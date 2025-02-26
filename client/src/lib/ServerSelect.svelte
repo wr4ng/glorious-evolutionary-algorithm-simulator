@@ -1,7 +1,7 @@
 <script lang="ts">
 	interface ServerSelectProps {
-		setServerURL: (url: string) => Promise<void>,
-		error: string,
+		setServerURL: (url: string) => Promise<void>;
+		error: string;
 	}
 	let { setServerURL, error }: ServerSelectProps = $props();
 

@@ -18,15 +18,19 @@
 	}
 </script>
 
-<form onsubmit={handleSumbit}>
-	<label>
-		Server URL:
-		<input type="text" bind:value={url} required />
-	</label>
-	<button type="submit" disabled={loading}>
+<form onsubmit={handleSumbit} class="max-w-sm mx-auto flex flex-col p-4 gap-2">
+	<label for="serverURL">Server URL: </label>
+	<input
+		type="text"
+		id="serverURL"
+		bind:value={url}
+		required
+		class="bg-gray-50 border rounded-lg p-2.5"
+	/>
+	<button type="submit" disabled={loading} class="border rounded-lg">
 		{loading ? "Loading..." : "Select"}
 	</button>
+	{#if error}
+		<p class="text-red-500 font-bold">{error}</p>
+	{/if}
 </form>
-{#if error}
-	<p>{error}</p>
-{/if}

@@ -27,7 +27,11 @@
 		required
 		class="bg-gray-50 border rounded-lg p-2.5"
 	/>
-	<button type="submit" disabled={loading} class="border rounded-lg">
+	<button
+		type="submit"
+		disabled={loading}
+		class="border rounded-lg py-2 font-bold"
+	>
 		{loading ? "Loading..." : "Select"}
 	</button>
 	{#if error}

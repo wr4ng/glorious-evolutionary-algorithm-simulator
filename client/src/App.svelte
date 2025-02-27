@@ -37,7 +37,7 @@
 	function selectTask(id: string) {
 		const newURL = new URL(window.location.href);
 		newURL.searchParams.set("serverURL", serverURL);
-		newURL.searchParams.set("taskID", id);
+		newURL.searchParams.append("taskID", id);
 		window.history.pushState({}, "", newURL);
 
 		taskID = id;
@@ -48,6 +48,7 @@
 		const handlePopState = () => {
 			const params = new URLSearchParams(window.location.search);
 			serverURL = params.get("serverURL") || "";
+			taskID = params.get("taskID") || "";
 			if (serverURL) {
 				checkServerURL(serverURL);
 			}

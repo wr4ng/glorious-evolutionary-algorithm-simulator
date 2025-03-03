@@ -1,19 +1,15 @@
 #![allow(dead_code)]
 
 use rand::{seq::SliceRandom, Rng};
+use std::fmt::Debug;
 
+trait SearchSpace: Debug + Clone {
+    fn new_random<R: Rng>(size: usize, rng: &mut R) -> Self;
+}
+
+#[derive(Debug, Clone)]
 struct Bitstring {
     bits: Vec<bool>,
-}
-
-struct Permutation {
-    permutation: Vec<usize>,
-}
-
-//TODO: Maybe rename to instance? or solution?
-// Need clone + debug
-trait SearchSpace {
-    fn new_random<R: Rng>(size: usize, rng: &mut R) -> Self;
 }
 
 impl SearchSpace for Bitstring {
@@ -26,6 +22,11 @@ impl SearchSpace for Bitstring {
     }
 }
 
+#[derive(Debug, Clone)]
+struct Permutation {
+    permutation: Vec<usize>,
+}
+
 impl SearchSpace for Permutation {
     fn new_random<R: Rng>(size: usize, rng: &mut R) -> Self {
         let mut perm = (0..size).collect::<Vec<_>>();
@@ -35,47 +36,49 @@ impl SearchSpace for Permutation {
 }
 
 trait FitnessFunction<T: SearchSpace> {
-    fn fitness(&self, instance: &T) -> usize;
+    fn evaluate(&self, instance: &T) -> f64;
     fn is_maximizing(&self) -> bool;
+
+    fn compare(&self, a: f64, b: f64) -> std::cmp::Ordering {
+        todo!()
+    }
 }
 
 struct OneMax;
 
 impl FitnessFunction<Bitstring> for OneMax {
-    fn fitness(&self, instance: &Bitstring) -> usize {
+    fn evaluate(&self, instance: &Bitstring) -> f64 {
         return instance
             .bits
             .iter()
-            .fold(0, |acc, b| if *b { acc + 1 } else { acc });
+            .fold(0_f64, |acc, b| if *b { acc + 1_f64 } else { acc });
     }
     fn is_maximizing(&self) -> bool {
         true
     }
 }
 
-//TODO:
+//TODO: struct LeadingOnes;
+//TODO: struct TSP {}
+// determine how we want to store distances (probably distance matrix to support non-euclidian
+// instances
+// impl FitnessFunction<Permutation> for TSP {}
+// impl TSP { from_EUC2D() -> TSP }
+
+// Shared state between all simulations. Probably the type to send to client
+struct SimulationState<S: SearchSpace> {
+    iteration: usize,
+    current_solution: S,
+    current_fitness: f64,
+}
+
 trait EvolutionaryAlgorithm<S: SearchSpace, F: FitnessFunction<S>> {
-    //
     fn iterate(&mut self) -> &SimulationState<S>;
 }
+//TODO:
 //- function to run a single iteration
 //- function to create a problem instance from provided params (given all are available)
 //  fn fromParams(&Params) -> Option<Self>;
-
-//TODO:
-// struct TSP
-// determine how we want to store distances (probably distance matrix to support non-euclidian
-// instances
-// impl Problem<Permutation> for TSP {}
-// impl TSP { from_EUC2D() -> TSP }
-
-// struct OnePlusOneEA<P, S> where P: Problem<S> {
-//     problem: P
-// }
-//
-// impl OnePlusOneEA {
-//
-// }
 
 trait Mutation<S: SearchSpace> {
     fn apply(&self, solution: &S) -> S;
@@ -94,10 +97,8 @@ where
     M: Mutation<S>,
 {
     fn iterate(&mut self) -> &SimulationState<S> {
-        // Save previous fitness
-        // Create new offspring
         let offspring = self.mutator.apply(&mut self.state.current_solution);
-        let new_fitness = self.fitness_function.fitness(&offspring);
+        let new_fitness = self.fitness_function.evaluate(&offspring);
         // Compare with previous fitness (EvolutionData struct?) and possible swap internal
         // solution...
         //
@@ -106,9 +107,3 @@ where
     }
 }
 
-// Shared state between all simulations. Probably the type to send to client
-struct SimulationState<S: SearchSpace> {
-    iteration: usize,
-    current_solution: S,
-    current_fitness: usize, //TODO: f64?
-}

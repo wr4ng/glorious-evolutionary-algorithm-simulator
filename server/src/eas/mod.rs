@@ -2,6 +2,7 @@
 
 use rand::{seq::SliceRandom, Rng};
 use std::fmt::Debug;
+use tokio::sync::watch;
 
 trait SearchSpace: Debug + Clone {
     fn new_random<R: Rng>(size: usize, rng: &mut R) -> Self;
@@ -40,7 +41,11 @@ trait FitnessFunction<T: SearchSpace> {
     fn is_maximizing(&self) -> bool;
 
     fn compare(&self, a: f64, b: f64) -> std::cmp::Ordering {
-        todo!()
+        if self.is_maximizing() {
+            a.total_cmp(&b)
+        } else {
+            a.total_cmp(&b).reverse()
+        }
     }
 }
 
@@ -106,4 +111,3 @@ where
         &self.state
     }
 }
-

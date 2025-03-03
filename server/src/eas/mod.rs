@@ -78,7 +78,7 @@ pub struct SimulationState<S: SearchSpace> {
 }
 
 pub trait EvolutionaryAlgorithm<S: SearchSpace, F: FitnessFunction<S>> {
-    fn iterate(&mut self) -> &SimulationState<S>;
+    fn iterate<R: Rng>(&mut self, rng: &mut R) -> &SimulationState<S>;
 }
 //TODO:
 //- function to run a single iteration
@@ -110,21 +110,19 @@ impl Mutation<Bitstring> for NaiveBitflip {
     }
 }
 
-pub struct OnePlusOneEA<S: SearchSpace, F: FitnessFunction<S>, M: Mutation<S>, R> {
+pub struct OnePlusOneEA<S: SearchSpace, F: FitnessFunction<S>, M: Mutation<S>> {
     pub state: SimulationState<S>,
     fitness_function: F,
     mutator: M,
-    rng: R,
 }
 
-impl<S, F, M, R> OnePlusOneEA<S, F, M, R>
+impl<S, F, M> OnePlusOneEA<S, F, M>
 where
     S: SearchSpace,
     F: FitnessFunction<S>,
     M: Mutation<S>,
-    R: Rng,
 {
-    pub fn new(size: usize, mutator: M, fitness_function: F, mut rng: R) -> Self {
+    pub fn new<R: Rng>(size: usize, mutator: M, fitness_function: F, mut rng: R) -> Self {
         let current_solution = S::new_random(size, &mut rng);
         let current_fitness = fitness_function.evaluate(&current_solution);
         OnePlusOneEA {
@@ -135,22 +133,18 @@ where
             },
             fitness_function,
             mutator,
-            rng,
         }
     }
 }
 
-impl<S, F, M, R> EvolutionaryAlgorithm<S, F> for OnePlusOneEA<S, F, M, R>
+impl<S, F, M> EvolutionaryAlgorithm<S, F> for OnePlusOneEA<S, F, M>
 where
     S: SearchSpace,
     F: FitnessFunction<S>,
     M: Mutation<S>,
-    R: Rng,
 {
-    fn iterate(&mut self) -> &SimulationState<S> {
-        let offspring = self
-            .mutator
-            .apply(&mut self.state.current_solution, &mut self.rng);
+    fn iterate<R: Rng>(&mut self, rng: &mut R) -> &SimulationState<S> {
+        let offspring = self.mutator.apply(&mut self.state.current_solution, rng);
 
         let new_fitness = self.fitness_function.evaluate(&offspring);
 

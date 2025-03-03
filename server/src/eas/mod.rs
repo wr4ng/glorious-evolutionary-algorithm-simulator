@@ -111,11 +111,6 @@ where
             self.state.current_solution = offspring;
         }
 
-        // Compare with previous fitness (EvolutionData struct?) and possible swap internal
-        //
-        // solution...
-        //
-        // Update simulation state...
         &self.state
     }
 }

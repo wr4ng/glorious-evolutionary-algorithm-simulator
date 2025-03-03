@@ -3,12 +3,12 @@
 use rand::{seq::SliceRandom, Rng};
 use std::fmt::Debug;
 
-trait SearchSpace: Debug + Clone {
+pub trait SearchSpace: Debug + Clone {
     fn new_random<R: Rng>(size: usize, rng: &mut R) -> Self;
 }
 
 #[derive(Debug, Clone)]
-struct Bitstring {
+pub struct Bitstring {
     bits: Vec<bool>,
 }
 
@@ -23,7 +23,7 @@ impl SearchSpace for Bitstring {
 }
 
 #[derive(Debug, Clone)]
-struct Permutation {
+pub struct Permutation {
     permutation: Vec<usize>,
 }
 
@@ -35,7 +35,7 @@ impl SearchSpace for Permutation {
     }
 }
 
-trait FitnessFunction<T: SearchSpace> {
+pub trait FitnessFunction<T: SearchSpace> {
     fn evaluate(&self, instance: &T) -> f64;
     fn is_maximizing(&self) -> bool;
 
@@ -48,7 +48,7 @@ trait FitnessFunction<T: SearchSpace> {
     }
 }
 
-struct OneMax;
+pub struct OneMax;
 
 impl FitnessFunction<Bitstring> for OneMax {
     fn evaluate(&self, instance: &Bitstring) -> f64 {
@@ -70,13 +70,14 @@ impl FitnessFunction<Bitstring> for OneMax {
 // impl TSP { from_EUC2D() -> TSP }
 
 // Shared state between all simulations. Probably the type to send to client
-struct SimulationState<S: SearchSpace> {
-    iteration: usize,
-    current_solution: S,
-    current_fitness: f64,
+#[derive(Debug)]
+pub struct SimulationState<S: SearchSpace> {
+    pub iteration: usize,
+    pub current_solution: S,
+    pub current_fitness: f64,
 }
 
-trait EvolutionaryAlgorithm<S: SearchSpace, F: FitnessFunction<S>> {
+pub trait EvolutionaryAlgorithm<S: SearchSpace, F: FitnessFunction<S>> {
     fn iterate(&mut self) -> &SimulationState<S>;
 }
 //TODO:
@@ -84,29 +85,82 @@ trait EvolutionaryAlgorithm<S: SearchSpace, F: FitnessFunction<S>> {
 //- function to create a problem instance from provided params (given all are available)
 //  fn fromParams(&Params) -> Option<Self>;
 
-trait Mutation<S: SearchSpace> {
-    fn apply(&self, solution: &S) -> S;
+pub trait Mutation<S: SearchSpace> {
+    fn apply<R: Rng>(&self, solution: &S, rng: &mut R) -> S;
 }
 
-struct OnePlusOneEA<S: SearchSpace, F: FitnessFunction<S>, M: Mutation<S>> {
-    state: SimulationState<S>,
+pub struct NaiveBitflip;
+
+impl Mutation<Bitstring> for NaiveBitflip {
+    fn apply<R: Rng>(&self, solution: &Bitstring, rng: &mut R) -> Bitstring {
+        let bits = solution
+            .bits
+            .iter()
+            .map(|b| {
+                let flip = rng.random_ratio(1, solution.bits.len() as u32);
+                if flip {
+                    !*b
+                } else {
+                    *b
+                }
+            })
+            .collect::<Vec<_>>();
+
+        Bitstring { bits }
+    }
+}
+
+pub struct OnePlusOneEA<S: SearchSpace, F: FitnessFunction<S>, M: Mutation<S>, R> {
+    pub state: SimulationState<S>,
     fitness_function: F,
     mutator: M,
+    rng: R,
 }
 
-impl<S, F, M> EvolutionaryAlgorithm<S, F> for OnePlusOneEA<S, F, M>
+impl<S, F, M, R> OnePlusOneEA<S, F, M, R>
 where
     S: SearchSpace,
     F: FitnessFunction<S>,
     M: Mutation<S>,
+    R: Rng,
+{
+    pub fn new(size: usize, mutator: M, fitness_function: F, mut rng: R) -> Self {
+        let current_solution = S::new_random(size, &mut rng);
+        let current_fitness = fitness_function.evaluate(&current_solution);
+        OnePlusOneEA {
+            state: SimulationState {
+                iteration: 0,
+                current_solution,
+                current_fitness,
+            },
+            fitness_function,
+            mutator,
+            rng,
+        }
+    }
+}
+
+impl<S, F, M, R> EvolutionaryAlgorithm<S, F> for OnePlusOneEA<S, F, M, R>
+where
+    S: SearchSpace,
+    F: FitnessFunction<S>,
+    M: Mutation<S>,
+    R: Rng,
 {
     fn iterate(&mut self) -> &SimulationState<S> {
-        let offspring = self.mutator.apply(&mut self.state.current_solution);
+        let offspring = self
+            .mutator
+            .apply(&mut self.state.current_solution, &mut self.rng);
+
         let new_fitness = self.fitness_function.evaluate(&offspring);
 
         self.state.iteration += 1;
 
-        if self.fitness_function.compare(self.state.current_fitness, new_fitness) == std::cmp::Ordering::Greater {
+        let fitness_order = self
+            .fitness_function
+            .compare(new_fitness, self.state.current_fitness);
+
+        if fitness_order == std::cmp::Ordering::Greater {
             self.state.current_fitness = new_fitness;
             self.state.current_solution = offspring;
         }

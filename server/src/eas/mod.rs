@@ -2,7 +2,6 @@
 
 use rand::{seq::SliceRandom, Rng};
 use std::fmt::Debug;
-use tokio::sync::watch;
 
 trait SearchSpace: Debug + Clone {
     fn new_random<R: Rng>(size: usize, rng: &mut R) -> Self;
@@ -104,7 +103,16 @@ where
     fn iterate(&mut self) -> &SimulationState<S> {
         let offspring = self.mutator.apply(&mut self.state.current_solution);
         let new_fitness = self.fitness_function.evaluate(&offspring);
+
+        self.state.iteration += 1;
+
+        if self.fitness_function.compare(self.state.current_fitness, new_fitness) == std::cmp::Ordering::Greater {
+            self.state.current_fitness = new_fitness;
+            self.state.current_solution = offspring;
+        }
+
         // Compare with previous fitness (EvolutionData struct?) and possible swap internal
+        //
         // solution...
         //
         // Update simulation state...

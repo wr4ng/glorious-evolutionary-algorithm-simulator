@@ -83,37 +83,20 @@ mod tests {
         }
     }
 
-    struct TestCase<'a> {
-        input: &'a str,
-        flips: &'a str,
-        expected: &'a str,
-    }
-
     #[test]
     fn test_naive_bitflip() {
+        // (input, flips, expected)
         let testcases = vec![
-            TestCase {
-                input: "00000000",
-                flips: "10001001",
-                expected: "10001001",
-            },
-            TestCase {
-                input: "1001010110",
-                flips: "1111111111",
-                expected: "0110101001",
-            },
-            TestCase {
-                input: "10101011010101010101011",
-                flips: "00000000000000000000000",
-                expected: "10101011010101010101011",
-            },
+            ("00000000", "10001001", "10001001"),
+            ("1001010110", "1111111111", "0110101001"),
+            ("101010110101010", "000000000000000", "101010110101010"),
         ];
 
         for t in testcases {
-            let bitstring = Bitstring::from_str(t.input);
-            let mut mock_rng = MockRng::new_ratio(bitstring_to_bools(t.flips));
+            let bitstring = Bitstring::from_str(t.0);
+            let mut mock_rng = MockRng::new_ratio(bitstring_to_bools(t.1));
             let got = NaiveBitflip::apply(&NaiveBitflip, &bitstring, &mut mock_rng);
-            assert_eq!(*got.bits(), bitstring_to_bools(t.expected))
+            assert_eq!(*got.bits(), bitstring_to_bools(t.2))
         }
     }
 }

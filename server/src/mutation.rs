@@ -67,14 +67,53 @@ impl EARng for MockRng {
 mod tests {
     use super::*;
 
+    fn bitstring_to_bools(s: &str) -> Vec<bool> {
+        s.chars()
+            .map(|c| match c {
+                '0' => false,
+                '1' => true,
+                _ => panic!("invalid character: {}", c),
+            })
+            .collect()
+    }
+
+    impl Bitstring {
+        fn from_str(s: &str) -> Self {
+            Bitstring::new(bitstring_to_bools(s))
+        }
+    }
+
+    struct TestCase<'a> {
+        input: &'a str,
+        flips: &'a str,
+        expected: &'a str,
+    }
+
     #[test]
     fn test_naive_bitflip() {
-        let bitstring = Bitstring::new(vec![false; 10]);
-        let mut flips = vec![false; 10];
-        flips[2] = true;
-        flips[6] = true;
-        let mut rng = MockRng::new_ratio(flips.clone());
-        let flipped = NaiveBitflip::apply(&NaiveBitflip, &bitstring, &mut rng);
-        assert_eq!(*flipped.bits(), flips);
+        let testcases = vec![
+            TestCase {
+                input: "00000000",
+                flips: "10001001",
+                expected: "10001001",
+            },
+            TestCase {
+                input: "1001010110",
+                flips: "1111111111",
+                expected: "0110101001",
+            },
+            TestCase {
+                input: "10101011010101010101011",
+                flips: "00000000000000000000000",
+                expected: "10101011010101010101011",
+            },
+        ];
+
+        for t in testcases {
+            let bitstring = Bitstring::from_str(t.input);
+            let mut mock_rng = MockRng::new_ratio(bitstring_to_bools(t.flips));
+            let got = NaiveBitflip::apply(&NaiveBitflip, &bitstring, &mut mock_rng);
+            assert_eq!(*got.bits(), bitstring_to_bools(t.expected))
+        }
     }
 }

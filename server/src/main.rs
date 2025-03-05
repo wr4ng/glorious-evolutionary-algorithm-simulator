@@ -1,21 +1,9 @@
 use axum::{http::StatusCode, routing::get, Json, Router};
-use eas::{EvolutionaryAlgorithm, NaiveBitflip, OneMax};
 use serde::Serialize;
 use tower_http::cors::CorsLayer;
 
-mod eas;
-
 #[tokio::main]
 async fn main() {
-    //TODO: Example
-    let mut rng = rand::rng();
-    let mut ea = eas::OnePlusOneEA::new(8, NaiveBitflip, OneMax, &mut rng);
-    println!("Initial state: {:?}", ea.state);
-    for _ in 0..10 {
-        let _ = ea.iterate(&mut rng);
-    }
-    println!("10 iterations: {:?}", ea.state);
-
     let app = Router::new()
         .route("/tasks", get(get_tasks))
         .layer(CorsLayer::permissive());

@@ -13,13 +13,9 @@ impl Mutation<Bitstring> for NaiveBitflip {
         let bits = solution
             .bits()
             .iter()
-            .map(|b| {
-                let flip = rng.random_ratio(1, solution.bits().len() as u32);
-                if flip {
-                    !*b
-                } else {
-                    *b
-                }
+            .map(|&b| {
+                let to_flip = rng.random_ratio(1, solution.bits().len() as u32);
+                to_flip ^ b
             })
             .collect::<Vec<_>>();
 

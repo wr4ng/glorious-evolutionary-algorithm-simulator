@@ -20,14 +20,32 @@ impl FitnessFunction<Bitstring> for OneMax {
         return instance
             .bits()
             .iter()
-            .fold(0_f64, |acc, b| if *b { acc + 1_f64 } else { acc });
+            .fold(0_f64, |acc, &b| if b { acc + 1_f64 } else { acc });
     }
     fn is_maximizing(&self) -> bool {
         true
     }
 }
 
-//TODO: struct LeadingOnes;
+struct LeadingOnes;
+
+impl FitnessFunction<Bitstring> for LeadingOnes {
+    fn evaluate(&self, instance: &Bitstring) -> f64 {
+        let mut leading_ones = 0;
+        for &b in instance.bits() {
+            if b {
+                leading_ones += 1;
+            } else {
+                break;
+            }
+        }
+        leading_ones as f64
+    }
+    fn is_maximizing(&self) -> bool {
+        true
+    }
+}
+
 //TODO: struct TSP {}
 // determine how we want to store distances (probably distance matrix to support non-euclidian
 // instances
@@ -40,18 +58,22 @@ mod tests {
 
     impl Bitstring {
         fn from_bitstring(bitstring: &str) -> Self {
-            Bitstring::new(bitstring.chars().map(|c| match c {
-                '0' => false,
-                '1' => true,
-                _ => panic!("invalid character: {}", c),
-            })
-            .collect())
+            Bitstring::new(
+                bitstring
+                    .chars()
+                    .map(|c| match c {
+                        '0' => false,
+                        '1' => true,
+                        _ => panic!("invalid character: {}", c),
+                    })
+                    .collect(),
+            )
         }
     }
 
     #[test]
     fn test_one_max() {
-        // (bitstring, ones)
+        // (bitstring, fitness)
         let testcases = vec![
             ("0000", 0.0),
             ("1001010101", 5.0),
@@ -63,7 +85,33 @@ mod tests {
         for t in testcases {
             let b = Bitstring::from_bitstring(t.0);
             let got = OneMax::evaluate(&OneMax, &b);
-            assert_eq!(got, t.1, "expected fitness of {} but got {} on \"{}\"", t.1, got, t.0);
+            assert_eq!(
+                got, t.1,
+                "expected fitness of {} but got {} on \"{}\"",
+                t.1, got, t.0
+            );
+        }
+    }
+
+    #[test]
+    fn test_leading_ones() {
+        // (bitstring, fitness)
+        let testcases = vec![
+            ("0000", 0.0),
+            ("1001010101", 1.0),
+            ("1111111111", 10.0),
+            ("1111100000", 5.0),
+            ("0000011111", 0.0),
+        ];
+
+        for t in testcases {
+            let b = Bitstring::from_bitstring(t.0);
+            let got = LeadingOnes::evaluate(&LeadingOnes, &b);
+            assert_eq!(
+                got, t.1,
+                "expected fitness of {} but got {} on \"{}\"",
+                t.1, got, t.0
+            );
         }
     }
 }

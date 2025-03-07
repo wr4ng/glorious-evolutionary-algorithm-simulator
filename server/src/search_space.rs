@@ -35,6 +35,12 @@ pub struct Permutation {
     permutation: Vec<usize>,
 }
 
+impl Permutation {
+    pub fn permutation(&self) -> &Vec<usize> {
+        &self.permutation
+    }
+}
+
 impl SearchSpace for Permutation {
     fn new_random<R: Rng>(size: usize, rng: &mut R) -> Self {
         let mut perm = (0..size).collect::<Vec<_>>();

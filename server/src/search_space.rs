@@ -39,6 +39,10 @@ impl Permutation {
     pub fn permutation(&self) -> &Vec<usize> {
         &self.permutation
     }
+
+    pub fn new(permutation: Vec<usize>) -> Self {
+        Permutation { permutation }
+    }
 }
 
 impl SearchSpace for Permutation {

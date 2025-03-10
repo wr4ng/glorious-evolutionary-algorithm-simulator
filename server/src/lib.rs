@@ -49,6 +49,8 @@ where
     }
 }
 
+//TODO: Possibly implement (1+1) EA differently for bitstrings vs permutations (to handle mutation
+// differences, local/global)
 impl<S, F, M> EvolutionaryAlgorithm<S, F> for OnePlusOneEA<S, F, M>
 where
     S: SearchSpace,

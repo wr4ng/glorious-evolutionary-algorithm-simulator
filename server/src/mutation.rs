@@ -1,6 +1,6 @@
+use super::search_space::{Bitstring, Permutation, SearchSpace};
 use rand::Rng;
-
-use super::search_space::{Bitstring, SearchSpace};
+use std::ops::Range;
 
 pub trait Mutation<S: SearchSpace> {
     fn apply<R: EARng>(&self, solution: &S, rng: &mut R) -> S;
@@ -24,22 +24,57 @@ impl Mutation<Bitstring> for NaiveBitflip {
 }
 //TODO: pub struct TwoOpt;
 //      impl Mutation<Permutation> for TwoOpt { ... }
+
+pub struct TwoOpt;
+
+impl Mutation<Permutation> for TwoOpt {
+    fn apply<R: EARng>(&self, solution: &Permutation, rng: &mut R) -> Permutation {
+        let previous = solution.permutation();
+        let a = rng.random_range(0..previous.len());
+        let mut b = a;
+        while b == a {
+            b = rng.random_range(0..previous.len());
+        }
+        let (v1, v2) = if a > b { (b, a) } else { (a, b) };
+        let mut result = Vec::with_capacity(previous.len());
+        for v in &previous[0..=v1] {
+            result.push(*v);
+        }
+        for i in ((v1 + 1)..=v2).rev() {
+            result.push(previous[i]);
+        }
+        for v in &previous[(v2 + 1)..] {
+            result.push(*v);
+        }
+        Permutation::new(result)
+    }
+}
+
 //TODO: pub struct ThreeOpt;
 //      impl Mutation<Permutation> for ThreeOpt { ... }
 
 pub trait EARng {
     fn random_ratio(&mut self, numerator: u32, denominator: u32) -> bool;
+    fn random_range(&mut self, range: Range<usize>) -> usize;
 }
 
 impl<T: Rng> EARng for T {
     fn random_ratio(&mut self, numerator: u32, denominator: u32) -> bool {
         Rng::random_ratio(self, numerator, denominator)
     }
+
+    fn random_range(&mut self, range: Range<usize>) -> usize {
+        Rng::random_range(self, range)
+    }
 }
 
+#[derive(Default)]
 struct MockRng {
     random_ratio_values: Vec<bool>,
     random_ratio_index: usize,
+
+    random_range_values: Vec<usize>,
+    random_range_index: usize,
 }
 
 impl MockRng {
@@ -47,6 +82,15 @@ impl MockRng {
         MockRng {
             random_ratio_values: values,
             random_ratio_index: 0,
+            ..Default::default()
+        }
+    }
+
+    fn new_range(values: Vec<usize>) -> Self {
+        MockRng {
+            random_range_values: values,
+            random_range_index: 0,
+            ..Default::default()
         }
     }
 }
@@ -55,6 +99,12 @@ impl EARng for MockRng {
     fn random_ratio(&mut self, _: u32, _: u32) -> bool {
         let value = self.random_ratio_values[self.random_ratio_index];
         self.random_ratio_index += 1;
+        value
+    }
+
+    fn random_range(&mut self, _: Range<usize>) -> usize {
+        let value = self.random_range_values[self.random_range_index];
+        self.random_range_index += 1;
         value
     }
 }
@@ -73,12 +123,6 @@ mod tests {
             .collect()
     }
 
-    impl Bitstring {
-        fn from_str(s: &str) -> Self {
-            Bitstring::new(bitstring_to_bools(s))
-        }
-    }
-
     #[test]
     fn test_naive_bitflip() {
         // (input, flips, expected)
@@ -89,10 +133,18 @@ mod tests {
         ];
 
         for t in testcases {
-            let bitstring = Bitstring::from_str(t.0);
+            let bitstring = Bitstring::from_bitstring(t.0).unwrap();
             let mut mock_rng = MockRng::new_ratio(bitstring_to_bools(t.1));
             let got = NaiveBitflip::apply(&NaiveBitflip, &bitstring, &mut mock_rng);
             assert_eq!(*got.bits(), bitstring_to_bools(t.2))
         }
+    }
+
+    #[test]
+    fn test_two_opt() {
+        let initial = Permutation::new(vec![0, 1, 4, 3, 2, 5, 6, 7]);
+        let mut mock_rng = MockRng::new_range(vec![1, 4]);
+        let result = TwoOpt::apply(&TwoOpt, &initial, &mut mock_rng);
+        assert_eq!(*result.permutation(), vec![0, 1, 2, 3, 4, 5, 6, 7])
     }
 }

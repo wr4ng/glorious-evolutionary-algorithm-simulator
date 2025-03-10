@@ -18,6 +18,23 @@ impl Bitstring {
     pub fn new(bits: Vec<bool>) -> Self {
         Bitstring { bits }
     }
+
+    //TODO: Should be Result<Self, {some error}>
+    pub fn from_bitstring(s: &str) -> Option<Self> {
+        let bitstring = s
+            .chars()
+            .map(|c| match c {
+                '0' => Some(false),
+                '1' => Some(true),
+                _ => None,
+            })
+            .collect::<Option<Vec<_>>>();
+
+        match bitstring {
+            None => None,
+            Some(bits) => Some(Self { bits }),
+        }
+    }
 }
 
 impl SearchSpace for Bitstring {

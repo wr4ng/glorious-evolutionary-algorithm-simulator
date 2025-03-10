@@ -1,4 +1,4 @@
-use server::fitness::OneMax;
+use server::fitness::one_max::OneMax;
 use server::mutation::NaiveBitflip;
 use server::EvolutionaryAlgorithm;
 use server::OnePlusOneEA;

@@ -57,9 +57,7 @@ impl TSP {
             })
             .collect::<Option<Vec<_>>>();
 
-        let Some(coords) = coords else {
-            return None;
-        };
+        let coords = coords?;
 
         let mut distances = vec![vec![0.0; coords.len()]; coords.len()];
 

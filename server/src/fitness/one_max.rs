@@ -5,10 +5,10 @@ pub struct OneMax;
 
 impl FitnessFunction<Bitstring> for OneMax {
     fn evaluate(&self, instance: &Bitstring) -> f64 {
-        return instance
+        instance
             .bits()
             .iter()
-            .fold(0_f64, |acc, &b| if b { acc + 1_f64 } else { acc });
+            .fold(0_f64, |acc, &b| if b { acc + 1_f64 } else { acc })
     }
     fn is_maximizing(&self) -> bool {
         true

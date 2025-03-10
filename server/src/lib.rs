@@ -56,7 +56,7 @@ where
     M: Mutation<S>,
 {
     fn iterate<R: Rng>(&mut self, rng: &mut R) -> &SimulationState<S> {
-        let offspring = self.mutator.apply(&mut self.state.current_solution, rng);
+        let offspring = self.mutator.apply(&self.state.current_solution, rng);
 
         let new_fitness = self.fitness_function.evaluate(&offspring);
 

@@ -30,18 +30,15 @@ impl Bitstring {
             })
             .collect::<Option<Vec<_>>>();
 
-        match bitstring {
-            None => None,
-            Some(bits) => Some(Self { bits }),
-        }
+        bitstring.map(|bits| Self { bits })
     }
 }
 
 impl SearchSpace for Bitstring {
     fn new_random<R: Rng>(size: usize, rng: &mut R) -> Self {
         let mut bits = vec![false; size];
-        for i in 0..size {
-            bits[i] = rng.random();
+        for bit in bits.iter_mut() {
+            *bit = rng.random();
         }
         Bitstring { bits }
     }
@@ -66,6 +63,6 @@ impl SearchSpace for Permutation {
     fn new_random<R: Rng>(size: usize, rng: &mut R) -> Self {
         let mut perm = (0..size).collect::<Vec<_>>();
         perm.shuffle(rng);
-        return Permutation { permutation: perm };
+        Permutation { permutation: perm }
     }
 }

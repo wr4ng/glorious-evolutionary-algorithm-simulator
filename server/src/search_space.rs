@@ -3,6 +3,7 @@ use std::fmt::Debug;
 
 pub trait SearchSpace: Debug + Clone {
     fn new_random<R: Rng>(size: usize, rng: &mut R) -> Self;
+    fn size(&self) -> usize;
 }
 
 #[derive(Debug, Clone)]
@@ -22,6 +23,7 @@ impl Bitstring {
     pub fn flip(&mut self, i: usize) {
         self.bits[i] = !self.bits[i];
     }
+
     //TODO: Should be Result<Self, {some error}>
     pub fn from_bitstring(s: &str) -> Option<Self> {
         let bitstring = s
@@ -45,6 +47,10 @@ impl SearchSpace for Bitstring {
         }
         Bitstring { bits }
     }
+
+    fn size(&self) -> usize {
+        self.bits.len()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -67,5 +73,9 @@ impl SearchSpace for Permutation {
         let mut perm = (0..size).collect::<Vec<_>>();
         perm.shuffle(rng);
         Permutation { permutation: perm }
+    }
+
+    fn size(&self) -> usize {
+        self.permutation.len()
     }
 }

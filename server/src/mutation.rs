@@ -14,7 +14,7 @@ impl Mutation<Bitstring> for NaiveBitflip {
             .bits()
             .iter()
             .map(|&b| {
-                let to_flip = rng.random_ratio(1, solution.bits().len() as u32);
+                let to_flip = rng.random_ratio(1, solution.size() as u32);
                 to_flip ^ b
             })
             .collect::<Vec<_>>();
@@ -28,11 +28,11 @@ pub struct Bitflip;
 impl Mutation<Bitstring> for Bitflip {
     fn apply<R: EARng>(&self, solution: &Bitstring, rng: &mut R) -> Bitstring {
         let mut result = solution.clone();
-        let p = 1.0 / solution.bits().len() as f64;
+        let p = 1.0 / solution.size() as f64;
         let mut i = 0;
         i += rng.sample_geometric(p) as usize;
 
-        while i < solution.bits().len() {
+        while i < solution.size() {
             result.flip(i);
             i += 1;
             i += rng.sample_geometric(p) as usize;

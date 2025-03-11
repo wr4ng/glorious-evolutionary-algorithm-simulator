@@ -41,7 +41,16 @@ impl Mutation<Bitstring> for Bitflip {
     }
 }
 
-//TODO: pub struct SingleBitflip (used by Simulated Annealing)
+pub struct SingleBitflip;
+
+impl Mutation<Bitstring> for SingleBitflip {
+    fn apply<R: EARng>(&self, solution: &Bitstring, rng: &mut R) -> Bitstring {
+        let mut result = solution.clone();
+        let i = rng.random_range(0..solution.size());
+        result.flip(i);
+        result
+    }
+}
 
 pub struct TwoOpt;
 
@@ -197,6 +206,23 @@ mod tests {
             let bitstring = Bitstring::from_bitstring(t.0).unwrap();
             let mut mock_rng = MockRng::new_geometric(t.1);
             let got = Bitflip.apply(&bitstring, &mut mock_rng);
+            assert_eq!(*got.bits(), bitstring_to_bools(t.2))
+        }
+    }
+
+    #[test]
+    fn test_single_bitflip() {
+        // (input, flip, expected)
+        let testcases = vec![
+            ("00000000", 7, "00000001"),
+            ("1001010110", 3, "1000010110"),
+            ("101010110101010", 0, "001010110101010"),
+        ];
+
+        for t in testcases {
+            let bitstring = Bitstring::from_bitstring(t.0).unwrap();
+            let mut mock_rng = MockRng::new_range(vec![t.1]);
+            let got = SingleBitflip.apply(&bitstring, &mut mock_rng);
             assert_eq!(*got.bits(), bitstring_to_bools(t.2))
         }
     }

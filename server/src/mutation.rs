@@ -22,8 +22,8 @@ impl Mutation<Bitstring> for NaiveBitflip {
         Bitstring::new(bits)
     }
 }
-//TODO: pub struct TwoOpt;
-//      impl Mutation<Permutation> for TwoOpt { ... }
+
+//TODO: pub struct SingleBitflip (used by Simulated Annealing)
 
 pub struct TwoOpt;
 

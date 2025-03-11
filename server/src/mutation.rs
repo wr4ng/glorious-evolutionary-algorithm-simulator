@@ -1,15 +1,14 @@
+use super::rng::Rng;
 use super::search_space::{Bitstring, Permutation, SearchSpace};
-use rand::Rng;
-use std::ops::Range;
 
 pub trait Mutation<S: SearchSpace> {
-    fn apply<R: EARng>(&self, solution: &S, rng: &mut R) -> S;
+    fn apply<R: Rng>(&self, solution: &S, rng: &mut R) -> S;
 }
 
 pub struct NaiveBitflip;
 
 impl Mutation<Bitstring> for NaiveBitflip {
-    fn apply<R: EARng>(&self, solution: &Bitstring, rng: &mut R) -> Bitstring {
+    fn apply<R: Rng>(&self, solution: &Bitstring, rng: &mut R) -> Bitstring {
         let bits = solution
             .bits()
             .iter()
@@ -26,7 +25,7 @@ impl Mutation<Bitstring> for NaiveBitflip {
 pub struct Bitflip;
 
 impl Mutation<Bitstring> for Bitflip {
-    fn apply<R: EARng>(&self, solution: &Bitstring, rng: &mut R) -> Bitstring {
+    fn apply<R: Rng>(&self, solution: &Bitstring, rng: &mut R) -> Bitstring {
         let mut result = solution.clone();
         let p = 1.0 / solution.size() as f64;
         let mut i = 0;
@@ -44,7 +43,7 @@ impl Mutation<Bitstring> for Bitflip {
 pub struct SingleBitflip;
 
 impl Mutation<Bitstring> for SingleBitflip {
-    fn apply<R: EARng>(&self, solution: &Bitstring, rng: &mut R) -> Bitstring {
+    fn apply<R: Rng>(&self, solution: &Bitstring, rng: &mut R) -> Bitstring {
         let mut result = solution.clone();
         let i = rng.random_range(0..solution.size());
         result.flip(i);
@@ -55,7 +54,7 @@ impl Mutation<Bitstring> for SingleBitflip {
 pub struct TwoOpt;
 
 impl Mutation<Permutation> for TwoOpt {
-    fn apply<R: EARng>(&self, solution: &Permutation, rng: &mut R) -> Permutation {
+    fn apply<R: Rng>(&self, solution: &Permutation, rng: &mut R) -> Permutation {
         let previous = solution.permutation();
         let a = rng.random_range(0..previous.len());
         let mut b = a;
@@ -80,90 +79,10 @@ impl Mutation<Permutation> for TwoOpt {
 //TODO: pub struct ThreeOpt;
 //      impl Mutation<Permutation> for ThreeOpt { ... }
 
-pub trait EARng {
-    fn random_ratio(&mut self, numerator: u32, denominator: u32) -> bool;
-    fn random_range(&mut self, range: Range<usize>) -> usize;
-    fn sample_geometric(&mut self, p: f64) -> u64;
-}
-
-impl<T: Rng> EARng for T {
-    fn random_ratio(&mut self, numerator: u32, denominator: u32) -> bool {
-        Rng::random_ratio(self, numerator, denominator)
-    }
-
-    fn random_range(&mut self, range: Range<usize>) -> usize {
-        Rng::random_range(self, range)
-    }
-
-    // Sample a value from a geometric distribution with success probablity p,
-    // using inverse CDF method
-    fn sample_geometric(&mut self, p: f64) -> u64 {
-        let rand: f64 = Rng::random_range(self, 0.0..1.0);
-        (rand.log2() / (1.0 - p).log2()).floor() as u64
-    }
-}
-
-#[derive(Default)]
-struct MockRng {
-    random_ratio_values: Vec<bool>,
-    random_ratio_index: usize,
-
-    random_range_values: Vec<usize>,
-    random_range_index: usize,
-
-    random_geometric_values: Vec<u64>,
-    random_geometric_index: usize,
-}
-
-impl MockRng {
-    fn new_ratio(values: Vec<bool>) -> Self {
-        MockRng {
-            random_ratio_values: values,
-            random_ratio_index: 0,
-            ..Default::default()
-        }
-    }
-
-    fn new_range(values: Vec<usize>) -> Self {
-        MockRng {
-            random_range_values: values,
-            random_range_index: 0,
-            ..Default::default()
-        }
-    }
-
-    fn new_geometric(values: Vec<u64>) -> Self {
-        MockRng {
-            random_geometric_values: values,
-            random_geometric_index: 0,
-            ..Default::default()
-        }
-    }
-}
-
-impl EARng for MockRng {
-    fn random_ratio(&mut self, _: u32, _: u32) -> bool {
-        let value = self.random_ratio_values[self.random_ratio_index];
-        self.random_ratio_index += 1;
-        value
-    }
-
-    fn random_range(&mut self, _: Range<usize>) -> usize {
-        let value = self.random_range_values[self.random_range_index];
-        self.random_range_index += 1;
-        value
-    }
-
-    fn sample_geometric(&mut self, _: f64) -> u64 {
-        let value = self.random_geometric_values[self.random_geometric_index];
-        self.random_geometric_index += 1;
-        value
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::rng::MockRng;
 
     fn bitstring_to_bools(s: &str) -> Vec<bool> {
         s.chars()

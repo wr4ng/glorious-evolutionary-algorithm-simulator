@@ -187,7 +187,7 @@ mod tests {
         for t in testcases {
             let bitstring = Bitstring::from_bitstring(t.0).unwrap();
             let mut mock_rng = MockRng::new_ratio(bitstring_to_bools(t.1));
-            let got = NaiveBitflip::apply(&NaiveBitflip, &bitstring, &mut mock_rng);
+            let got = NaiveBitflip.apply(&bitstring, &mut mock_rng);
             assert_eq!(*got.bits(), bitstring_to_bools(t.2))
         }
     }
@@ -231,7 +231,7 @@ mod tests {
     fn test_two_opt() {
         let initial = Permutation::new(vec![0, 1, 4, 3, 2, 5, 6, 7]);
         let mut mock_rng = MockRng::new_range(vec![1, 4]);
-        let result = TwoOpt::apply(&TwoOpt, &initial, &mut mock_rng);
+        let result = TwoOpt.apply(&initial, &mut mock_rng);
         assert_eq!(*result.permutation(), vec![0, 1, 2, 3, 4, 5, 6, 7])
     }
 }

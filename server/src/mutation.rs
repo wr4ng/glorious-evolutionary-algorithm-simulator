@@ -23,6 +23,24 @@ impl Mutation<Bitstring> for NaiveBitflip {
     }
 }
 
+pub struct Bitflip;
+
+impl Mutation<Bitstring> for Bitflip {
+    fn apply<R: EARng>(&self, solution: &Bitstring, rng: &mut R) -> Bitstring {
+        let mut result = solution.clone();
+        let p = 1.0 / solution.bits().len() as f64;
+        let mut i = 0;
+        i += rng.sample_geometric(p) as usize;
+
+        while i < solution.bits().len() {
+            result.flip(i);
+            i += 1;
+            i += rng.sample_geometric(p) as usize;
+        }
+        result
+    }
+}
+
 //TODO: pub struct SingleBitflip (used by Simulated Annealing)
 
 pub struct TwoOpt;
@@ -56,6 +74,7 @@ impl Mutation<Permutation> for TwoOpt {
 pub trait EARng {
     fn random_ratio(&mut self, numerator: u32, denominator: u32) -> bool;
     fn random_range(&mut self, range: Range<usize>) -> usize;
+    fn sample_geometric(&mut self, p: f64) -> u64;
 }
 
 impl<T: Rng> EARng for T {
@@ -66,6 +85,13 @@ impl<T: Rng> EARng for T {
     fn random_range(&mut self, range: Range<usize>) -> usize {
         Rng::random_range(self, range)
     }
+
+    // Sample a value from a geometric distribution with success probablity p,
+    // using inverse CDF method
+    fn sample_geometric(&mut self, p: f64) -> u64 {
+        let rand: f64 = Rng::random_range(self, 0.0..1.0);
+        (rand.log2() / (1.0 - p).log2()).floor() as u64
+    }
 }
 
 #[derive(Default)]
@@ -75,6 +101,9 @@ struct MockRng {
 
     random_range_values: Vec<usize>,
     random_range_index: usize,
+
+    random_geometric_values: Vec<u64>,
+    random_geometric_index: usize,
 }
 
 impl MockRng {
@@ -93,6 +122,14 @@ impl MockRng {
             ..Default::default()
         }
     }
+
+    fn new_geometric(values: Vec<u64>) -> Self {
+        MockRng {
+            random_geometric_values: values,
+            random_geometric_index: 0,
+            ..Default::default()
+        }
+    }
 }
 
 impl EARng for MockRng {
@@ -105,6 +142,12 @@ impl EARng for MockRng {
     fn random_range(&mut self, _: Range<usize>) -> usize {
         let value = self.random_range_values[self.random_range_index];
         self.random_range_index += 1;
+        value
+    }
+
+    fn sample_geometric(&mut self, _: f64) -> u64 {
+        let value = self.random_geometric_values[self.random_geometric_index];
+        self.random_geometric_index += 1;
         value
     }
 }
@@ -136,6 +179,24 @@ mod tests {
             let bitstring = Bitstring::from_bitstring(t.0).unwrap();
             let mut mock_rng = MockRng::new_ratio(bitstring_to_bools(t.1));
             let got = NaiveBitflip::apply(&NaiveBitflip, &bitstring, &mut mock_rng);
+            assert_eq!(*got.bits(), bitstring_to_bools(t.2))
+        }
+    }
+
+    #[test]
+    fn test_bitflip() {
+        // (input, [flip distance(s)], expected)
+        let testcases = vec![
+            ("0000000000", vec![4, 10], "0000100000"),
+            ("0000000000", vec![1, 2, 10], "0100100000"),
+            ("0000000000", vec![0, 0, 0, 10], "1110000000"),
+            ("0000000000", vec![10], "0000000000"),
+        ];
+
+        for t in testcases {
+            let bitstring = Bitstring::from_bitstring(t.0).unwrap();
+            let mut mock_rng = MockRng::new_geometric(t.1);
+            let got = Bitflip.apply(&bitstring, &mut mock_rng);
             assert_eq!(*got.bits(), bitstring_to_bools(t.2))
         }
     }

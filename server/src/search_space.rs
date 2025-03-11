@@ -19,6 +19,9 @@ impl Bitstring {
         Bitstring { bits }
     }
 
+    pub fn flip(&mut self, i: usize) {
+        self.bits[i] = !self.bits[i];
+    }
     //TODO: Should be Result<Self, {some error}>
     pub fn from_bitstring(s: &str) -> Option<Self> {
         let bitstring = s

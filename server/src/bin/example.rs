@@ -1,14 +1,15 @@
 use server::algorithms::{one_plus_one_ea::OnePlusOneEA, EvolutionaryAlgorithm};
 use server::fitness::one_max::OneMax;
-use server::mutation::NaiveBitflip;
+use server::mutation::Bitflip;
 
 fn main() {
     //TODO: Example
     let mut rng = rand::rng();
-    let mut ea = OnePlusOneEA::new(8, NaiveBitflip, OneMax, &mut rng);
+    let mut ea = OnePlusOneEA::new(20, Bitflip, OneMax, &mut rng);
     println!("Initial state: {:?}", ea.state);
-    for _ in 0..10 {
+    let n = 100;
+    for _ in 0..n {
         let _ = ea.iterate(&mut rng);
     }
-    println!("10 iterations: {:?}", ea.state);
+    println!("{} iterations: {:?}", n, ea.state);
 }

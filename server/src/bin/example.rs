@@ -1,6 +1,6 @@
-use server::algorithms::{one_plus_one_ea::OnePlusOneEA, EvolutionaryAlgorithm};
-use server::fitness::one_max::OneMax;
-use server::mutation::Bitflip;
+use eas::algorithms::{one_plus_one_ea::OnePlusOneEA, EvolutionaryAlgorithm};
+use eas::fitness::one_max::OneMax;
+use eas::mutation::Bitflip;
 
 fn main() {
     //TODO: Example

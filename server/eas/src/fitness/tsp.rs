@@ -74,6 +74,7 @@ impl TSP {
     }
 }
 
+#[cfg(test)]
 fn parse_tour(input: &str) -> Option<Vec<usize>> {
     //TODO: Read values from metadata section. Verify Tour type
     let (_metadata, remaning) = match input.split_once("TOUR_SECTION\n") {

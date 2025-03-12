@@ -35,6 +35,7 @@ pub struct MockRng {
     random_geometric_index: usize,
 }
 
+#[cfg(test)]
 impl MockRng {
     pub fn new_ratio(values: Vec<bool>) -> Self {
         MockRng {

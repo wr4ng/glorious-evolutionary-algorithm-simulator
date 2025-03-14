@@ -5,12 +5,12 @@ use axum::{
 	extract::State,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::{VecDeque} , sync::{Arc, RwLock}};
+use std::{collections::VecDeque , sync::{Arc, RwLock}};
 
 #[derive()]
 struct AppState {
 	queue: RwLock<VecDeque<Task>>,
-	finished: RwLock<Vec<Result>>
+	finished: RwLock<Vec<Result>>,
 }
 
 type SharedState = Arc<AppState>;
@@ -20,7 +20,7 @@ async fn main() {
 	// tracing_subscriber::fmt::init();
 	let state: SharedState = Arc::new(AppState{
 		queue: RwLock::new(VecDeque::new()),
-		finished: RwLock::new(Vec::new())
+		finished: RwLock::new(Vec::new()),
 	});
 
     // build our application with a single route
@@ -29,8 +29,6 @@ async fn main() {
 	.route("/tasks", 
 		get(get_tasks)
 		.post(create_task))
-    .route("/tasks/ID", 
-		get(get_task))
 	.with_state(state);
 
     // run our app with hyper, listening globally on port 3000
@@ -42,12 +40,6 @@ async fn root() -> &'static str {
     "Hello, world!"
 }
 
-async fn get_task(Json(id): Json<ID>) -> (StatusCode) {
-	//TODO Find Task with ID, skal heller ikke retunere status code men en json
-	StatusCode::ACCEPTED
-}
-
-
 async fn create_task(State(state): State<SharedState>, Json(request): Json<CreateTaskRequest>) -> (StatusCode) {	
 	let task = Task {
 		id: 1, //TODO random or counting
@@ -58,15 +50,19 @@ async fn create_task(State(state): State<SharedState>, Json(request): Json<Creat
 		parameters: request.parameters,
 		body: request.body,
 	};
-	
 	state.queue.write().unwrap().push_back(task);
 
 	StatusCode::CREATED
 }
 
-async fn get_tasks(State(state): State<SharedState>) -> Json<Vec<Task>> {
+async fn get_tasks(State(state): State<SharedState>) -> (StatusCode, Json<TasksReturn>) {
 	let tasks = state.queue.read().unwrap().clone().into_iter().collect();
-	Json(tasks)
+	let finished = state.finished.read().unwrap().clone();
+	let returns = TasksReturn{
+		queued: tasks,
+		finished: finished,
+	};
+	(StatusCode::ACCEPTED, Json(returns))
 }
 
 #[derive(Deserialize)]
@@ -85,7 +81,7 @@ struct CreateTaskRequest {
 
 #[derive(Serialize, Clone)]
 struct Task {
-	id:  u64,
+	id:  usize,
 	algorithm: Algorithm,
 	problem: Problem,
 	stop_cond: StopCondition,
@@ -129,8 +125,15 @@ struct AlgoParameters {
 	//TODO
 }
 
+#[derive(Serialize, Clone)]
 struct Result {
 	id: usize,
 	algorithm: Algorithm,
 	problem: Problem,	
+}
+
+#[derive(Serialize)]
+struct TasksReturn {
+	queued: Vec<Task>,
+	finished: Vec<Result>,
 }

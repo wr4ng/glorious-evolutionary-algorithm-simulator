@@ -101,6 +101,7 @@ impl<F: FitnessFunction<Permutation>> Mutation<Permutation> for ThreeOpt<F>{
             c = rng.random_range(0..previous.len());
         }
         let perms = three_opt_perms(previous,a,b,c);
+        //TODO fix clone
         let mut best = perms[0].clone();
         for i in 1..=8 {
             if self.fitness.compare(self.fitness.evaluate(&Permutation::new(perms[i].clone())), self.fitness.evaluate(&Permutation::new(best.clone()))) == std::cmp::Ordering::Greater {
@@ -112,21 +113,21 @@ impl<F: FitnessFunction<Permutation>> Mutation<Permutation> for ThreeOpt<F>{
 }
 
 fn three_opt_perms(previous: &Vec<usize>, a: usize, b: usize, c: usize) -> Vec<Vec<usize>> {
-    let low = min(min(a, b),c);
-    let high = max(max(a, b),c);
+    let low = a.min(b.min(c));
+    let high = a.max(b.max(c));
     let mid =
                         if a != low || a != high {a} 
                         else if b != low || b != high {b} 
                         else {c};
 
     let mut result = Vec::with_capacity(10);
-    let ab = two_opt(previous, a, b);
-    let ac = two_opt(previous, a, c);
-    let bc = two_opt(previous, b,c);
-    let abac = two_opt(&ab, a, c);
-    let acab = two_opt(&ac, a, b);
-    let bcab = two_opt(&bc, a,b);
-    let final1 = two_opt(&abac, a, b);
+    let ab = two_opt(previous, low, mid);
+    let ac = two_opt(previous, low, high);
+    let bc = two_opt(previous, mid,high);
+    let abac = two_opt(&ab, low, high);
+    let acab = two_opt(&ac, low, mid);
+    let bcab = two_opt(&bc, low,mid);
+    let final1 = two_opt(&abac, low, mid);
     result.push(previous.clone());
     result.push(ab);
     result.push(ac);
@@ -215,7 +216,7 @@ mod tests {
     #[test]
     fn test_three_opt() {
         let initial = vec![0, 1, 2, 3, 4, 5];
-        let result = three_opt_perms(&initial, 1, 3, 5);
+        let result = three_opt_perms(&initial, 3, 1, 5);
         assert_eq!(result[0], vec![0, 1, 2, 3, 4, 5]); // none
         assert_eq!(result[1], vec![0, 1, 3, 2, 4, 5]); // ab
         assert_eq!(result[2], vec![0, 1, 5, 4, 3, 2]); // ac

@@ -3,6 +3,7 @@ use crate::search_space::Permutation;
 
 pub struct TSP {
     distances: Vec<Vec<f64>>,
+    vertices: u64,
 }
 
 impl FitnessFunction<Permutation> for TSP {
@@ -24,7 +25,15 @@ impl FitnessFunction<Permutation> for TSP {
 
 impl TSP {
     pub fn new(distances: Vec<Vec<f64>>) -> Self {
-        TSP { distances }
+        let vertices = distances.len() as u64;
+        TSP {
+            distances,
+            vertices,
+        }
+    }
+
+    pub fn num_vertices(&self) -> u64 {
+        self.vertices
     }
 
     //TODO: Should probably be Result<TSP, TSPParseError> or something

@@ -119,23 +119,15 @@ fn three_opt_perms(previous: &Vec<usize>, a: usize, b: usize, c: usize) -> Vec<V
                         if a != low || a != high {a} 
                         else if b != low || b != high {b} 
                         else {c};
-
-    let mut result = Vec::with_capacity(10);
-    let ab = two_opt(previous, low, mid);
-    let ac = two_opt(previous, low, high);
-    let bc = two_opt(previous, mid,high);
-    let abac = two_opt(&ab, low, high);
-    let acab = two_opt(&ac, low, mid);
-    let bcab = two_opt(&bc, low,mid);
-    let final1 = two_opt(&abac, low, mid);
+    let mut result = Vec::with_capacity(8);
     result.push(previous.clone());
-    result.push(ab);
-    result.push(ac);
-    result.push(bc);
-    result.push(abac);
-    result.push(acab);
-    result.push(bcab);
-    result.push(final1);
+    let operations = 
+                    [(0,low,mid),(0,low,high),(0,mid,high),
+                    (1,low,high),(2,low,mid),(3,low,mid),
+                    (4,low,mid)];
+    for (base, v1, v2) in operations {
+        result.push(two_opt(&result[base], v1, v2))
+    }
     result
 }
 

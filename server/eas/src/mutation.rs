@@ -1,3 +1,6 @@
+use crate::fitness::FitnessFunction;
+
+use std::cmp::{min, max};
 use super::rng::Rng;
 use super::search_space::{Bitstring, Permutation, SearchSpace};
 
@@ -61,23 +64,79 @@ impl Mutation<Permutation> for TwoOpt {
         while b == a {
             b = rng.random_range(0..previous.len());
         }
-        let (v1, v2) = if a > b { (b, a) } else { (a, b) };
-        let mut result = Vec::with_capacity(previous.len());
-        for v in &previous[0..=v1] {
-            result.push(*v);
-        }
-        for i in ((v1 + 1)..=v2).rev() {
-            result.push(previous[i]);
-        }
-        for v in &previous[(v2 + 1)..] {
-            result.push(*v);
-        }
+        let result = two_opt(previous, a, b);
         Permutation::new(result)
     }
 }
 
-//TODO: pub struct ThreeOpt;
-//      impl Mutation<Permutation> for ThreeOpt { ... }
+fn two_opt(previous: &Vec<usize>, a: usize, b: usize) -> Vec<usize> {
+    let (v1, v2) = if a > b { (b, a) } else { (a, b) };
+    let mut result = Vec::with_capacity(previous.len());
+    for v in &previous[0..=v1] {
+        result.push(*v);
+    }
+    for i in ((v1 + 1)..=v2).rev() {
+        result.push(previous[i]);
+    }
+    for v in &previous[(v2 + 1)..] {
+        result.push(*v);
+    }
+    result
+}
+
+pub struct ThreeOpt<F: FitnessFunction<Permutation>>{
+    fitness: F
+}
+
+impl<F: FitnessFunction<Permutation>> Mutation<Permutation> for ThreeOpt<F>{
+    fn apply<R: Rng>(&self, solution: &Permutation, rng: &mut R) -> Permutation {
+        let previous = solution.permutation();
+        let a = rng.random_range(0..previous.len());
+        let mut b = a;
+        while b == a {
+            b = rng.random_range(0..previous.len());
+        }
+        let mut c = b;
+        while c == a || c == b {
+            c = rng.random_range(0..previous.len());
+        }
+        let perms = three_opt_perms(previous,a,b,c);
+        let mut best = perms[0].clone();
+        for i in 1..=8 {
+            if self.fitness.compare(self.fitness.evaluate(&Permutation::new(perms[i].clone())), self.fitness.evaluate(&Permutation::new(best.clone()))) == std::cmp::Ordering::Greater {
+                best = perms[i].clone();
+            }
+        }
+        Permutation::new(previous.clone())
+    }
+}
+
+fn three_opt_perms(previous: &Vec<usize>, a: usize, b: usize, c: usize) -> Vec<Vec<usize>> {
+    let low = min(min(a, b),c);
+    let high = max(max(a, b),c);
+    let mid =
+                        if a != low || a != high {a} 
+                        else if b != low || b != high {b} 
+                        else {c};
+
+    let mut result = Vec::with_capacity(10);
+    let ab = two_opt(previous, a, b);
+    let ac = two_opt(previous, a, c);
+    let bc = two_opt(previous, b,c);
+    let abac = two_opt(&ab, a, c);
+    let acab = two_opt(&ac, a, b);
+    let bcab = two_opt(&bc, a,b);
+    let final1 = two_opt(&abac, a, b);
+    result.push(previous.clone());
+    result.push(ab);
+    result.push(ac);
+    result.push(bc);
+    result.push(abac);
+    result.push(acab);
+    result.push(bcab);
+    result.push(final1);
+    result
+}
 
 #[cfg(test)]
 mod tests {
@@ -153,4 +212,26 @@ mod tests {
         let result = TwoOpt.apply(&initial, &mut mock_rng);
         assert_eq!(*result.permutation(), vec![0, 1, 2, 3, 4, 5, 6, 7])
     }
+    #[test]
+    fn test_three_opt() {
+        let initial = vec![0, 1, 2, 3, 4, 5];
+        let result = three_opt_perms(&initial, 1, 3, 5);
+        assert_eq!(result[0], vec![0, 1, 2, 3, 4, 5]); // none
+        assert_eq!(result[1], vec![0, 1, 3, 2, 4, 5]); // ab
+        assert_eq!(result[2], vec![0, 1, 5, 4, 3, 2]); // ac
+        assert_eq!(result[3], vec![0, 1, 2, 3, 5, 4]); // bc
+        assert_eq!(result[4], vec![0, 1, 5, 4, 2, 3]); // abac
+        assert_eq!(result[5], vec![0, 1, 4, 5, 3, 2]); // acab
+        assert_eq!(result[6], vec![0, 1, 3, 2, 5, 4]); // bcab
+        assert_eq!(result[7], vec![0, 1, 4, 5, 2, 3]); // Final
+    }
 }
+// for v in &previous[0..=v1] {
+//     result.push(*v);
+// }
+// for i in ((v1 + 1)..=v2).rev() {
+//     result.push(previous[i]);
+// }
+// for v in &previous[(v2 + 1)..] {
+//     result.push(*v);
+// }

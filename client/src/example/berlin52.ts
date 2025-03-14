@@ -54,6 +54,7 @@ export const nodes = [
 ];
 
 export const edges = [
+	{ source: 0, target: 48},
 	{ source: 48, target: 31 },
 	{ source: 31, target: 44 },
 	{ source: 44, target: 18 },
@@ -104,5 +105,5 @@ export const edges = [
 	{ source: 2, target: 17 },
 	{ source: 17, target: 30 },
 	{ source: 30, target: 21 },
-	{ source: 21, target: 48 },
+	{ source: 21, target: 0 },
 ];

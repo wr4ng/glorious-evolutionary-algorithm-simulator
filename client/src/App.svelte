@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Chart from "./lib/Chart.svelte";
 	import Graph from "./lib/Graph.svelte";
+	import Onion from "./lib/Onion.svelte";
 	import { nodes, edges } from "./example/berlin52.ts";
 	//import Main from "./lib/Main.svelte";
 
@@ -18,6 +19,8 @@
 	<div class="bg-blue-100 max-h-120 p-4">
 		<Graph {nodes} {edges} />
 	</div>
-	<div class="bg-green-100">Info</div>
+	<div class="bg-green-100 max-h-120">
+		<Onion />
+	</div>
 	<div class="bg-orange-100">Buttons...</div>
 </div>

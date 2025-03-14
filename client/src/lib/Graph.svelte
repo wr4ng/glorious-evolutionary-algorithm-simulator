@@ -1,13 +1,14 @@
 <script lang="ts">
+	import { onMount } from "svelte";
+
 	interface Node {
-		id: string;
 		x: number;
 		y: number;
 	}
 
 	interface Edge {
-		source: string;
-		target: string;
+		source: number;
+		target: number;
 	}
 
 	interface GraphProps {
@@ -46,23 +47,21 @@
 		};
 	}
 
-	function getNode(id: string): Node | undefined {
-		return nodes.find((n) => n.id === id);
-	}
+	onMount(() => {
+		console.log(nodes, edges);
+	});
 </script>
 
 <div class="graph-container" use:updateDimensions>
 	<svg {viewBox} preserveAspectRatio="xMidYMid meet">
 		{#each edges as edge}
-			{#if getNode(edge.source) && getNode(edge.target)}
-				<line
-					x1={getNode(edge.source)!.x}
-					y1={getNode(edge.source)!.y}
-					x2={getNode(edge.target)!.x}
-					y2={getNode(edge.target)!.y}
-					class="edge"
-				/>
-			{/if}
+			<line
+				x1={nodes[edge.source].x}
+				y1={nodes[edge.source].y}
+				x2={nodes[edge.target].x}
+				y2={nodes[edge.target].y}
+				class="edge"
+			/>
 		{/each}
 		{#each nodes as node}
 			<circle cx={node.x} cy={node.y} r="5" class="node" />

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Chart from "./lib/Chart.svelte";
 	import Graph from "./lib/Graph.svelte";
+	import { nodes, edges } from "./example/berlin52.ts";
 	//import Main from "./lib/Main.svelte";
 
 	let dataPoints = $state([
@@ -8,20 +9,6 @@
 		{ iteration: 1000, fitness: 120 },
 		{ iteration: 2000, fitness: 125 },
 	]);
-
-	let nodes = [
-		{ id: "A", x: 500, y: 100 },
-		{ id: "B", x: 105, y: 120 },
-		{ id: "C", x: 35, y: 300 },
-		{ id: "D", x: 24, y: 50 },
-	];
-
-	let edges = [
-		{ source: "A", target: "B" },
-		{ source: "A", target: "C" },
-		{ source: "B", target: "C" },
-		{ source: "D", target: "C" },
-	];
 </script>
 
 <div class="grid grid-cols-2">

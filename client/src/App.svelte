@@ -10,6 +10,16 @@
 		{ iteration: 1000, fitness: 120 },
 		{ iteration: 2000, fitness: 125 },
 	]);
+
+	const pointData = [
+		{ x: 0.5, y: 0.5 },
+		{ x: 0.2, y: 0.6 },
+		{ x: 0.8, y: 0.7 },
+		{ x: 1, y: 0.7 },
+		{ x: 1, y: 1 },
+		{ x: 1, y: 0 },
+	];
+
 </script>
 
 <div class="grid grid-cols-2">
@@ -20,7 +30,7 @@
 		<Graph {nodes} {edges} />
 	</div>
 	<div class="bg-green-100 max-h-120">
-		<Onion />
+		<Onion {pointData} />
 	</div>
 	<div class="bg-orange-100">Buttons...</div>
 </div>

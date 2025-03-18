@@ -1,73 +1,78 @@
 <script lang="ts">
 	const resolution = 100;
 
-	//TODO: Take as props
-	const pointData: Point[] = [
-		{ x: 0.5, y: 0.5 },
-		{ x: 0.2, y: 0.6 },
-		{ x: 0.8, y: 0.7 },
-		{ x: 1, y: 0.7 },
-		{ x: 1, y: 1 },
-		{ x: 1, y: 0 },
-	];
-
-	// Gaussian function with mu=0 and sigma=1
-	function gaussian(x: number) {
-		// e^(-x^2 / 2)
-		return Math.exp(-(x ** 2) / 2);
-	}
-
-	//TODO: Determine values for x-range (vertical)
-	const minX = -3.5;
-	const maxX = 3.5;
-	const minY = 0; // gaussian(0) = e^(-0^2/2) = 1;
-	const maxY = 1;
-
 	interface Point {
 		x: number;
 		y: number;
 	}
 
-	const points: Point[] = [];
-	for (let x = minX; x <= maxX; x += (maxX - minX) / resolution) {
-		const y = gaussian(x);
-		points.push({ x: x, y: y });
+	interface OnionProps {
+		pointData: Point[];
 	}
 
-	function toPath(points: Point[], width: number, height: number) {
-		// Left side of the Gaussian curve
+	const { pointData }: OnionProps = $props();
+
+	//TODO: Determine values for x-range (vertical)
+	const xDiff = 3.5;
+
+	// Gaussian function with mu=0 and sigma=1
+	function gaussian(x: number) {
+		return Math.exp(-(x ** 2) / 2); // e^(-x^2 / 2)
+	}
+
+	// Calculate gaussian value for resolution points from minX to maxX (in gaussion coordinate system, standard xy)
+	const gaussPoints: Point[] = [{ x: -xDiff, y: 0 }];
+	for (let x = -xDiff; x <= xDiff; x += 2 * xDiff / resolution) {
+		const y = gaussian(x);
+		gaussPoints.push({ x: x, y: y });
+	}
+	gaussPoints.push({ x: xDiff, y: 0 });
+
+	function toPath(points: Point[]) {
 		const leftPath = points
 			.map((p, i) => {
-				const px = ((p.y - minY) / (maxY - minY)) * (width / 2); // Scale y to half width (left side)
-				const py = ((p.x - minX) / (maxX - minX)) * height; // Scale x to full height
-				//TODO: Fix hardcorded 50
-				return `${i === 0 ? "M" : "L"} ${50 - px} ${height - py}`; // Flip y-axis
+				const { x, y } = gaussToView({ x: p.y, y: p.x });
+				return `${i === 0 ? "M" : "L"} ${x} ${y}`;
 			})
 			.join(" ");
 
-		// Right side of the Gaussian curve
 		const rightPath = points
 			.map((p, i) => {
-				const px = ((p.y - minY) / (maxY - minY)) * (width / 2); // Scale y to half width (right side)
-				const py = ((p.x - minX) / (maxX - minX)) * height; // Scale x to full height
-				//TODO: Fix hardcorded 50
-				return `${i === 0 ? "M" : "L"} ${50 + px} ${height - py}`; // Flip y-axis
+				const { x, y } = gaussToView({ x: -p.y, y: p.x });
+				return `${i === 0 ? "M" : "L"} ${x} ${y}`;
 			})
 			.join(" ");
 
 		return leftPath + " " + rightPath;
 	}
 
-	function toSVGCoords(x: number, y: number, width: number, height: number) {
-		const gaussX = minX + (maxX - minX) * y;
+	// Maps a percentage point {x: [0; 1], y: [0; 1]} to view coordinates
+	function mapPercentagePoint(p: Point) {
+		// Compute gaussian value at given percentage
+		const gaussX = -xDiff + 2 * xDiff * p.y;
 		const gaussY = gaussian(gaussX);
 
-		const py = height - y * height;
+		// Map y percentage to [0; 100] + flip direction
+		const py = 100 - p.y * 100;
 
-		const pgaussY = -gaussY + gaussY * 2 * x;
-		const px = 50 - ((pgaussY - minY) / (maxY - minY)) * (width / 2);
+		// Calculate x distance to point from center, in the gaussian coordinate space
+		const xDistance = (p.x - 0.5) * gaussY;
+		// Map distance to view space
+		const px = 50 - 100 * xDistance;
 
 		return { x: px, y: py };
+	}
+
+	const pointDataView = pointData.map((p) => mapPercentagePoint(p));
+
+	// Map a point from gaussian coordinate space to view space
+	function gaussToView(p: Point): Point {
+		// p.x is [0; 1]. Map to distance of y-axis (half total distance)
+		const x = 50 - p.x * 50;
+		// Map p.x value from [-xDiff; xDiff] to [0; 100], then flip it (so 0 is at bottom)
+		// [-xDiff; xDiff] -> [0; 2 * xDiff] -> [0; 1] -> [0; 100]
+		const y = 100 - ((p.y + xDiff) / (2 * xDiff)) * 100;
+		return { x, y };
 	}
 </script>
 
@@ -101,19 +106,14 @@
 			vector-effect="non-scaling-stroke"
 		/>
 		<path
-			d={toPath(points, 100, 100)}
+			d={toPath(gaussPoints)}
 			stroke="red"
 			fill="none"
 			stroke-width="3"
 			vector-effect="non-scaling-stroke"
 		/>
-		{#each pointData as p}
-			<circle
-				cx={toSVGCoords(p.x, p.y, 100, 100).x}
-				cy={toSVGCoords(p.x, p.y, 100, 100).y}
-				r="1"
-				class="node"
-			/>
+		{#each pointDataView as p}
+			<circle cx={p.x} cy={p.y} r="1" class="node" />
 		{/each}
 	</svg>
 </div>

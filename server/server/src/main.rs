@@ -1,5 +1,5 @@
 use axum::{
-    routing::{get,post},
+    routing::get,
     http::StatusCode,
     Json, Router,
 	extract::State,
@@ -40,7 +40,7 @@ async fn root() -> &'static str {
     "Hello, world!"
 }
 
-async fn create_task(State(state): State<SharedState>, Json(request): Json<CreateTaskRequest>) -> (StatusCode) {	
+async fn create_task(State(state): State<SharedState>, Json(request): Json<CreateTaskRequest>) -> StatusCode {
 	let task = Task {
 		id: 1, //TODO random or counting
 		algorithm: request.algorithm,
@@ -60,15 +60,11 @@ async fn get_tasks(State(state): State<SharedState>) -> (StatusCode, Json<TasksR
 	let finished = state.finished.read().unwrap().clone();
 	let returns = TasksReturn{
 		queued: tasks,
-		finished: finished,
+		finished,
 	};
 	(StatusCode::ACCEPTED, Json(returns))
 }
 
-#[derive(Deserialize)]
-struct ID {
-	id: usize,
-}
 #[derive(Deserialize)]
 struct CreateTaskRequest {
 	algorithm: Algorithm,

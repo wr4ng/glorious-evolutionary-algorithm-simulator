@@ -1,8 +1,10 @@
 use axum::{Json, Router, extract::State, http::StatusCode, routing::get};
+use eas::{algorithms::{one_plus_one_ea::OnePlusOneEA, EvolutionaryAlgorithm}, fitness::one_max::OneMax, mutation::Bitflip};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::VecDeque,
     sync::{Arc, RwLock},
+    thread,
 };
 use uuid::Uuid;
 
@@ -44,7 +46,21 @@ async fn create_task(
         parameters: request.parameters,
         body: request.body,
     };
-    state.queue.write().unwrap().push_back(task);
+
+    state
+        .queue
+        .write()
+        .expect("RWLock is poisoned")
+        .push_back(task);
+
+    thread::spawn(move || {
+        let mut ea = OnePlusOneEA::new(1000, Bitflip, OneMax, rand::rng());
+        println!("initial: {}", ea.state.current_fitness);
+        for _ in 0..100_000 {
+            ea.iterate(&mut rand::rng());
+        }
+        println!("result: {}", ea.state.current_fitness);
+    });
 
     StatusCode::CREATED
 }
@@ -95,8 +111,8 @@ enum Algorithm {
 #[derive(Deserialize, Serialize, Clone)]
 enum Problem {
     OneMax,
+    LeadingOnes,
     TSP,
-    LeadginOnes,
 }
 
 #[derive(Deserialize, Serialize, Clone)]

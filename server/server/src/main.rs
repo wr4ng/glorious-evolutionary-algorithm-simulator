@@ -4,6 +4,7 @@ use std::{
     collections::VecDeque,
     sync::{Arc, RwLock},
 };
+use uuid::Uuid;
 
 #[derive()]
 struct AppState {
@@ -15,7 +16,6 @@ type SharedState = Arc<AppState>;
 
 #[tokio::main]
 async fn main() {
-    // tracing_subscriber::fmt::init();
     let state: SharedState = Arc::new(AppState {
         queue: RwLock::new(VecDeque::new()),
         finished: RwLock::new(Vec::new()),
@@ -23,7 +23,6 @@ async fn main() {
 
     // build our application with a single route
     let app = Router::new()
-        .route("/", get(root))
         .route("/tasks", get(get_tasks).post(create_task))
         .with_state(state);
 
@@ -32,16 +31,12 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn root() -> &'static str {
-    "Hello, world!"
-}
-
 async fn create_task(
     State(state): State<SharedState>,
     Json(request): Json<CreateTaskRequest>,
 ) -> StatusCode {
     let task = Task {
-        id: 1, //TODO random or counting
+        id: Uuid::new_v4(),
         algorithm: request.algorithm,
         problem: request.problem,
         stop_cond: request.stop_cond,
@@ -55,8 +50,14 @@ async fn create_task(
 }
 
 async fn get_tasks(State(state): State<SharedState>) -> (StatusCode, Json<TasksReturn>) {
-    let tasks = state.queue.read().unwrap().clone().into_iter().collect();
-    let finished = state.finished.read().unwrap().clone();
+    let tasks = state
+        .queue
+        .read()
+        .expect("RWLock is poisoned")
+        .clone()
+        .into_iter()
+        .collect();
+    let finished = state.finished.read().expect("RWLock is poisoned").clone();
     let returns = TasksReturn {
         queued: tasks,
         finished,
@@ -76,7 +77,7 @@ struct CreateTaskRequest {
 
 #[derive(Serialize, Clone)]
 struct Task {
-    id: usize,
+    id: Uuid,
     algorithm: Algorithm,
     problem: Problem,
     stop_cond: StopCondition,

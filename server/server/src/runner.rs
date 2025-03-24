@@ -1,5 +1,3 @@
-use std::fmt::Debug;
-
 use eas::{
     algorithms::{EvolutionaryAlgorithm, one_plus_one_ea::OnePlusOneEA},
     fitness::{leading_ones::LeadingOnes, one_max::OneMax},

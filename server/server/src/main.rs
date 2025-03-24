@@ -1,6 +1,6 @@
 use axum::{Json, Router, extract::State, http::StatusCode, routing::get};
 use eas::{
-    algorithms::{EvolutionaryAlgorithm, one_plus_one_ea::OnePlusOneEA},
+    algorithms::one_plus_one_ea::OnePlusOneEA,
     fitness::{leading_ones::LeadingOnes, one_max::OneMax},
     mutation::Bitflip,
 };
@@ -157,7 +157,7 @@ struct StopCondition {
 
 impl StopCondition {
     fn is_valid(&self) -> bool {
-        return self.max_time.is_some() || self.max_iterations.is_some();
+        self.max_time.is_some() || self.max_iterations.is_some()
     }
 }
 

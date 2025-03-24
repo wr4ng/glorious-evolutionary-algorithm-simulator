@@ -1,5 +1,11 @@
 use axum::{Json, Router, extract::State, http::StatusCode, routing::get};
-use eas::{algorithms::{one_plus_one_ea::OnePlusOneEA, EvolutionaryAlgorithm}, fitness::one_max::OneMax, mutation::Bitflip};
+use eas::{
+    algorithms::{EvolutionaryAlgorithm, one_plus_one_ea::OnePlusOneEA},
+    fitness::{leading_ones::LeadingOnes, one_max::OneMax},
+    mutation::Bitflip,
+};
+use rand::rng;
+use runner::Runner;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::VecDeque,
@@ -8,10 +14,12 @@ use std::{
 };
 use uuid::Uuid;
 
+mod runner;
+
 #[derive()]
 struct AppState {
     queue: RwLock<VecDeque<Task>>,
-    finished: RwLock<Vec<Result>>,
+    finished: RwLock<Vec<TaskResult>>,
 }
 
 type SharedState = Arc<AppState>;
@@ -36,12 +44,12 @@ async fn main() {
 async fn create_task(
     State(state): State<SharedState>,
     Json(request): Json<CreateTaskRequest>,
-) -> StatusCode {
+) -> (StatusCode, Result<(), String>) {
     let task = Task {
         id: Uuid::new_v4(),
         algorithm: request.algorithm,
         problem: request.problem,
-        stop_cond: request.stop_cond,
+        stop_cond: request.stop_cond.clone(),
         task_param: request.task_param,
         parameters: request.parameters,
         body: request.body,
@@ -53,16 +61,40 @@ async fn create_task(
         .expect("RWLock is poisoned")
         .push_back(task);
 
+    if !request.stop_cond.is_valid() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Err("invalid stop condition".to_string()),
+        );
+    }
+
     thread::spawn(move || {
-        let mut ea = OnePlusOneEA::new(1000, Bitflip, OneMax, rand::rng());
-        println!("initial: {}", ea.state.current_fitness);
-        for _ in 0..100_000 {
-            ea.iterate(&mut rand::rng());
+        //TODO: Extract into function that returns Option<Runner> or Result<Runner,
+        //ValidationError> or similar
+        let mut r: Runner = match request.algorithm {
+            Algorithm::OnePlusOneEA => match request.problem {
+                Problem::OneMax => {
+                    Runner::OnePlusOneOneMax(OnePlusOneEA::new(100, Bitflip, OneMax, rng()))
+                }
+                Problem::LeadingOnes => Runner::OnePlusOneLeadingOnes(OnePlusOneEA::new(
+                    100,
+                    Bitflip,
+                    LeadingOnes,
+                    rng(),
+                )),
+                Problem::TSP => todo!(),
+            },
+            Algorithm::SimulatedAnnealing => todo!(),
+            Algorithm::ACO => todo!(),
+        };
+        println!("initial: {}", r.current_fitness());
+        for _ in 0..1_000 {
+            r.iterate(&mut rng());
         }
-        println!("result: {}", ea.state.current_fitness);
+        println!("result: {}", r.current_fitness());
     });
 
-    StatusCode::CREATED
+    (StatusCode::CREATED, Ok(()))
 }
 
 async fn get_tasks(State(state): State<SharedState>) -> (StatusCode, Json<TasksReturn>) {
@@ -102,13 +134,13 @@ struct Task {
     body: String,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Copy)]
 enum Algorithm {
     OnePlusOneEA,
     SimulatedAnnealing,
     ACO,
 }
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Copy)]
 enum Problem {
     OneMax,
     LeadingOnes,
@@ -121,6 +153,12 @@ struct StopCondition {
     max_iterations: Option<usize>,
     max_iterations_since_improvement: Option<usize>,
     requested_fitness: Option<usize>,
+}
+
+impl StopCondition {
+    fn is_valid(&self) -> bool {
+        return self.max_time.is_some() || self.max_iterations.is_some();
+    }
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -138,7 +176,7 @@ struct AlgoParameters {
 }
 
 #[derive(Serialize, Clone)]
-struct Result {
+struct TaskResult {
     id: usize,
     algorithm: Algorithm,
     problem: Problem,
@@ -147,5 +185,5 @@ struct Result {
 #[derive(Serialize)]
 struct TasksReturn {
     queued: Vec<Task>,
-    finished: Vec<Result>,
+    finished: Vec<TaskResult>,
 }

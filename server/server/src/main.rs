@@ -35,8 +35,8 @@ async fn main() {
 
     // build our application with a single route
     let app = Router::new()
-        .layer(cors)
         .route("/tasks", get(get_tasks).post(create_task))
+        .layer(cors)
         .with_state(state);
 
     // run our app with hyper, listening globally on port 3000

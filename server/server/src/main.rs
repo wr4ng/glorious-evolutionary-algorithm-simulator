@@ -2,6 +2,7 @@ use axum::{Json, Router, extract::State, http::StatusCode, routing::get};
 use rand::rng;
 use runner::Runner;
 use serde::{Deserialize, Serialize};
+use tower_http::cors::CorsLayer;
 use std::{
     collections::VecDeque,
     sync::{Arc, RwLock},
@@ -28,10 +29,12 @@ async fn main() {
 
     // build our application with a single route
     let app = Router::new()
+        .layer(CorsLayer::permissive()) //TODO: Handle CORS
         .route("/tasks", get(get_tasks).post(create_task))
         .with_state(state);
 
     // run our app with hyper, listening globally on port 3000
+    println!("listining at 0.0.0.0:3000...");
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }

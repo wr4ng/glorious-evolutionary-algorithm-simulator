@@ -1,9 +1,4 @@
 use axum::{Json, Router, extract::State, http::StatusCode, routing::get};
-use eas::{
-    algorithms::one_plus_one_ea::OnePlusOneEA,
-    fitness::{leading_ones::LeadingOnes, one_max::OneMax},
-    mutation::Bitflip,
-};
 use rand::rng;
 use runner::Runner;
 use serde::{Deserialize, Serialize};
@@ -45,14 +40,13 @@ async fn create_task(
     State(state): State<SharedState>,
     Json(request): Json<CreateTaskRequest>,
 ) -> (StatusCode, Result<(), String>) {
+    let id = Uuid::new_v4();
+
     let task = Task {
-        id: Uuid::new_v4(),
+        id: id.clone(),
         algorithm: request.algorithm,
         problem: request.problem,
         stop_cond: request.stop_cond.clone(),
-        task_param: request.task_param,
-        parameters: request.parameters,
-        body: request.body,
     };
 
     state
@@ -68,30 +62,34 @@ async fn create_task(
         );
     }
 
-    thread::spawn(move || {
-        //TODO: Extract into function that returns Option<Runner> or Result<Runner,
-        //ValidationError> or similar
-        let mut r: Runner = match request.algorithm {
-            Algorithm::OnePlusOneEA => match request.problem {
-                Problem::OneMax => {
-                    Runner::OnePlusOneOneMax(OnePlusOneEA::new(100, Bitflip, OneMax, rng()))
-                }
-                Problem::LeadingOnes => Runner::OnePlusOneLeadingOnes(OnePlusOneEA::new(
-                    100,
-                    Bitflip,
-                    LeadingOnes,
-                    rng(),
-                )),
-                Problem::TSP => todo!(),
-            },
-            Algorithm::SimulatedAnnealing => todo!(),
-            Algorithm::ACO => todo!(),
-        };
-        println!("initial: {}", r.current_fitness());
-        for _ in 0..1_000 {
-            r.iterate(&mut rng());
+    let mut runner = match Runner::create(request.clone()) {
+        Some(r) => r,
+        None => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Err("invalid configuration".to_string()),
+            );
         }
-        println!("result: {}", r.current_fitness());
+    };
+
+    thread::spawn(move || {
+        println!("initial: {}", runner.current_fitness());
+        //TODO: Use request.stop_condition
+        for _ in 0..1_000 {
+            runner.iterate(&mut rng());
+        }
+        println!("result: {}", runner.current_fitness());
+
+        state
+            .finished
+            .write()
+            .expect("RWLock is poisoned")
+            .push(TaskResult {
+                id,
+                algorithm: request.algorithm,
+                problem: request.problem,
+                final_fitness: runner.current_fitness(),
+            });
     });
 
     (StatusCode::CREATED, Ok(()))
@@ -113,14 +111,13 @@ async fn get_tasks(State(state): State<SharedState>) -> (StatusCode, Json<TasksR
     (StatusCode::ACCEPTED, Json(returns))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct CreateTaskRequest {
     algorithm: Algorithm,
     problem: Problem,
+    bitstring_size: Option<u32>,
+    tsp_instance: Option<String>,
     stop_cond: StopCondition,
-    task_param: TaskParameters,
-    parameters: AlgoParameters,
-    body: String,
 }
 
 #[derive(Serialize, Clone)]
@@ -129,9 +126,6 @@ struct Task {
     algorithm: Algorithm,
     problem: Problem,
     stop_cond: StopCondition,
-    task_param: TaskParameters,
-    parameters: AlgoParameters,
-    body: String,
 }
 
 #[derive(Deserialize, Serialize, Clone, Copy)]
@@ -161,25 +155,12 @@ impl StopCondition {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone)]
-struct TaskParameters {
-    repetitions: Option<usize>,
-    data_interval: Option<usize>,
-    measure_time: Option<bool>,
-    save_running_solutions: Option<bool>,
-    save_running_fitness: Option<bool>,
-}
-
-#[derive(Deserialize, Serialize, Clone)]
-struct AlgoParameters {
-    //TODO
-}
-
 #[derive(Serialize, Clone)]
 struct TaskResult {
-    id: usize,
+    id: Uuid,
     algorithm: Algorithm,
     problem: Problem,
+    final_fitness: f64,
 }
 
 #[derive(Serialize)]

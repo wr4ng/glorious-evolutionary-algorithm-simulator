@@ -69,6 +69,6 @@ where
     M: Mutation<Permutation>,
 {
     fn iterate<R: Rng>(&mut self, _: &mut R) -> &SimulationState<Permutation> {
-        todo!()
+        todo!("(1+1) EA for Permutation not implemented!")
     }
 }

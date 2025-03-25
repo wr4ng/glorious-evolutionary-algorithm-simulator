@@ -2,12 +2,12 @@ use axum::{Json, Router, extract::State, http::StatusCode, routing::get};
 use rand::rng;
 use runner::Runner;
 use serde::{Deserialize, Serialize};
-use tower_http::cors::CorsLayer;
 use std::{
     collections::VecDeque,
     sync::{Arc, RwLock},
     thread,
 };
+use tower_http::cors::{Any, CorsLayer};
 use uuid::Uuid;
 
 mod runner;
@@ -27,9 +27,15 @@ async fn main() {
         finished: RwLock::new(Vec::new()),
     });
 
+    //TODO: Proberly handle CORS
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
+
     // build our application with a single route
     let app = Router::new()
-        .layer(CorsLayer::permissive()) //TODO: Handle CORS
+        .layer(cors)
         .route("/tasks", get(get_tasks).post(create_task))
         .with_state(state);
 

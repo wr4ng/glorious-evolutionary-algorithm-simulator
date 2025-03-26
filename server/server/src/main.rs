@@ -35,6 +35,7 @@ async fn main() {
 
     // build our application with a single route
     let app = Router::new()
+        .route("/ping", get(ping_handler))
         .route("/tasks", get(get_tasks).post(create_task))
         .layer(cors)
         .with_state(state);
@@ -43,6 +44,10 @@ async fn main() {
     println!("listining at 0.0.0.0:3000...");
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
+}
+
+async fn ping_handler() -> String {
+    "pong".to_owned()
 }
 
 async fn create_task(

@@ -36,6 +36,10 @@ impl TSP {
         self.vertices
     }
 
+    pub fn num_cities(&self) -> usize {
+        self.distances.len()
+    }
+
     //TODO: Should probably be Result<TSP, TSPParseError> or something
     pub fn from_euc2d(input: &str) -> Option<TSP> {
         //TODO: Read values from metadata section. Verify EUC2D type

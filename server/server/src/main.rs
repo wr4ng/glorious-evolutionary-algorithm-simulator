@@ -1,6 +1,6 @@
 use axum::{Json, Router, extract::State, http::StatusCode, routing::get};
 use rand::rng;
-use runner::Runner;
+use create::create_ea;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::VecDeque,
@@ -10,7 +10,7 @@ use std::{
 use tower_http::cors::{Any, CorsLayer};
 use uuid::Uuid;
 
-mod runner;
+mod create;
 
 #[derive()]
 struct AppState {
@@ -57,7 +57,7 @@ async fn create_task(
     let id = Uuid::new_v4();
 
     let task = Task {
-        id: id.clone(),
+        id,
         algorithm: request.algorithm,
         problem: request.problem,
         stop_cond: request.stop_cond.clone(),
@@ -76,7 +76,7 @@ async fn create_task(
         );
     }
 
-    let mut runner = match Runner::create(request.clone()) {
+    let mut runner = match create_ea(request.clone()) {
         Some(r) => r,
         None => {
             return (

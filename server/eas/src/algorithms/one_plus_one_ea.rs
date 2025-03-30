@@ -4,7 +4,7 @@ use crate::{
     mutation::Mutation,
     search_space::{Bitstring, Permutation, SearchSpace},
 };
-use rand::Rng;
+use rand::{rngs::ThreadRng, Rng};
 
 pub struct OnePlusOneEA<S: SearchSpace, F: FitnessFunction<S>, M: Mutation<S>> {
     pub state: SimulationState<S>,
@@ -35,12 +35,12 @@ where
 
 // Implementation of (1+1) EA for a given fitness function and mutation operating on bitstrings.
 // Here the mutation is applied once each iteration.
-impl<F, M> EvolutionaryAlgorithm<Bitstring, F> for OnePlusOneEA<Bitstring, F, M>
+impl<F, M> EvolutionaryAlgorithm for OnePlusOneEA<Bitstring, F, M>
 where
     F: FitnessFunction<Bitstring>,
     M: Mutation<Bitstring>,
 {
-    fn iterate<R: Rng>(&mut self, rng: &mut R) -> &SimulationState<Bitstring> {
+    fn iterate(&mut self, rng: &mut ThreadRng) {
         let offspring = self.mutator.apply(&self.state.current_solution, rng);
 
         let new_fitness = self.fitness_function.evaluate(&offspring);
@@ -55,20 +55,26 @@ where
             self.state.current_fitness = new_fitness;
             self.state.current_solution = offspring;
         }
+    }
 
-        &self.state
+    fn current_fitness(&self) -> f64 {
+        self.state.current_fitness
     }
 }
 
 //TODO:
 // Implementation of (1+1) EA for a given fitness function and mutation operating on permutations.
 // Here the mutation is applied x times each iteration where x ~ Poisson(1).
-impl<F, M> EvolutionaryAlgorithm<Permutation, F> for OnePlusOneEA<Permutation, F, M>
+impl<F, M> EvolutionaryAlgorithm for OnePlusOneEA<Permutation, F, M>
 where
     F: FitnessFunction<Permutation>,
     M: Mutation<Permutation>,
 {
-    fn iterate<R: Rng>(&mut self, _: &mut R) -> &SimulationState<Permutation> {
+    fn iterate(&mut self, _: &mut ThreadRng) {
         todo!("(1+1) EA for Permutation not implemented!")
+    }
+
+    fn current_fitness(&self) -> f64 {
+        todo!()
     }
 }

@@ -1,6 +1,5 @@
-use crate::fitness::FitnessFunction;
 use crate::search_space::SearchSpace;
-use rand::Rng;
+use rand::rngs::ThreadRng;
 
 pub mod one_plus_one_ea;
 pub mod simulated_annealing;
@@ -13,6 +12,7 @@ pub struct SimulationState<S: SearchSpace> {
     pub current_fitness: f64,
 }
 
-pub trait EvolutionaryAlgorithm<S: SearchSpace, F: FitnessFunction<S>> {
-    fn iterate<R: Rng>(&mut self, rng: &mut R) -> &SimulationState<S>;
+pub trait EvolutionaryAlgorithm {
+    fn iterate(&mut self, rng: &mut ThreadRng);
+    fn current_fitness(&self) -> f64;
 }

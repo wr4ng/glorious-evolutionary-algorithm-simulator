@@ -1,6 +1,5 @@
 use crate::fitness::FitnessFunction;
 
-use std::cmp::{min, max};
 use super::rng::Rng;
 use super::search_space::{Bitstring, Permutation, SearchSpace};
 

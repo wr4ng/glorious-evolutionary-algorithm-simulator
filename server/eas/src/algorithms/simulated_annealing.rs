@@ -1,4 +1,4 @@
-use rand::Rng;
+use rand::{rngs::ThreadRng, Rng};
 
 use crate::{fitness::FitnessFunction, mutation::Mutation, search_space::SearchSpace};
 
@@ -114,14 +114,14 @@ where
     }
 }
 
-impl<S, F, M, C> EvolutionaryAlgorithm<S, F> for SimulatedAnnealing<S, F, M, C>
+impl<S, F, M, C> EvolutionaryAlgorithm for SimulatedAnnealing<S, F, M, C>
 where
     S: SearchSpace,
     F: FitnessFunction<S>,
     M: Mutation<S>,
     C: CoolingSchedule,
 {
-    fn iterate<R: Rng>(&mut self, rng: &mut R) -> &SimulationState<S> {
+    fn iterate(&mut self, rng: &mut ThreadRng) {
         let neighbor = self.mutator.apply(&self.state.current_solution, rng);
         let neighbor_fitness = self.fitness.evaluate(&neighbor);
 
@@ -143,7 +143,10 @@ where
             }
         }
         self.state.iteration += 1;
-        &self.state
+    }
+
+    fn current_fitness(&self) -> f64 {
+        self.state.current_fitness
     }
 }
 

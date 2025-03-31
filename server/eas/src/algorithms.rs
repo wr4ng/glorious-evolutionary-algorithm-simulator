@@ -4,6 +4,7 @@ use rand::Rng;
 
 pub mod one_plus_one_ea;
 pub mod simulated_annealing;
+pub mod aco;
 
 // Shared state between all simulations. Probably the type to send to client
 #[derive(Debug)]

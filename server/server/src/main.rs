@@ -88,9 +88,14 @@ async fn create_task(
 
     thread::spawn(move || {
         println!("initial: {}", runner.current_fitness());
+
         //TODO: Use request.stop_condition
-        for _ in 0..1_000 {
+        for i in 0..1_000_000 {
             runner.iterate(&mut rng());
+            //TODO: Don't use fixed update-rate
+            if i % 1000 == 0 {
+                println!("{}", runner.status_json().to_string());
+            }
         }
         println!("result: {}", runner.current_fitness());
 

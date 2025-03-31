@@ -5,6 +5,7 @@ use crate::{
     search_space::{Bitstring, Permutation, SearchSpace},
 };
 use rand::{rngs::ThreadRng, Rng};
+use serde_json::json;
 
 pub struct OnePlusOneEA<S: SearchSpace, F: FitnessFunction<S>, M: Mutation<S>> {
     pub state: SimulationState<S>,
@@ -60,6 +61,12 @@ where
     fn current_fitness(&self) -> f64 {
         self.state.current_fitness
     }
+
+    fn status_json(&self) -> serde_json::Value {
+        json!({
+            "current_fitness": &self.state.current_fitness
+        })
+    }
 }
 
 //TODO:
@@ -75,6 +82,10 @@ where
     }
 
     fn current_fitness(&self) -> f64 {
+        todo!()
+    }
+
+    fn status_json(&self) -> serde_json::Value {
         todo!()
     }
 }

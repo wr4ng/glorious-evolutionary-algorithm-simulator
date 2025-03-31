@@ -3,6 +3,14 @@
 	import Graph from "./Graph.svelte";
 	import Onion from "./Onion.svelte";
 	import { nodes, edges } from "../example/berlin52.ts";
+	import type { Task } from "../types/task";
+
+	interface DashboardProps {
+		serverURL: string;
+		task: Task;
+	}
+
+	let { serverURL, task } = $props();
 
 	let dataPoints = $state([
 		{ iteration: 0, fitness: 100 },
@@ -18,9 +26,9 @@
 		{ x: 1, y: 1 },
 		{ x: 1, y: 0 },
 	];
-
 </script>
 
+<p>Task ID: {task.id}</p>
 <div class="grid grid-cols-2">
 	<div class="bg-red-100 max-h-120">
 		<Chart {dataPoints} />

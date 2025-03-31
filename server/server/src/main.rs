@@ -1,31 +1,38 @@
 use axum::{Json, Router, extract::State, http::StatusCode, routing::get};
-use rand::rng;
 use create::create_ea;
+use rand::rng;
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::VecDeque,
-    sync::{Arc, RwLock},
+    collections::{HashMap, VecDeque},
+    sync::{Arc, Mutex},
     thread,
 };
+use tokio::sync::broadcast::{Sender, channel};
 use tower_http::cors::{Any, CorsLayer};
 use uuid::Uuid;
+use ws::get_websocket_updates;
 
 mod create;
+mod ws;
 
 #[derive()]
 struct AppState {
-    queue: RwLock<VecDeque<Task>>,
-    finished: RwLock<Vec<TaskResult>>,
+    in_progress: HashMap<Uuid, Task>,
+    in_progress_channels: HashMap<Uuid, Sender<serde_json::Value>>,
+    queue: VecDeque<Task>,
+    finished: Vec<TaskResult>,
 }
 
-type SharedState = Arc<AppState>;
+type SharedState = Arc<Mutex<AppState>>;
 
 #[tokio::main]
 async fn main() {
-    let state: SharedState = Arc::new(AppState {
-        queue: RwLock::new(VecDeque::new()),
-        finished: RwLock::new(Vec::new()),
-    });
+    let state: SharedState = Arc::new(Mutex::new(AppState {
+        in_progress: HashMap::new(),
+        in_progress_channels: HashMap::new(),
+        queue: VecDeque::new(),
+        finished: Vec::new(),
+    }));
 
     //TODO: Proberly handle CORS
     let cors = CorsLayer::new()
@@ -37,6 +44,7 @@ async fn main() {
     let app = Router::new()
         .route("/ping", get(ping_handler))
         .route("/tasks", get(get_tasks).post(create_task))
+        .route("/ws", get(get_websocket_updates))
         .layer(cors)
         .with_state(state);
 
@@ -55,7 +63,6 @@ async fn create_task(
     Json(request): Json<CreateTaskRequest>,
 ) -> (StatusCode, Result<(), String>) {
     let id = Uuid::new_v4();
-
     let task = Task {
         id,
         algorithm: request.algorithm,
@@ -63,11 +70,12 @@ async fn create_task(
         stop_cond: request.stop_cond.clone(),
     };
 
+    //TODO: Push to instead if there are no threads avaiable to pick up task
     state
-        .queue
-        .write()
-        .expect("RWLock is poisoned")
-        .push_back(task);
+        .lock()
+        .expect("failed to aquire mutex")
+        .in_progress
+        .insert(id, task.clone());
 
     if !request.stop_cond.is_valid() {
         return (
@@ -89,42 +97,55 @@ async fn create_task(
     thread::spawn(move || {
         println!("initial: {}", runner.current_fitness());
 
+        //Insert channel
+        let (tx, _) = channel::<serde_json::Value>(10); //TODO: Determine capacity
+        state
+            .lock()
+            .expect("failed to aquire mutex")
+            .in_progress_channels
+            .insert(task.id, tx.clone());
+
         //TODO: Use request.stop_condition
         for i in 0..1_000_000 {
             runner.iterate(&mut rng());
             //TODO: Don't use fixed update-rate
             if i % 1000 == 0 {
                 println!("{}", runner.status_json().to_string());
+                let _ = tx.send(runner.status_json());
             }
         }
         println!("result: {}", runner.current_fitness());
 
-        state
-            .finished
-            .write()
-            .expect("RWLock is poisoned")
-            .push(TaskResult {
+        // Keep lock on shared state while removing from in_progress and inserting into finished
+        {
+            let mut state = state.lock().expect("failed to aquire mutex");
+            state.in_progress.remove(&task.id);
+            state.in_progress_channels.remove(&task.id);
+            state.finished.push(TaskResult {
                 id,
                 algorithm: request.algorithm,
                 problem: request.problem,
                 final_fitness: runner.current_fitness(),
             });
+        }
     });
 
     (StatusCode::CREATED, Ok(()))
 }
 
 async fn get_tasks(State(state): State<SharedState>) -> (StatusCode, Json<TasksReturn>) {
-    let tasks = state
-        .queue
-        .read()
-        .expect("RWLock is poisoned")
+    let state = state.lock().expect("couldn't aquire mutex");
+    let in_progress = state
+        .in_progress
         .clone()
         .into_iter()
+        .map(|(_, t)| t)
         .collect();
-    let finished = state.finished.read().expect("RWLock is poisoned").clone();
+    let queued = state.queue.clone().into_iter().collect();
+    let finished = state.finished.clone();
     let returns = TasksReturn {
-        queued: tasks,
+        in_progress,
+        queued,
         finished,
     };
     (StatusCode::ACCEPTED, Json(returns))
@@ -184,6 +205,7 @@ struct TaskResult {
 
 #[derive(Serialize)]
 struct TasksReturn {
+    in_progress: Vec<Task>,
     queued: Vec<Task>,
     finished: Vec<TaskResult>,
 }

@@ -64,7 +64,9 @@ where
 
     fn status_json(&self) -> serde_json::Value {
         json!({
-            "current_fitness": &self.state.current_fitness
+            "iterations": self.state.iteration,
+            "current_fitness": self.state.current_fitness,
+            "current_solution": self.state.current_solution.to_bitstring()
         })
     }
 }

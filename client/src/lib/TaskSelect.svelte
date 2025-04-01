@@ -35,7 +35,6 @@
 			in_progress = resp.in_progress;
 			queued = resp.queued;
 			finished = resp.finished;
-			console.log(resp.in_progress);
 		} catch (error) {
 			console.log(error);
 		}

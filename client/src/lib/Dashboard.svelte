@@ -4,28 +4,99 @@
 	import Onion from "./Onion.svelte";
 	import { nodes, edges } from "../example/berlin52.ts";
 	import type { Task } from "../types/task";
+	import type { DataPoint } from "../types/chart.ts";
 
 	interface DashboardProps {
 		serverURL: string;
 		task: Task;
 	}
 
-	let { serverURL, task } = $props();
+	let { serverURL, task }: DashboardProps = $props();
+	var socket: WebSocket;
 
-	let dataPoints = $state([
-		{ iteration: 0, fitness: 100 },
-		{ iteration: 1000, fitness: 120 },
-		{ iteration: 2000, fitness: 125 },
-	]);
+	let dataPoints: DataPoint[] = $state([]);
 
-	const pointData = [
-		{ x: 0.5, y: 0.5 },
-		{ x: 0.2, y: 0.6 },
-		{ x: 0.8, y: 0.7 },
-		{ x: 1, y: 0.7 },
-		{ x: 1, y: 1 },
-		{ x: 1, y: 0 },
-	];
+	interface Point {
+		x: number;
+		y: number;
+	};
+
+	let pointData: Point[] = $state([]);
+
+	interface SimulationUpdate {
+		iterations: number;
+		current_fitness: number;
+		current_solution: string;
+	}
+
+	async function setupWebsocket() {
+		const wsURL = `${serverURL}/ws/${task.id}`;
+		socket = new WebSocket(wsURL);
+
+		socket.onopen = (event) => {
+			//TODO: Show loading before connection opens
+			console.log(event);
+		};
+
+		socket.onclose = (event) => {
+			//TODO: Show simulation is completed
+			console.log(event);
+		};
+
+		socket.onerror = (event) => {
+			//TODO: Handle error
+			console.log(event);
+		};
+
+		socket.onmessage = (event) => {
+			try {
+				const message = JSON.parse(event.data) as SimulationUpdate;
+				dataPoints = [
+					...dataPoints,
+					{
+						iteration: message.iterations,
+						fitness: message.current_fitness,
+					},
+				];
+				const onionPoint = bitstringToOnion(message.current_solution);
+				pointData = [...pointData, onionPoint];
+			} catch (error) {
+				//TODO: Handle error
+				console.log(error);
+			}
+		};
+	}
+
+	function bitstringToOnion(bitstring: string) {
+		const numOnes = (bitstring.match(/1/g) || []).length;
+		if (numOnes == bitstring.length) {
+			return { x: 1, y: 1 };
+		} else if (numOnes == 0) {
+			return { x: 0, y: 0 };
+		}
+		const vertical = numOnes / bitstring.length;
+
+		let averageOneIndex = 0;
+		for (let i = 0; i < bitstring.length; i++) {
+			if (bitstring[i] == "1") {
+				averageOneIndex += i;
+			}
+		}
+		//TODO: Can simplify this using n(n+1)/2
+		let minAverage = 0;
+		let maxAverage = 0;
+		for (let i = 0; i < numOnes; i++) {
+			minAverage += i;
+			maxAverage += bitstring.length - 1 - i;
+		}
+		// Map averageOneIndex from [minAverage; maxAverage] to [0; 1]
+		let horizontal =
+			(averageOneIndex - minAverage) / (maxAverage - minAverage);
+
+		return { x: horizontal, y: vertical };
+	}
+
+	setupWebsocket();
 </script>
 
 <p>Task ID: {task.id}</p>
@@ -37,7 +108,7 @@
 		<Graph {nodes} {edges} />
 	</div>
 	<div class="bg-green-100 max-h-120">
-		<Onion {pointData} />
+		<Onion pointData={pointData} />
 	</div>
 	<div class="bg-orange-100">Buttons...</div>
 </div>

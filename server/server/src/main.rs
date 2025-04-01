@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, VecDeque},
     sync::{Arc, Mutex},
-    thread,
+    thread::{self, sleep},
+    time::Duration,
 };
 use tokio::sync::broadcast::{Sender, channel};
 use tower_http::cors::{Any, CorsLayer};
@@ -44,7 +45,7 @@ async fn main() {
     let app = Router::new()
         .route("/ping", get(ping_handler))
         .route("/tasks", get(get_tasks).post(create_task))
-        .route("/ws", get(get_websocket_updates))
+        .route("/ws/{id}", get(get_websocket_updates))
         .layer(cors)
         .with_state(state);
 
@@ -105,15 +106,19 @@ async fn create_task(
             .in_progress_channels
             .insert(task.id, tx.clone());
 
+        sleep(Duration::from_secs(5));
+
+        let _ = tx.send(runner.status_json());
         //TODO: Use request.stop_condition
         for i in 0..1_000_000 {
             runner.iterate(&mut rng());
             //TODO: Don't use fixed update-rate
-            if i % 1000 == 0 {
-                println!("{}", runner.status_json().to_string());
+            //TODO: runner.get_iterations() instead of i
+            if (i + 1) % 1000 == 0 {
                 let _ = tx.send(runner.status_json());
             }
         }
+        let _ = tx.send(runner.status_json());
         println!("result: {}", runner.current_fitness());
 
         // Keep lock on shared state while removing from in_progress and inserting into finished

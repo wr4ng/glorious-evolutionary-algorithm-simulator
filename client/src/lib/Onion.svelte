@@ -22,7 +22,7 @@
 
 	// Calculate gaussian value for resolution points from minX to maxX (in gaussion coordinate system, standard xy)
 	const gaussPoints: Point[] = [{ x: -xDiff, y: 0 }];
-	for (let x = -xDiff; x <= xDiff; x += 2 * xDiff / resolution) {
+	for (let x = -xDiff; x <= xDiff; x += (2 * xDiff) / resolution) {
 		const y = gaussian(x);
 		gaussPoints.push({ x: x, y: y });
 	}
@@ -63,8 +63,6 @@
 		return { x: px, y: py };
 	}
 
-	const pointDataView = pointData.map((p) => mapPercentagePoint(p));
-
 	// Map a point from gaussian coordinate space to view space
 	function gaussToView(p: Point): Point {
 		// p.x is [0; 1]. Map to distance of y-axis (half total distance)
@@ -74,6 +72,12 @@
 		const y = 100 - ((p.y + xDiff) / (2 * xDiff)) * 100;
 		return { x, y };
 	}
+
+	let pointDataView: Point[] = $state([]);
+
+	$effect(() => {
+		pointDataView = pointData.map((p) => mapPercentagePoint(p));
+	});
 </script>
 
 <div style="width: 100%; height: 100%;">

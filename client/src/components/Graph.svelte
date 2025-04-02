@@ -46,10 +46,6 @@
 			},
 		};
 	}
-
-	onMount(() => {
-		console.log(nodes, edges);
-	});
 </script>
 
 <div class="graph-container" use:updateDimensions>

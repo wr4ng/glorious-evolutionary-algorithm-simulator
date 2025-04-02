@@ -19,7 +19,7 @@
 	interface Point {
 		x: number;
 		y: number;
-	};
+	}
 
 	let pointData: Point[] = $state([]);
 
@@ -108,7 +108,7 @@
 		<Graph {nodes} {edges} />
 	</div>
 	<div class="bg-green-100 max-h-120">
-		<Onion pointData={pointData} />
+		<Onion {pointData} />
 	</div>
 	<div class="bg-orange-100">Buttons...</div>
 </div>

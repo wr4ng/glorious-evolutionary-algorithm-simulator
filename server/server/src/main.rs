@@ -5,8 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, VecDeque},
     sync::{Arc, Mutex},
-    thread::{self, sleep},
-    time::Duration,
+    thread,
 };
 use tokio::sync::broadcast::{Sender, channel};
 use tower_http::cors::{Any, CorsLayer};
@@ -62,7 +61,7 @@ async fn ping_handler() -> String {
 async fn create_task(
     State(state): State<SharedState>,
     Json(request): Json<CreateTaskRequest>,
-) -> (StatusCode, Result<(), String>) {
+) -> Result<Json<Task>, StatusCode> {
     let id = Uuid::new_v4();
     let task = Task {
         id,
@@ -79,19 +78,13 @@ async fn create_task(
         .insert(id, task.clone());
 
     if !request.stop_cond.is_valid() {
-        return (
-            StatusCode::BAD_REQUEST,
-            Err("invalid stop condition".to_string()),
-        );
+        return Err(StatusCode::BAD_REQUEST);
     }
 
     let mut runner = match create_ea(request.clone()) {
         Some(r) => r,
         None => {
-            return (
-                StatusCode::BAD_REQUEST,
-                Err("invalid configuration".to_string()),
-            );
+            return Err(StatusCode::BAD_REQUEST);
         }
     };
 
@@ -105,8 +98,6 @@ async fn create_task(
             .expect("failed to aquire mutex")
             .in_progress_channels
             .insert(task.id, tx.clone());
-
-        sleep(Duration::from_secs(5));
 
         let _ = tx.send(runner.status_json());
         //TODO: Use request.stop_condition
@@ -135,17 +126,12 @@ async fn create_task(
         }
     });
 
-    (StatusCode::CREATED, Ok(()))
+    Ok(Json(task))
 }
 
 async fn get_tasks(State(state): State<SharedState>) -> (StatusCode, Json<TasksReturn>) {
     let state = state.lock().expect("couldn't aquire mutex");
-    let in_progress = state
-        .in_progress
-        .clone()
-        .into_iter()
-        .map(|(_, t)| t)
-        .collect();
+    let in_progress = state.in_progress.clone().into_values().collect();
     let queued = state.queue.clone().into_iter().collect();
     let finished = state.finished.clone();
     let returns = TasksReturn {

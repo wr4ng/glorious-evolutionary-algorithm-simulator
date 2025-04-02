@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { generateGaussPoints, generateGaussPath, mapPercentageToView, } from "../lib/onion";
+	import {
+		generateGaussPoints,
+		generateGaussPath,
+		mapPercentageToView,
+	} from "../lib/onion";
 	import type { Point } from "../types/types";
 
 	interface OnionProps {

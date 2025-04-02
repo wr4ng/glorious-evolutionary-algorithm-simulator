@@ -79,7 +79,7 @@
 		let averageOneIndex = 0;
 		for (let i = 0; i < bitstring.length; i++) {
 			if (bitstring[i] == "1") {
-				averageOneIndex += i;
+				averageOneIndex += bitstring.length - 1 - i;
 			}
 		}
 		//TODO: Can simplify this using n(n+1)/2

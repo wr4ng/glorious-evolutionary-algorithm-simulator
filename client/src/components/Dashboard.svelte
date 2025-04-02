@@ -2,9 +2,10 @@
 	import Chart from "./Chart.svelte";
 	import Graph from "./Graph.svelte";
 	import Onion from "./Onion.svelte";
-	import { nodes, edges } from "../example/berlin52.ts";
+	import { nodes, edges } from "../example/berlin52";
 	import type { Task } from "../types/task";
-	import type { DataPoint } from "../types/chart.ts";
+	import type { DataPoint } from "../types/chart";
+    import type { Point } from "../types/types";
 
 	interface DashboardProps {
 		serverURL: string;
@@ -15,12 +16,6 @@
 	var socket: WebSocket;
 
 	let dataPoints: DataPoint[] = $state([]);
-
-	interface Point {
-		x: number;
-		y: number;
-	}
-
 	let pointData: Point[] = $state([]);
 
 	interface SimulationUpdate {

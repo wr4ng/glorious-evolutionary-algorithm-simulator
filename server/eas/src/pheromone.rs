@@ -3,15 +3,20 @@ use super::search_space::{Bitstring, Permutation, SearchSpace};
 
 
 pub trait Pheromone<S: SearchSpace> {
-	fn apply(&mut self, path: &S, fitness: f64);
+	fn apply(&mut self, path: &S, fitness: f64); //change fit to usize
 	fn decrease(&mut self, decrease_factor: f64);
-	fn new(&self, size: usize) -> Self;
-	fn pheromones(&self, node: usize) -> Vec<f64>;
+	fn pheromones(&self, node: usize) -> &Vec<f64>;
 }
 
 // Ant System ----
 pub struct AS {
 	pheromones: Vec<Vec<f64>>
+}
+
+impl AS {
+	fn new(x: usize,y: usize) -> Self {
+		AS { pheromones: vec![vec![0.0;y]; x]}
+	}
 }
 
 impl Pheromone<Permutation> for AS {
@@ -33,13 +38,9 @@ impl Pheromone<Permutation> for AS {
 		}
 	}
 	
-	fn new(&self, size: usize) -> Self {
-			AS { pheromones: vec![vec![0.0; 2]; size] }
-		}
-		
 	// TODO WHY WONT BURROW?
-	fn pheromones(&self, node: usize) -> Vec<f64> {
-			self.pheromones[node].clone()
+	fn pheromones(&self, node: usize) -> &Vec<f64> {
+			&self.pheromones[node]
 		}
 		
 }
@@ -60,13 +61,9 @@ impl Pheromone<Bitstring> for AS {
 			}
 		}
 	}
-	
-	fn new(&self, size: usize) -> Self {
-		AS { pheromones: vec![vec![0.0; size]; size] }
-		}
 		
-	fn pheromones(&self, node: usize) -> Vec<f64> {
-		self.pheromones[node].clone()
+	fn pheromones(&self, node: usize) -> &Vec<f64> {
+		&self.pheromones[node]
 	}
 
 }
@@ -74,8 +71,8 @@ impl Pheromone<Bitstring> for AS {
 // MMAS -----
 pub struct MMAS {
 	pheromones: Vec<Vec<f64>>,
-	top: f64,
-	bot: f64,
+	max: f64,
+	min: f64,
 }
 
 impl Pheromone<Bitstring> for MMAS{
@@ -87,11 +84,71 @@ impl Pheromone<Bitstring> for MMAS{
 		todo!()
 	}
 
-	fn new(&self, size: usize) -> Self {
-		MMAS { pheromones: vec![vec![0.0; 2]; size], top: 1.0, bot: 0.1 } //TODO changability of top and bot
+	fn pheromones(&self, node: usize) -> &Vec<f64> {
+		&self.pheromones[node]
 	}
+}
 
-	fn pheromones(&self, node: usize) -> Vec<f64> {
-		self.pheromones[node].clone()
-	}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bitstring_pheromone_update() {
+        let expected_values = vec![vec![0.0, 1.0/64.0];5];
+		let fit = 64; 
+		let path = Bitstring::new(vec![true; 5]);
+		let mut p: AS = AS::new(5, 2);
+		p.apply(&path, fit as f64);
+		for i in 0..5{
+			assert_eq!(*<AS as Pheromone<Bitstring>>::pheromones(&p, i), expected_values[i]);
+		}
+    }
+	#[test]
+    fn bitstring_pheromone_update_false() {
+        let expected_values = vec![vec![1.0/64.0, 0.0];5];
+		let fit = 64; 
+		let path = Bitstring::new(vec![false; 5]);
+		let mut p: AS = AS::new(5, 2);
+		p.apply(&path, fit as f64);
+		for i in 0..5{
+			assert_eq!(*<AS as Pheromone<Bitstring>>::pheromones(&p, i), expected_values[i]);
+		}
+    }
+	#[test]
+    fn bitstring_pheromone_decrease() {
+        let expected_values = vec![vec![1.0/64.0 * 0.9, 0.0];5];
+		let fit = 64; 
+		let path = Bitstring::new(vec![false; 5]);
+		let mut p: AS = AS::new(5, 2);
+		p.apply(&path, fit as f64);
+		<AS as Pheromone<Bitstring>>::decrease(&mut p, 0.9 as f64);
+		for i in 0..5{
+			assert_eq!(*<AS as Pheromone<Bitstring>>::pheromones(&p, i), expected_values[i]);
+		}
+    }
+	#[test]
+    fn permutation_pheromone_update() {
+        let expected_values = vec![vec![1.0/64.0, 0.0];5];
+		let fit = 64; 
+		let path = Bitstring::new(vec![false; 5]);
+		let mut p: AS = AS::new(5, 2);
+		p.apply(&path, fit as f64);
+		for i in 0..5{
+			assert_eq!(*<AS as Pheromone<Bitstring>>::pheromones(&p, i), expected_values[i]);
+		}
+    }
+	#[test]
+    fn permutation_pheromone_decrease() {
+        let expected_values = vec![vec![1.0/64.0 * 0.9, 0.0];5];
+		let fit = 64; 
+		let path = Bitstring::new(vec![false; 5]);
+		let mut p: AS = AS::new(5, 2);
+		p.apply(&path, fit as f64);
+		<AS as Pheromone<Bitstring>>::decrease(&mut p, 0.9 as f64);
+		for i in 0..5{
+			assert_eq!(*<AS as Pheromone<Bitstring>>::pheromones(&p, i), expected_values[i]);
+		}
+    }
+
 }

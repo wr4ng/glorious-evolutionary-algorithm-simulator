@@ -14,7 +14,7 @@ impl FitnessFunction<Permutation> for TSP {
             tour_length += self.distances[pair[0]][pair[1]];
         }
         // Add last edge (end -> start)
-        tour_length += self.distances[p[p.len() - 1]][0];
+        tour_length += self.distances[p[p.len() - 1]][p[0]];
         tour_length
     }
 

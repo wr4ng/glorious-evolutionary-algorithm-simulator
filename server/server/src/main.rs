@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, VecDeque},
     sync::{Arc, Mutex},
-    thread,
+    thread::{self, sleep}, time::Duration,
 };
 use tokio::sync::broadcast::{Sender, channel};
 use tower_http::cors::{Any, CorsLayer};
@@ -98,6 +98,8 @@ async fn create_task(
             .expect("failed to aquire mutex")
             .in_progress_channels
             .insert(task.id, tx.clone());
+
+        sleep(Duration::from_millis(100));
 
         let _ = tx.send(runner.status_json());
         //TODO: Use request.stop_condition

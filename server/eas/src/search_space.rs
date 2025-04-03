@@ -1,9 +1,11 @@
-use rand::{seq::SliceRandom, Rng};
 use std::fmt::Debug;
 
+use crate::rng::MyRng;
+
 pub trait SearchSpace: Debug + Clone {
-    fn new_random<R: Rng>(size: usize, rng: &mut R) -> Self;
+    fn new_random<R: MyRng>(size: usize, rng: &mut R) -> Self;
     fn size(&self) -> usize;
+    fn to_string(&self) -> String;
 }
 
 #[derive(Debug, Clone)]
@@ -37,17 +39,10 @@ impl Bitstring {
 
         bitstring.map(|bits| Self { bits })
     }
-
-    pub fn to_bitstring(&self) -> String {
-        self.bits
-            .iter()
-            .map(|&b| if b { "1" } else { "0" })
-            .collect()
-    }
 }
 
 impl SearchSpace for Bitstring {
-    fn new_random<R: Rng>(size: usize, rng: &mut R) -> Self {
+    fn new_random<R: MyRng>(size: usize, rng: &mut R) -> Self {
         let mut bits = vec![false; size];
         for bit in bits.iter_mut() {
             *bit = rng.random();
@@ -57,6 +52,13 @@ impl SearchSpace for Bitstring {
 
     fn size(&self) -> usize {
         self.bits.len()
+    }
+
+    fn to_string(&self) -> String {
+        self.bits
+            .iter()
+            .map(|&b| if b { "1" } else { "0" })
+            .collect()
     }
 }
 
@@ -76,13 +78,21 @@ impl Permutation {
 }
 
 impl SearchSpace for Permutation {
-    fn new_random<R: Rng>(size: usize, rng: &mut R) -> Self {
+    fn new_random<R: MyRng>(size: usize, rng: &mut R) -> Self {
         let mut perm = (0..size).collect::<Vec<_>>();
-        perm.shuffle(rng);
+        rng.shuffle_vec(&mut perm);
         Permutation { permutation: perm }
     }
 
     fn size(&self) -> usize {
         self.permutation.len()
+    }
+
+    fn to_string(&self) -> String {
+        self.permutation
+            .iter()
+            .map(|&v| v.to_string())
+            .collect::<Vec<_>>()
+            .join(",")
     }
 }

@@ -64,3 +64,32 @@ export function mapPercentageToView(p: Point) {
 
 	return { x: px, y: py };
 }
+
+export function bitstringToOnionCoords(bitstring: string) {
+	const numOnes = (bitstring.match(/1/g) || []).length;
+	if (numOnes == bitstring.length) {
+		return { x: 1, y: 1 };
+	} else if (numOnes == 0) {
+		return { x: 0, y: 0 };
+	}
+	const vertical = numOnes / bitstring.length;
+
+	let averageOneIndex = 0;
+	for (let i = 0; i < bitstring.length; i++) {
+		if (bitstring[i] == "1") {
+			averageOneIndex += bitstring.length - 1 - i;
+		}
+	}
+	//TODO: Can simplify this using n(n+1)/2
+	let minAverage = 0;
+	let maxAverage = 0;
+	for (let i = 0; i < numOnes; i++) {
+		minAverage += i;
+		maxAverage += bitstring.length - 1 - i;
+	}
+	// Map averageOneIndex from [minAverage; maxAverage] to [0; 1]
+	let horizontal =
+		(averageOneIndex - minAverage) / (maxAverage - minAverage);
+
+	return { x: horizontal, y: vertical };
+}

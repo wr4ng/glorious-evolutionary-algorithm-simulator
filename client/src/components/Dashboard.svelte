@@ -2,10 +2,11 @@
 	import Chart from "./Chart.svelte";
 	import Graph from "./Graph.svelte";
 	import Onion from "./Onion.svelte";
-	import { nodes, edges } from "../example/berlin52";
+	import { nodes, edges } from "../example/berlin52"; //TODO: Handle permutation
+	import { bitstringToOnionCoords } from "../lib/onion";
 	import type { Task } from "../types/task";
 	import type { DataPoint } from "../types/chart";
-    import type { Point } from "../types/types";
+	import type { Point } from "../types/types";
 
 	interface DashboardProps {
 		serverURL: string;
@@ -16,7 +17,7 @@
 	var socket: WebSocket;
 
 	let dataPoints: DataPoint[] = $state([]);
-	let pointData: Point[] = $state([]);
+	let onionPoints: Point[] = $state([]);
 
 	interface SimulationUpdate {
 		iterations: number;
@@ -53,8 +54,11 @@
 						fitness: message.current_fitness,
 					},
 				];
-				const onionPoint = bitstringToOnion(message.current_solution);
-				pointData = [...pointData, onionPoint];
+				if (isBitstringProblem) {
+					const p = bitstringToOnionCoords(message.current_solution);
+					onionPoints = [...onionPoints, p];
+				}
+				//TODO: Handle permutation
 			} catch (error) {
 				//TODO: Handle error
 				console.log(error);
@@ -62,36 +66,10 @@
 		};
 	}
 
-	function bitstringToOnion(bitstring: string) {
-		const numOnes = (bitstring.match(/1/g) || []).length;
-		if (numOnes == bitstring.length) {
-			return { x: 1, y: 1 };
-		} else if (numOnes == 0) {
-			return { x: 0, y: 0 };
-		}
-		const vertical = numOnes / bitstring.length;
-
-		let averageOneIndex = 0;
-		for (let i = 0; i < bitstring.length; i++) {
-			if (bitstring[i] == "1") {
-				averageOneIndex += bitstring.length - 1 - i;
-			}
-		}
-		//TODO: Can simplify this using n(n+1)/2
-		let minAverage = 0;
-		let maxAverage = 0;
-		for (let i = 0; i < numOnes; i++) {
-			minAverage += i;
-			maxAverage += bitstring.length - 1 - i;
-		}
-		// Map averageOneIndex from [minAverage; maxAverage] to [0; 1]
-		let horizontal =
-			(averageOneIndex - minAverage) / (maxAverage - minAverage);
-
-		return { x: horizontal, y: vertical };
-	}
-
 	setupWebsocket();
+
+	const isBitstringProblem = ["OneMax", "LeadingOnes"].includes(task.problem);
+	const isPermutationProblem = ["TSP"].includes(task.problem);
 </script>
 
 <p>Task ID: {task.id}</p>
@@ -99,11 +77,13 @@
 	<div class="bg-red-100 max-h-120">
 		<Chart {dataPoints} />
 	</div>
-	<div class="bg-blue-100 max-h-120 p-4">
-		<Graph {nodes} {edges} />
+	<div class="bg-blue-100 max-h-120">
+		{#if isBitstringProblem}
+			<Onion pointData={onionPoints} />
+		{:else if isPermutationProblem}
+			<Graph {nodes} {edges} />
+		{:else}
+			<p>Invalid problem. No visualization to show.</p>
+		{/if}
 	</div>
-	<div class="bg-green-100 max-h-120">
-		<Onion {pointData} />
-	</div>
-	<div class="bg-orange-100">Buttons...</div>
 </div>

@@ -37,6 +37,13 @@ impl Bitstring {
 
         bitstring.map(|bits| Self { bits })
     }
+
+    pub fn to_bitstring(&self) -> String {
+        self.bits
+            .iter()
+            .map(|&b| if b { "1" } else { "0" })
+            .collect()
+    }
 }
 
 impl SearchSpace for Bitstring {

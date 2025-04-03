@@ -15,4 +15,5 @@ pub struct SimulationState<S: SearchSpace> {
 pub trait EvolutionaryAlgorithm {
     fn iterate(&mut self, rng: &mut ThreadRng);
     fn current_fitness(&self) -> f64;
+    fn status_json(&self) -> serde_json::Value;
 }

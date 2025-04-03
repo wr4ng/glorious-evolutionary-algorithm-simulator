@@ -32,7 +32,7 @@
 			},
 			options: {
 				responsive: true,
-				maintainAspectRatio: true,
+				maintainAspectRatio: false,
 				animation: false,
 				scales: {
 					x: {

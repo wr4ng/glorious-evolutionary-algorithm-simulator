@@ -1,4 +1,5 @@
 use rand::{rngs::ThreadRng, Rng};
+use serde_json::json;
 
 use crate::{fitness::FitnessFunction, mutation::Mutation, search_space::SearchSpace};
 
@@ -147,6 +148,12 @@ where
 
     fn current_fitness(&self) -> f64 {
         self.state.current_fitness
+    }
+
+    fn status_json(&self) -> serde_json::Value {
+        json!({
+            "current_fitness": &self.state.current_fitness
+        })
     }
 }
 

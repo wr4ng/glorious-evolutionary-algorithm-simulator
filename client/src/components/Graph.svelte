@@ -46,13 +46,9 @@
 			},
 		};
 	}
-
-	onMount(() => {
-		console.log(nodes, edges);
-	});
 </script>
 
-<div class="graph-container" use:updateDimensions>
+<div class="graph-container p-4" use:updateDimensions>
 	<svg {viewBox} preserveAspectRatio="xMidYMid meet">
 		{#each edges as edge}
 			<line

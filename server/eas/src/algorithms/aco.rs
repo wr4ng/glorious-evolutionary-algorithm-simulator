@@ -10,7 +10,9 @@ pub struct ACO<S: SearchSpace, F: FitnessFunction<S>, P: Pheromone<S>> {
 	pheromone: P,
     decrease_factor: f64,
     ants: usize,
-    size: usize
+    size: usize,
+    alpha: f64,
+    beta: f64,
 }
 
 impl<S, F, P> ACO<S, F, P>
@@ -19,7 +21,8 @@ where
 	F: FitnessFunction<S>,
 	P: Pheromone<S>,
 {
-	pub fn new<R: Rng>(size: usize, fitness_function: F, pheromone: P, ants: usize, decrease_factor: f64, mut rng: R) -> Self {
+	pub fn new<R: Rng>(size: usize, fitness_function: F, pheromone: P, ants: usize, decrease_factor: f64, alpha: f64,
+        beta: f64, mut rng: R) -> Self {
 		let current_solution = S::new_random(size, &mut rng);
         let current_fitness = fitness_function.evaluate(&current_solution);
         ACO {
@@ -32,7 +35,9 @@ where
             pheromone,
             decrease_factor,
             ants,
-            size,   
+            size,
+            alpha,
+            beta,   
         }
 	}
 
@@ -62,21 +67,20 @@ where
     fn iterate<R: Rng>(&mut self, rng: &mut R) -> &SimulationState<Bitstring> {
         // Generate paths
         let mut paths = Vec::with_capacity(self.ants);
+        let half:f64 = 1.0/2.0;
         for ant in 0..self.ants{
+            let mut values = Vec::<f64>::with_capacity(2);
             let mut path = Vec::<bool>::with_capacity(self.size);
             for step in 0..self.size{
                 let weights = self.pheromone.pheromones(step);
                 let mut total_weight = 0.0;
-                for w in weights.clone() { //TODO clone
-                    if w > 0.1 {    //TODO figue out constant
-                        total_weight += w;
-                    }
-                    else {
-                        total_weight += 0.1
-                    }
+                for i in 0..=1 { //TODO clone
+                    let val = weights[i].powf(self.alpha) + half.powf(self.beta);
+                    total_weight += val;
+                    values[i] = val;
                 }
                 let num = rng.random_range(0.0..=1.0);
-                if weights[0]/total_weight > num{
+                if values[0]/total_weight > num{
                     path[step] = false
                 }
                 else {
@@ -103,9 +107,11 @@ where
         // Generate paths
         let mut paths = Vec::with_capacity(self.ants);
         let mut visited = vec![false; self.size];
+        let inv_size: f64 = 1.0 / self.size as f64;
         for ant in 0..self.ants{
             let mut path = Vec::<usize>::with_capacity(self.size);
             let mut current_node = 0;
+            visited[0] = true;
             let mut possible_nexts = Vec::<usize>::with_capacity(self.size + 1);
             let mut possible_weights = Vec::<f64>::with_capacity(self.size + 1); //possible fenwick tree
             for step in 0..self.size{
@@ -115,18 +121,13 @@ where
                 for node in 0..self.size{
                     if visited[node] {continue;}
                     possible_nexts[added] = node;
-                    if weights[node] > 0.1 { //TODO replace in pheromones
-                        possible_weights[added] += possible_weights[added-1] + weights[node];
-                        total_weight += weights[node];
-                    }
-                    else {
-                        possible_weights[added] += possible_weights[added-1] + 0.1;
-                        total_weight += 0.1;
-                    }
+                    let val = weights[node].powf(self.alpha) + inv_size.powf(self.beta);
+                    total_weight += val;
+                    possible_weights[added] = val;
                     added += 1
                 } 
                 let num = rng.random_range(0.0..=1.0);
-                let mut find_node = 0;
+                let mut find_node = 1;
                 while possible_weights[find_node] / total_weight < num{
                     find_node += 1;
                 }

@@ -2,8 +2,9 @@
 	import Chart from "./Chart.svelte";
 	import Graph from "./Graph.svelte";
 	import Onion from "./Onion.svelte";
-	import { nodes, edges } from "../example/berlin52"; //TODO: Handle permutation
+	import { berlinNodes, berlinEdges } from "../example/berlin52"; //TODO: Handle permutation
 	import { bitstringToOnionCoords } from "../lib/onion";
+	import { parsePermutation } from "../lib/graph";
 	import type { Task } from "../types/task";
 	import type { DataPoint } from "../types/chart";
 	import type { Point } from "../types/types";
@@ -18,6 +19,7 @@
 
 	let dataPoints: DataPoint[] = $state([]);
 	let onionPoints: Point[] = $state([]);
+	let edges = $state(berlinEdges);
 
 	interface SimulationUpdate {
 		iterations: number;
@@ -57,6 +59,8 @@
 				if (isBitstringProblem) {
 					const p = bitstringToOnionCoords(message.current_solution);
 					onionPoints = [...onionPoints, p];
+				} else if (isPermutationProblem) {
+					edges = parsePermutation(message.current_solution);
 				}
 				//TODO: Handle permutation
 			} catch (error) {
@@ -81,7 +85,7 @@
 		{#if isBitstringProblem}
 			<Onion pointData={onionPoints} />
 		{:else if isPermutationProblem}
-			<Graph {nodes} {edges} />
+			<Graph nodes={berlinNodes} {edges} />
 		{:else}
 			<p>Invalid problem. No visualization to show.</p>
 		{/if}

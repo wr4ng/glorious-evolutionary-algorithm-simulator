@@ -1,11 +1,10 @@
-use super::{EvolutionaryAlgorithm, SimulationState};
+use super::{EvolutionaryAlgorithmCore, SimulationState};
 use crate::{
     fitness::FitnessFunction,
     mutation::Mutation,
     rng::MyRng,
     search_space::{Bitstring, Permutation, SearchSpace},
 };
-use rand::rngs::ThreadRng;
 use serde_json::json;
 
 pub struct OnePlusOneEA<S: SearchSpace, F: FitnessFunction<S>, M: Mutation<S>> {
@@ -37,12 +36,12 @@ where
 
 // Implementation of (1+1) EA for a given fitness function and mutation operating on bitstrings.
 // Here the mutation is applied once each iteration.
-impl<F, M> EvolutionaryAlgorithm for OnePlusOneEA<Bitstring, F, M>
+impl<F, M> EvolutionaryAlgorithmCore for OnePlusOneEA<Bitstring, F, M>
 where
     F: FitnessFunction<Bitstring>,
     M: Mutation<Bitstring>,
 {
-    fn iterate(&mut self, rng: &mut ThreadRng) {
+    fn iterate<R: MyRng>(&mut self, rng: &mut R) {
         let offspring = self.mutator.apply(&self.state.current_solution, rng);
 
         let new_fitness = self.fitness_function.evaluate(&offspring);
@@ -74,12 +73,12 @@ where
 
 // Implementation of (1+1) EA for a given fitness function and mutation operating on permutations.
 // Here the mutation is applied (x+1) times each iteration where x ~ Poisson(1).
-impl<F, M> EvolutionaryAlgorithm for OnePlusOneEA<Permutation, F, M>
+impl<F, M> EvolutionaryAlgorithmCore for OnePlusOneEA<Permutation, F, M>
 where
     F: FitnessFunction<Permutation>,
     M: Mutation<Permutation>,
 {
-    fn iterate(&mut self, rng: &mut ThreadRng) {
+    fn iterate<R: MyRng>(&mut self, rng: &mut R) {
         let num_mutations = rng.sample_poisson();
         let mut offspring = self.mutator.apply(&self.state.current_solution, rng);
 

@@ -1,4 +1,4 @@
-use crate::search_space::SearchSpace;
+use crate::{rng::MyRng, search_space::SearchSpace};
 use rand::rngs::ThreadRng;
 
 pub mod one_plus_one_ea;
@@ -12,8 +12,28 @@ pub struct SimulationState<S: SearchSpace> {
     pub current_fitness: f64,
 }
 
+trait EvolutionaryAlgorithmCore {
+    fn iterate<R: MyRng>(&mut self, rng: &mut R);
+    fn current_fitness(&self) -> f64;
+    fn status_json(&self) -> serde_json::Value;
+}
+
 pub trait EvolutionaryAlgorithm {
     fn iterate(&mut self, rng: &mut ThreadRng);
     fn current_fitness(&self) -> f64;
     fn status_json(&self) -> serde_json::Value;
+}
+
+impl<T: EvolutionaryAlgorithmCore> EvolutionaryAlgorithm for T {
+    fn iterate(&mut self, rng: &mut ThreadRng) {
+        self.iterate(rng);
+    }
+
+    fn current_fitness(&self) -> f64 {
+        self.current_fitness()
+    }
+
+    fn status_json(&self) -> serde_json::Value {
+        self.status_json()
+    }
 }

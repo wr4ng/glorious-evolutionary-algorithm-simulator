@@ -1,9 +1,8 @@
-use rand::{rngs::ThreadRng, Rng};
 use serde_json::json;
 
 use crate::{fitness::FitnessFunction, mutation::Mutation, rng::MyRng, search_space::SearchSpace};
 
-use super::{EvolutionaryAlgorithm, SimulationState};
+use super::{EvolutionaryAlgorithmCore, SimulationState};
 
 pub trait CoolingSchedule {
     fn temperature(&self, t: u64) -> f64;
@@ -115,14 +114,14 @@ where
     }
 }
 
-impl<S, F, M, C> EvolutionaryAlgorithm for SimulatedAnnealing<S, F, M, C>
+impl<S, F, M, C> EvolutionaryAlgorithmCore for SimulatedAnnealing<S, F, M, C>
 where
     S: SearchSpace,
     F: FitnessFunction<S>,
     M: Mutation<S>,
     C: CoolingSchedule,
 {
-    fn iterate(&mut self, rng: &mut ThreadRng) {
+    fn iterate<R: MyRng>(&mut self, rng: &mut R) {
         let neighbor = self.mutator.apply(&self.state.current_solution, rng);
         let neighbor_fitness = self.fitness.evaluate(&neighbor);
 

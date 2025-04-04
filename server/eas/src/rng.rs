@@ -4,6 +4,7 @@ use rand::{seq::SliceRandom, Rng};
 
 pub trait MyRng {
     fn random(&mut self) -> bool;
+    fn random_bool(&mut self, probability: f64) -> bool;
     fn random_ratio(&mut self, numerator: u32, denominator: u32) -> bool;
     fn random_range(&mut self, range: Range<usize>) -> usize;
     fn sample_geometric(&mut self, p: f64) -> u64;
@@ -14,6 +15,10 @@ pub trait MyRng {
 impl<T: Rng> MyRng for T {
     fn random(&mut self) -> bool {
         self.random()
+    }
+
+    fn random_bool(&mut self, probability: f64) -> bool {
+        self.random_bool(probability)
     }
 
     fn random_ratio(&mut self, numerator: u32, denominator: u32) -> bool {
@@ -92,6 +97,10 @@ impl MockRng {
 
 impl MyRng for MockRng {
     fn random(&mut self) -> bool {
+        todo!()
+    }
+
+    fn random_bool(&mut self, _: f64) -> bool {
         todo!()
     }
 

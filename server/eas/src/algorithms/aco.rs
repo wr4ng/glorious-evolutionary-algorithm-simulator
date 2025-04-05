@@ -41,21 +41,22 @@ where
         }
 	}
 
-    pub fn update_pheromones(&mut self, paths: Vec<S>){
+    pub fn update_pheromones(&mut self, paths: &Vec<S>){
         self.pheromone.decrease(self.decrease_factor);
-        for path in paths {
-            let fit = self.fitness_function.evaluate(&path);
-
-            self.pheromone.apply(&path, fit);
+        let mut fitness_values = Vec::<f64>::with_capacity(self.ants);
+        for path in 0..paths.len() {
+            let fit = self.fitness_function.evaluate(&paths[path]);
+            fitness_values[path] = fit;
 
             let fit_cmp = self
             .fitness_function.compare(fit, self.state.current_fitness);
-
+        
             if fit_cmp == std::cmp::Ordering::Greater {
-                self.state.current_solution = path;
+                self.state.current_solution = paths[path].clone();
                 self.state.current_fitness = fit;
             }
         }
+    self.pheromone.apply(paths, &fitness_values);
     }
 }
 
@@ -91,7 +92,7 @@ where
         }
 
         // Update pheromones
-        self.update_pheromones(paths);
+        self.update_pheromones(&paths);
         
         self.state.iteration += 1;
         &self.state
@@ -139,7 +140,7 @@ where
         }
 
         // Update pheromones
-        self.update_pheromones(paths);
+        self.update_pheromones(&paths);
         
         self.state.iteration += 1;
         &self.state

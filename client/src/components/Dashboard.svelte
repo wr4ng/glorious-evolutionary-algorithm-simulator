@@ -6,8 +6,8 @@
 	import { bitstringToOnionCoords } from "../lib/onion";
 	import { parsePermutation } from "../lib/graph";
 	import type { Task } from "../types/task";
-	import type { DataPoint } from "../types/chart";
 	import type { Point } from "../types/types";
+	import type { Series } from "../types/chart";
 
 	interface DashboardProps {
 		serverURL: string;
@@ -17,14 +17,40 @@
 	let { serverURL, task }: DashboardProps = $props();
 	var socket: WebSocket;
 
-	let dataPoints: DataPoint[] = $state([]);
 	let onionPoints: Point[] = $state([]);
 	let edges = $state(berlinEdges);
+
+	let iterations: number[] = $state([]);
+	let fitness: number[] = $state([]);
+	let temperature: number[] = $state([]);
 
 	interface SimulationUpdate {
 		iterations: number;
 		current_fitness: number;
 		current_solution: string;
+		temperature: number | undefined;
+	}
+
+	function buildSeries(): Series[] {
+		let series: Series[] = [
+			{
+				data: [...fitness],
+				label: "Fitness",
+				color: "blue",
+				yAxisID: "yfit",
+			},
+		];
+		if (hasTemp) {
+			series.push(
+				{
+					data: [...temperature],
+					label: "Temperature",
+					color: "red",
+					yAxisID: "ytemp",
+				}
+			);
+		}
+		return series;
 	}
 
 	async function setupWebsocket() {
@@ -49,13 +75,14 @@
 		socket.onmessage = (event) => {
 			try {
 				const message = JSON.parse(event.data) as SimulationUpdate;
-				dataPoints = [
-					...dataPoints,
-					{
-						iteration: message.iterations,
-						fitness: message.current_fitness,
-					},
-				];
+
+				iterations = [...iterations, message.iterations];
+				fitness = [...fitness, message.current_fitness];
+
+				if (message.temperature) {
+					temperature = [...temperature, message.temperature];
+				}
+
 				if (isBitstringProblem) {
 					const p = bitstringToOnionCoords(message.current_solution);
 					onionPoints = [...onionPoints, p];
@@ -74,12 +101,13 @@
 
 	const isBitstringProblem = ["OneMax", "LeadingOnes"].includes(task.problem);
 	const isPermutationProblem = ["TSP"].includes(task.problem);
+	const hasTemp = task.algorithm == "SimulatedAnnealing";
 </script>
 
 <p>Task ID: {task.id}</p>
 <div class="grid grid-cols-2">
 	<div class="bg-red-100 max-h-120">
-		<Chart {dataPoints} />
+		<Chart labels={[...iterations]} series={buildSeries()} />
 	</div>
 	<div class="bg-blue-100 max-h-120">
 		{#if isBitstringProblem}

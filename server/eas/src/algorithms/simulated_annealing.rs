@@ -153,8 +153,8 @@ where
         json!({
             "iterations": self.state.iteration,
             "current_fitness": self.state.current_fitness,
-            "current_solution": self.state.current_solution.to_string()
-            //TODO: Temperature
+            "current_solution": self.state.current_solution.to_string(),
+            "temperature": self.current_temperature(),
         })
     }
 }

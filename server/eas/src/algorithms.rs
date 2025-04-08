@@ -15,12 +15,14 @@ pub struct SimulationState<S: SearchSpace> {
 trait EvolutionaryAlgorithmCore {
     fn iterate<R: MyRng>(&mut self, rng: &mut R);
     fn current_fitness(&self) -> f64;
+    fn iterations(&self) -> u64;
     fn status_json(&self) -> serde_json::Value;
 }
 
 pub trait EvolutionaryAlgorithm {
     fn iterate(&mut self, rng: &mut ThreadRng);
     fn current_fitness(&self) -> f64;
+    fn iterations(&self) -> u64;
     fn status_json(&self) -> serde_json::Value;
 }
 
@@ -31,6 +33,10 @@ impl<T: EvolutionaryAlgorithmCore> EvolutionaryAlgorithm for T {
 
     fn current_fitness(&self) -> f64 {
         self.current_fitness()
+    }
+
+    fn iterations(&self) -> u64 {
+        self.iterations()
     }
 
     fn status_json(&self) -> serde_json::Value {

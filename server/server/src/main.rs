@@ -79,10 +79,6 @@ async fn create_task(
         .in_progress
         .insert(id, task.clone());
 
-    if !request.stop_cond.is_valid() {
-        return Err(StatusCode::BAD_REQUEST);
-    }
-
     let mut runner = match create_ea(request.clone()) {
         Some(r) => r,
         None => {
@@ -104,15 +100,23 @@ async fn create_task(
         sleep(Duration::from_millis(100));
 
         let _ = tx.send(runner.status_json());
-        //TODO: Use request.stop_condition
-        for i in 0..1_000_000 {
+        loop {
             runner.iterate(&mut rng());
+            if runner.iterations() >= task.stop_cond.max_iterations {
+                break;
+            }
+            // If optimal solution is provided, stop if it is reached
+            if let Some(optimal) = task.stop_cond.optimal_fitness {
+                if optimal == runner.current_fitness() {
+                    break;
+                }
+            }
             //TODO: Don't use fixed update-rate
-            //TODO: runner.get_iterations() instead of i
-            if (i + 1) % 1000 == 0 {
+            if runner.iterations() % 1000 == 0 {
                 let _ = tx.send(runner.status_json());
             }
         }
+
         let _ = tx.send(runner.status_json());
         println!("result: {}", runner.current_fitness());
 
@@ -179,16 +183,8 @@ enum Problem {
 
 #[derive(Deserialize, Serialize, Clone)]
 struct StopCondition {
-    max_time: Option<usize>,
-    max_iterations: Option<usize>,
-    max_iterations_since_improvement: Option<usize>,
-    requested_fitness: Option<usize>,
-}
-
-impl StopCondition {
-    fn is_valid(&self) -> bool {
-        self.max_time.is_some() || self.max_iterations.is_some()
-    }
+    max_iterations: u64,
+    optimal_fitness: Option<f64>,
 }
 
 #[derive(Serialize, Clone)]

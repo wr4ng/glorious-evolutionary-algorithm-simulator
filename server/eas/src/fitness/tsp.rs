@@ -76,7 +76,6 @@ impl TSP {
 
         for i in 0..coords.len() {
             for j in 0..coords.len() {
-                //TODO: Calculate distance based on EUC2D
                 let (_, x1, y1) = coords[i];
                 let (_, x2, y2) = coords[j];
                 let d = ((x1 - x2).powi(2) + (y1 - y2).powi(2)).sqrt();

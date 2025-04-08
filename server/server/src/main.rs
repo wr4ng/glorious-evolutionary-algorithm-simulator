@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, VecDeque},
     sync::{Arc, Mutex},
-    thread::{self, sleep}, time::Duration,
+    thread::{self, sleep},
+    time::Duration,
 };
 use tokio::sync::broadcast::{Sender, channel};
 use tower_http::cors::{Any, CorsLayer};

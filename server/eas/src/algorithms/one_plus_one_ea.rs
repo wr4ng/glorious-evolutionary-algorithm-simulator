@@ -62,6 +62,10 @@ where
         self.state.current_fitness
     }
 
+    fn iterations(&self) -> u64 {
+        self.state.iteration
+    }
+
     fn status_json(&self) -> serde_json::Value {
         json!({
             "iterations": self.state.iteration,
@@ -100,6 +104,10 @@ where
 
     fn current_fitness(&self) -> f64 {
         self.state.current_fitness
+    }
+
+    fn iterations(&self) -> u64 {
+        self.state.iteration
     }
 
     fn status_json(&self) -> serde_json::Value {

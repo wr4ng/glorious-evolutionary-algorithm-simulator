@@ -5,7 +5,7 @@ use eas::{
         simulated_annealing::{DefaultTSPSchedule, SimulatedAnnealing},
     },
     fitness::{leading_ones::LeadingOnes, one_max::OneMax, tsp::TSP},
-    mutation::{Bitflip, TwoOpt},
+    mutation::{Bitflip, SingleBitflip, TwoOpt},
 };
 use rand::rng;
 
@@ -20,7 +20,19 @@ pub fn create_ea(request: CreateTaskRequest) -> Option<Box<dyn EvolutionaryAlgor
                 OneMax,
                 &mut rng(),
             ))),
-            Algorithm::SimulatedAnnealing => todo!(),
+            Algorithm::SimulatedAnnealing => {
+                let c = DefaultTSPSchedule::from_max_iterations(
+                    request.bitstring_size? as u64,
+                    request.stop_cond.max_iterations,
+                );
+                Some(Box::new(SimulatedAnnealing::new(
+                    request.bitstring_size? as usize,
+                    SingleBitflip,
+                    OneMax,
+                    c,
+                    &mut rng(),
+                )))
+            }
             Algorithm::ACO => todo!(),
         },
         Problem::LeadingOnes => match request.algorithm {
@@ -30,7 +42,19 @@ pub fn create_ea(request: CreateTaskRequest) -> Option<Box<dyn EvolutionaryAlgor
                 LeadingOnes,
                 &mut rng(),
             ))),
-            Algorithm::SimulatedAnnealing => todo!(),
+            Algorithm::SimulatedAnnealing => {
+                let c = DefaultTSPSchedule::from_max_iterations(
+                    request.bitstring_size? as u64,
+                    request.stop_cond.max_iterations,
+                );
+                Some(Box::new(SimulatedAnnealing::new(
+                    request.bitstring_size? as usize,
+                    SingleBitflip,
+                    LeadingOnes,
+                    c,
+                    &mut rng(),
+                )))
+            }
             Algorithm::ACO => todo!(),
         },
         Problem::TSP => {
@@ -44,8 +68,10 @@ pub fn create_ea(request: CreateTaskRequest) -> Option<Box<dyn EvolutionaryAlgor
                     &mut rng(),
                 ))),
                 Algorithm::SimulatedAnnealing => {
-                    let c =
-                        DefaultTSPSchedule::from_max_iterations(tsp.num_cities() as u64, 1_000_000); //TODO: Use max iterations from request
+                    let c = DefaultTSPSchedule::from_max_iterations(
+                        tsp.num_cities() as u64,
+                        request.stop_cond.max_iterations,
+                    );
                     Some(Box::new(SimulatedAnnealing::new(
                         tsp.num_cities(),
                         TwoOpt,

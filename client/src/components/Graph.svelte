@@ -1,13 +1,5 @@
 <script lang="ts">
-	interface Node {
-		x: number;
-		y: number;
-	}
-
-	interface Edge {
-		source: number;
-		target: number;
-	}
+	import type { Node, Edge } from "../types/types";
 
 	interface GraphProps {
 		nodes: Node[];

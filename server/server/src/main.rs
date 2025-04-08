@@ -67,6 +67,7 @@ async fn create_task(
         id,
         algorithm: request.algorithm,
         problem: request.problem,
+        tsp_instance: request.tsp_instance.clone(),
         stop_cond: request.stop_cond.clone(),
     };
 
@@ -158,6 +159,7 @@ struct Task {
     id: Uuid,
     algorithm: Algorithm,
     problem: Problem,
+    tsp_instance: Option<String>,
     stop_cond: StopCondition,
 }
 

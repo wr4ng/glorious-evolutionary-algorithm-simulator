@@ -2,12 +2,12 @@
 	import Chart from "./Chart.svelte";
 	import Graph from "./Graph.svelte";
 	import Onion from "./Onion.svelte";
-	import { berlinNodes, berlinEdges } from "../example/berlin52"; //TODO: Handle permutation
+	import type { Task } from "../types/task";
+	import type { Node, Edge, Point } from "../types/types";
+	import type { Series } from "../types/chart";
 	import { bitstringToOnionCoords } from "../lib/onion";
 	import { parsePermutation } from "../lib/graph";
-	import type { Task } from "../types/task";
-	import type { Point } from "../types/types";
-	import type { Series } from "../types/chart";
+	import { parseEUC2D } from "../lib/tsp";
 
 	interface DashboardProps {
 		serverURL: string;
@@ -18,7 +18,8 @@
 	var socket: WebSocket;
 
 	let onionPoints: Point[] = $state([]);
-	let edges = $state(berlinEdges);
+	let nodes: Node[] = $state([]);
+	let edges: Edge[] = $state([]);
 
 	let iterations: number[] = $state([]);
 	let fitness: number[] = $state([]);
@@ -41,14 +42,12 @@
 			},
 		];
 		if (hasTemp) {
-			series.push(
-				{
-					data: [...temperature],
-					label: "Temperature",
-					color: "red",
-					yAxisID: "ytemp",
-				}
-			);
+			series.push({
+				data: [...temperature],
+				label: "Temperature",
+				color: "red",
+				yAxisID: "ytemp",
+			});
 		}
 		return series;
 	}
@@ -97,11 +96,15 @@
 		};
 	}
 
-	setupWebsocket();
-
 	const isBitstringProblem = ["OneMax", "LeadingOnes"].includes(task.problem);
 	const isPermutationProblem = ["TSP"].includes(task.problem);
 	const hasTemp = task.algorithm == "SimulatedAnnealing";
+
+	if (task.problem == "TSP" && task.tsp_instance) {
+		nodes = parseEUC2D(task.tsp_instance);
+	}
+
+	setupWebsocket();
 </script>
 
 <p>Task ID: {task.id}</p>
@@ -113,7 +116,7 @@
 		{#if isBitstringProblem}
 			<Onion pointData={onionPoints} />
 		{:else if isPermutationProblem}
-			<Graph nodes={berlinNodes} {edges} />
+			<Graph {nodes} {edges} />
 		{:else}
 			<p>Invalid problem. No visualization to show.</p>
 		{/if}

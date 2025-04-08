@@ -1,9 +1,8 @@
-use rand::{rngs::ThreadRng, Rng};
 use serde_json::json;
 
-use crate::{fitness::FitnessFunction, mutation::Mutation, search_space::SearchSpace};
+use crate::{fitness::FitnessFunction, mutation::Mutation, rng::MyRng, search_space::SearchSpace};
 
-use super::{EvolutionaryAlgorithm, SimulationState};
+use super::{EvolutionaryAlgorithmCore, SimulationState};
 
 pub trait CoolingSchedule {
     fn temperature(&self, t: u64) -> f64;
@@ -95,7 +94,7 @@ where
     M: Mutation<S>,
     C: CoolingSchedule,
 {
-    pub fn new<R: Rng>(size: usize, mutator: M, fitness: F, cooling: C, mut rng: R) -> Self {
+    pub fn new<R: MyRng>(size: usize, mutator: M, fitness: F, cooling: C, mut rng: R) -> Self {
         let current_solution = S::new_random(size, &mut rng);
         let current_fitness = fitness.evaluate(&current_solution);
         SimulatedAnnealing {
@@ -115,14 +114,14 @@ where
     }
 }
 
-impl<S, F, M, C> EvolutionaryAlgorithm for SimulatedAnnealing<S, F, M, C>
+impl<S, F, M, C> EvolutionaryAlgorithmCore for SimulatedAnnealing<S, F, M, C>
 where
     S: SearchSpace,
     F: FitnessFunction<S>,
     M: Mutation<S>,
     C: CoolingSchedule,
 {
-    fn iterate(&mut self, rng: &mut ThreadRng) {
+    fn iterate<R: MyRng>(&mut self, rng: &mut R) {
         let neighbor = self.mutator.apply(&self.state.current_solution, rng);
         let neighbor_fitness = self.fitness.evaluate(&neighbor);
 
@@ -152,7 +151,10 @@ where
 
     fn status_json(&self) -> serde_json::Value {
         json!({
-            "current_fitness": &self.state.current_fitness
+            "iterations": self.state.iteration,
+            "current_fitness": self.state.current_fitness,
+            "current_solution": self.state.current_solution.to_string(),
+            "temperature": self.current_temperature(),
         })
     }
 }

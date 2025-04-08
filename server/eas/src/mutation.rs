@@ -1,16 +1,16 @@
 use crate::fitness::FitnessFunction;
 
-use super::rng::Rng;
+use super::rng::MyRng;
 use super::search_space::{Bitstring, Permutation, SearchSpace};
 
 pub trait Mutation<S: SearchSpace> {
-    fn apply<R: Rng>(&self, solution: &S, rng: &mut R) -> S;
+    fn apply<R: MyRng>(&self, solution: &S, rng: &mut R) -> S;
 }
 
 pub struct NaiveBitflip;
 
 impl Mutation<Bitstring> for NaiveBitflip {
-    fn apply<R: Rng>(&self, solution: &Bitstring, rng: &mut R) -> Bitstring {
+    fn apply<R: MyRng>(&self, solution: &Bitstring, rng: &mut R) -> Bitstring {
         let bits = solution
             .bits()
             .iter()
@@ -27,7 +27,7 @@ impl Mutation<Bitstring> for NaiveBitflip {
 pub struct Bitflip;
 
 impl Mutation<Bitstring> for Bitflip {
-    fn apply<R: Rng>(&self, solution: &Bitstring, rng: &mut R) -> Bitstring {
+    fn apply<R: MyRng>(&self, solution: &Bitstring, rng: &mut R) -> Bitstring {
         let mut result = solution.clone();
         let p = 1.0 / solution.size() as f64;
         let mut i = 0;
@@ -45,7 +45,7 @@ impl Mutation<Bitstring> for Bitflip {
 pub struct SingleBitflip;
 
 impl Mutation<Bitstring> for SingleBitflip {
-    fn apply<R: Rng>(&self, solution: &Bitstring, rng: &mut R) -> Bitstring {
+    fn apply<R: MyRng>(&self, solution: &Bitstring, rng: &mut R) -> Bitstring {
         let mut result = solution.clone();
         let i = rng.random_range(0..solution.size());
         result.flip(i);
@@ -56,7 +56,7 @@ impl Mutation<Bitstring> for SingleBitflip {
 pub struct TwoOpt;
 
 impl Mutation<Permutation> for TwoOpt {
-    fn apply<R: Rng>(&self, solution: &Permutation, rng: &mut R) -> Permutation {
+    fn apply<R: MyRng>(&self, solution: &Permutation, rng: &mut R) -> Permutation {
         let previous = solution.permutation();
         let a = rng.random_range(0..previous.len());
         let mut b = a;
@@ -88,7 +88,7 @@ pub struct ThreeOpt<F: FitnessFunction<Permutation>>{
 }
 
 impl<F: FitnessFunction<Permutation>> Mutation<Permutation> for ThreeOpt<F>{
-    fn apply<R: Rng>(&self, solution: &Permutation, rng: &mut R) -> Permutation {
+    fn apply<R: MyRng>(&self, solution: &Permutation, rng: &mut R) -> Permutation {
         let previous = solution.permutation();
         let a = rng.random_range(0..previous.len());
         let mut b = a;

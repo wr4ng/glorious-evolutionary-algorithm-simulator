@@ -1,4 +1,4 @@
-export const nodes = [
+export const berlinNodes = [
 	{ x: 565.0, y: 575.0 },
 	{ x: 25.0, y: 185.0 },
 	{ x: 345.0, y: 750.0 },
@@ -53,7 +53,7 @@ export const nodes = [
 	{ x: 1740.0, y: 245.0 },
 ];
 
-export const edges = [
+export const berlinEdges = [
 	{ source: 0, target: 48},
 	{ source: 48, target: 31 },
 	{ source: 31, target: 44 },

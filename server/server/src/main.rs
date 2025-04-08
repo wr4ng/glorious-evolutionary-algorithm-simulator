@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, VecDeque},
     sync::{Arc, Mutex},
-    thread::{self, sleep}, time::Duration,
+    thread::{self, sleep},
+    time::Duration,
 };
 use tokio::sync::broadcast::{Sender, channel};
 use tower_http::cors::{Any, CorsLayer};
@@ -67,6 +68,7 @@ async fn create_task(
         id,
         algorithm: request.algorithm,
         problem: request.problem,
+        tsp_instance: request.tsp_instance.clone(),
         stop_cond: request.stop_cond.clone(),
     };
 
@@ -158,6 +160,7 @@ struct Task {
     id: Uuid,
     algorithm: Algorithm,
     problem: Problem,
+    tsp_instance: Option<String>,
     stop_cond: StopCondition,
 }
 

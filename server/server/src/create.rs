@@ -1,5 +1,9 @@
 use eas::{
-    algorithms::{EvolutionaryAlgorithm, one_plus_one_ea::OnePlusOneEA},
+    algorithms::{
+        EvolutionaryAlgorithm,
+        one_plus_one_ea::OnePlusOneEA,
+        simulated_annealing::{DefaultTSPSchedule, SimulatedAnnealing},
+    },
     fitness::{leading_ones::LeadingOnes, one_max::OneMax, tsp::TSP},
     mutation::{Bitflip, TwoOpt},
 };
@@ -32,13 +36,24 @@ pub fn create_ea(request: CreateTaskRequest) -> Option<Box<dyn EvolutionaryAlgor
         Problem::TSP => {
             let tsp = TSP::from_euc2d(&request.tsp_instance?)?;
             match request.algorithm {
+                //TODO: Match on mutator
                 Algorithm::OnePlusOneEA => Some(Box::new(OnePlusOneEA::new(
                     tsp.num_cities(),
                     TwoOpt,
                     tsp,
                     &mut rng(),
                 ))),
-                Algorithm::SimulatedAnnealing => todo!(),
+                Algorithm::SimulatedAnnealing => {
+                    let c =
+                        DefaultTSPSchedule::from_max_iterations(tsp.num_cities() as u64, 1_000_000); //TODO: Use max iterations from request
+                    Some(Box::new(SimulatedAnnealing::new(
+                        tsp.num_cities(),
+                        TwoOpt,
+                        tsp,
+                        c,
+                        &mut rng(),
+                    )))
+                }
                 Algorithm::ACO => todo!(),
             }
         }

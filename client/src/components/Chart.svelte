@@ -1,16 +1,17 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import Chart, { type ChartConfiguration } from "chart.js/auto";
-	import type { DataPoint } from "../types/chart.ts";
+	import type { Series } from "../types/chart";
 
 	let chart: Chart;
 	let canvas: HTMLCanvasElement;
 
 	interface ChartProps {
-		dataPoints: DataPoint[];
+		labels: number[];
+		series: Series[];
 	}
 
-	let { dataPoints }: ChartProps = $props();
+	let { labels, series }: ChartProps = $props();
 
 	const updateChart = () => {
 		const ctx = canvas.getContext("2d");
@@ -19,16 +20,15 @@
 		const config: ChartConfiguration = {
 			type: "line",
 			data: {
-				labels: dataPoints.map((d) => d.iteration.toString()),
-				datasets: [
-					{
-						label: "Fitness",
-						data: dataPoints.map((d) => d.fitness),
-						borderColor: "blue",
-						borderWidth: 2,
-						fill: false,
-					},
-				],
+				labels: labels,
+				datasets: series.map((s) => ({
+					label: s.label,
+					data: s.data,
+					yAxisID: s.yAxisID,
+					borderColor: s.color,
+					borderWidth: 2,
+					fill: false,
+				})),
 			},
 			options: {
 				responsive: true,
@@ -38,8 +38,14 @@
 					x: {
 						title: { display: true, text: "Iteration" },
 					},
-					y: {
+					yfit: {
 						title: { display: true, text: "Fitness" },
+					},
+					ytemp: {
+						title: { display: true, text: "Temperature" },
+						position: "right",
+						display: "auto",
+						type: "logarithmic",
 					},
 				},
 			},
@@ -53,13 +59,19 @@
 	});
 
 	$effect(() => {
-		if (chart && dataPoints) {
-			chart.data.labels = dataPoints.map((d) => d.iteration.toString());
-			chart.data.datasets[0].data = dataPoints.map((d) => d.fitness);
+		if (chart && series) {
+			chart.data.labels = labels;
+			chart.data.datasets = series.map((s) => ({
+				label: s.label,
+				data: s.data,
+				yAxisID: s.yAxisID,
+				borderColor: s.color,
+				borderWidth: 2,
+				fill: false,
+			}));
 			chart.update();
 		}
 	});
-
 </script>
 
 <canvas bind:this={canvas}></canvas>

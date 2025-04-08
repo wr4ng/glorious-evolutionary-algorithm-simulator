@@ -1,25 +1,58 @@
 use std::ops::Range;
 
-pub trait Rng {
+use rand::{seq::SliceRandom, Rng};
+
+pub trait MyRng {
+    fn random(&mut self) -> bool;
+    fn random_bool(&mut self, probability: f64) -> bool;
     fn random_ratio(&mut self, numerator: u32, denominator: u32) -> bool;
     fn random_range(&mut self, range: Range<usize>) -> usize;
     fn sample_geometric(&mut self, p: f64) -> u64;
+    fn sample_poisson(&mut self) -> u64;
+    fn shuffle_vec<T>(&mut self, v: &mut Vec<T>);
 }
 
-impl<T: rand::Rng> Rng for T {
+impl<T: Rng> MyRng for T {
+    fn random(&mut self) -> bool {
+        self.random()
+    }
+
+    fn random_bool(&mut self, probability: f64) -> bool {
+        self.random_bool(probability)
+    }
+
     fn random_ratio(&mut self, numerator: u32, denominator: u32) -> bool {
-        rand::Rng::random_ratio(self, numerator, denominator)
+        self.random_ratio(numerator, denominator)
     }
 
     fn random_range(&mut self, range: Range<usize>) -> usize {
-        rand::Rng::random_range(self, range)
+        self.random_range(range)
     }
 
     // Sample a value from a geometric distribution with success probablity p,
     // using inverse CDF method
     fn sample_geometric(&mut self, p: f64) -> u64 {
-        let rand: f64 = rand::Rng::random_range(self, 0.0..1.0);
+        let rand: f64 = self.random_range(0.0..1.0);
         (rand.log2() / (1.0 - p).log2()).floor() as u64
+    }
+
+    // Sample a value from a Poisson distribution with mean 1 using Knuth's method
+    fn sample_poisson(&mut self) -> u64 {
+        let l = (-1.0_f64).exp(); // e^(-λ)
+        let mut k = 0;
+        let mut p = 1.0;
+        loop {
+            let u: f64 = self.random_range(0.0..1.0);
+            p *= u;
+            if p < l {
+                return k;
+            }
+            k += 1;
+        }
+    }
+
+    fn shuffle_vec<I>(&mut self, v: &mut Vec<I>) {
+        v.shuffle(self);
     }
 }
 
@@ -62,7 +95,15 @@ impl MockRng {
     }
 }
 
-impl Rng for MockRng {
+impl MyRng for MockRng {
+    fn random(&mut self) -> bool {
+        todo!()
+    }
+
+    fn random_bool(&mut self, _: f64) -> bool {
+        todo!()
+    }
+
     fn random_ratio(&mut self, _: u32, _: u32) -> bool {
         let value = self.random_ratio_values[self.random_ratio_index];
         self.random_ratio_index += 1;
@@ -79,5 +120,13 @@ impl Rng for MockRng {
         let value = self.random_geometric_values[self.random_geometric_index];
         self.random_geometric_index += 1;
         value
+    }
+
+    fn sample_poisson(&mut self) -> u64 {
+        todo!()
+    }
+
+    fn shuffle_vec<T>(&mut self, _: &mut Vec<T>) {
+        todo!()
     }
 }

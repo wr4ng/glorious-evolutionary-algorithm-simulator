@@ -121,4 +121,8 @@
 			<p>Invalid problem. No visualization to show.</p>
 		{/if}
 	</div>
+	<div class="p-4">
+		<p>Iteration: {iterations[iterations.length - 1]}</p>
+		<p>Fitness: {fitness[fitness.length - 1]}</p>
+	</div>
 </div>

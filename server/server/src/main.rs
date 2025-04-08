@@ -105,6 +105,12 @@ async fn create_task(
             if runner.iterations() >= task.stop_cond.max_iterations {
                 break;
             }
+            // If optimal solution is provided, stop if it is reached
+            if let Some(optimal) = task.stop_cond.optimal_fitness {
+                if optimal == runner.current_fitness() {
+                    break;
+                }
+            }
             //TODO: Don't use fixed update-rate
             if runner.iterations() % 1000 == 0 {
                 let _ = tx.send(runner.status_json());
@@ -178,6 +184,7 @@ enum Problem {
 #[derive(Deserialize, Serialize, Clone)]
 struct StopCondition {
     max_iterations: u64,
+    optimal_fitness: Option<f64>,
 }
 
 #[derive(Serialize, Clone)]

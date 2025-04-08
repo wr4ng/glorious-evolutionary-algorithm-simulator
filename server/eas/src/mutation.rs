@@ -69,25 +69,17 @@ impl Mutation<Permutation> for TwoOpt {
 }
 
 fn two_opt(previous: &Vec<usize>, a: usize, b: usize) -> Vec<usize> {
-    let (v1, v2) = if a > b { (b, a) } else { (a, b) };
-    let mut result = Vec::with_capacity(previous.len());
-    for v in &previous[0..=v1] {
-        result.push(*v);
-    }
-    for i in ((v1 + 1)..=v2).rev() {
-        result.push(previous[i]);
-    }
-    for v in &previous[(v2 + 1)..] {
-        result.push(*v);
-    }
+    let (a, b) = if a > b { (b, a) } else { (a, b) };
+    let mut result = previous.clone();
+    result[(a + 1)..=b].reverse();
     result
 }
 
-pub struct ThreeOpt<F: FitnessFunction<Permutation>>{
-    fitness: F
+pub struct ThreeOpt<F: FitnessFunction<Permutation>> {
+    fitness: F,
 }
 
-impl<F: FitnessFunction<Permutation>> Mutation<Permutation> for ThreeOpt<F>{
+impl<F: FitnessFunction<Permutation>> Mutation<Permutation> for ThreeOpt<F> {
     fn apply<R: MyRng>(&self, solution: &Permutation, rng: &mut R) -> Permutation {
         let previous = solution.permutation();
         let a = rng.random_range(0..previous.len());
@@ -99,11 +91,15 @@ impl<F: FitnessFunction<Permutation>> Mutation<Permutation> for ThreeOpt<F>{
         while c == a || c == b {
             c = rng.random_range(0..previous.len());
         }
-        let perms = three_opt_perms(previous,a,b,c);
+        let perms = three_opt_perms(previous, a, b, c);
         //TODO fix clone
         let mut best = perms[0].clone();
         for i in 1..=8 {
-            if self.fitness.compare(self.fitness.evaluate(&Permutation::new(perms[i].clone())), self.fitness.evaluate(&Permutation::new(best.clone()))) == std::cmp::Ordering::Greater {
+            if self.fitness.compare(
+                self.fitness.evaluate(&Permutation::new(perms[i].clone())),
+                self.fitness.evaluate(&Permutation::new(best.clone())),
+            ) == std::cmp::Ordering::Greater
+            {
                 best = perms[i].clone();
             }
         }
@@ -114,20 +110,60 @@ impl<F: FitnessFunction<Permutation>> Mutation<Permutation> for ThreeOpt<F>{
 fn three_opt_perms(previous: &Vec<usize>, a: usize, b: usize, c: usize) -> Vec<Vec<usize>> {
     let low = a.min(b.min(c));
     let high = a.max(b.max(c));
-    let mid =
-                        if a != low || a != high {a} 
-                        else if b != low || b != high {b} 
-                        else {c};
+    let mid = if a != low || a != high {
+        a
+    } else if b != low || b != high {
+        b
+    } else {
+        c
+    };
     let mut result = Vec::with_capacity(8);
     result.push(previous.clone());
-    let operations = 
-                    [(0,low,mid),(0,low,high),(0,mid,high),
-                    (1,low,high),(2,low,mid),(3,low,mid),
-                    (4,low,mid)];
+    let operations = [
+        (0, low, mid),
+        (0, low, high),
+        (0, mid, high),
+        (1, low, high),
+        (2, low, mid),
+        (3, low, mid),
+        (4, low, mid),
+    ];
     for (base, v1, v2) in operations {
         result.push(two_opt(&result[base], v1, v2))
     }
     result
+}
+
+fn three_opt_2(previous: &Vec<usize>, a: usize, b: usize, c: usize) -> Vec<Vec<usize>> {
+    // Assumes a < b < c and that b-a > 1 and c-b > 1
+    let front = &previous[0..a];
+    let x = &previous[(a + 1)..=b];
+    let y = &previous[(b + 1)..=c];
+    let back = &previous[(c + 1)..];
+
+    let z1 = [front, x, y, back].concat();
+
+    let mut z3 = z1.clone();
+    z3[(a + 1)..=b].reverse();
+
+    let mut z4 = z1.clone();
+    z4[(b + 1)..=c].reverse();
+
+    let mut z5 = z3.clone();
+    z5[(b + 1)..=c].reverse();
+
+    let z2 = [front, y, x, back].concat();
+
+    let mut z6 = z2.clone();
+    z6[(a + 1)..=b].reverse();
+
+    let mut z7 = z2.clone();
+    z7[(b + 1)..=c].reverse();
+
+    let mut z8 = z6.clone();
+    z8[(b + 1)..=c].reverse();
+
+    vec![z1, z2, z3, z4, z5, z6, z7, z8]
 }
 
 #[cfg(test)]

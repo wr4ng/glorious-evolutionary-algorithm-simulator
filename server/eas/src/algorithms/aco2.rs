@@ -1,10 +1,11 @@
 use std::vec;
 
-use super::{EvolutionaryAlgorithm, SimulationState};
+use super::{EvolutionaryAlgorithmCore, SimulationState};
 use crate::{
-    fitness::FitnessFunction, search_space::{Bitstring, Permutation, SearchSpace}
+    fitness::FitnessFunction,
+    rng::MyRng,
+    search_space::{Bitstring, SearchSpace}
 };
-use rand::Rng;
 
 pub struct ACO2<S: SearchSpace, F: FitnessFunction<S>, T: Tau<S, F, O>, E: Eta, C: Constructor<S>, O: Translator<S>> {
     pub state: SimulationState<S>,
@@ -26,7 +27,7 @@ where
     C: Constructor<S>,
     O: Translator<S>
 {
-    pub fn new<R: Rng>(size: usize, fitness_function: F, pheromone: T, heuristic: E, constructor: C, translator: O, ants: usize, mut rng: R) -> Self {
+    pub fn new<R: MyRng>(size: usize, fitness_function: F, pheromone: T, heuristic: E, constructor: C, translator: O, ants: usize, mut rng: R) -> Self {
         let current_solution = S::new_random(size, &mut rng);
         let current_fitness = fitness_function.evaluate(&current_solution);
         ACO2 {
@@ -46,7 +47,7 @@ where
     }
 }
 
-impl <F, S, T, E, C, O>EvolutionaryAlgorithm<S, F> for ACO2<S, F, T, E, C, O>
+impl <F, S, T, E, C, O>EvolutionaryAlgorithmCore for ACO2<S, F, T, E, C, O>
 where 
     F: FitnessFunction<S>,
     S: SearchSpace,
@@ -55,16 +56,25 @@ where
     C: Constructor<S>,
     O: Translator<S>,
 {
-    fn iterate<R: Rng>(&mut self, rng: &mut R) -> &SimulationState<S> {
+    fn iterate<R: MyRng>(&mut self, rng: &mut R){
         let mut paths = vec![vec![0; self.size]; self.ants];
         for ant in 0..self.ants{
             paths[ant] = self.constructor.construct(self.pheromone.tau(), self.heuristic.eta(), false, rng);
         }
         self.pheromone.update(&paths, &self.fitness_function, &self.translator);
-        // Calculate fitnesses
-        // update pheromones
-        // update State
-        &self.state
+        //TODO update state
+    }
+    
+    fn current_fitness(&self) -> f64 {
+        self.state.current_fitness
+    }
+    
+    fn iterations(&self) -> u64 {
+        self.state.iteration
+    }
+    
+    fn status_json(&self) -> serde_json::Value {
+        todo!()
     }
 }
 
@@ -221,7 +231,7 @@ pub trait Constructor<S>
 where
     S: SearchSpace,
 {
-    fn construct<R: Rng>(&self, tau: &Vec<Vec<(usize, f64)>>, eta: &Vec<Vec<f64>>, unique_visits: bool, rng: &mut R) -> Vec<usize>;
+    fn construct<R: MyRng>(&self, tau: &Vec<Vec<(usize, f64)>>, eta: &Vec<Vec<f64>>, unique_visits: bool, rng: &mut R) -> Vec<usize>;
 }
 
 pub struct PartialSumConstructor {}
@@ -230,7 +240,7 @@ impl<S> Constructor<S> for PartialSumConstructor
 where
     S: SearchSpace
 {
-    fn construct<R: Rng>(&self, tau: &Vec<Vec<(usize, f64)>>, eta: &Vec<Vec<f64>>, unique_visits: bool, rng: &mut R) -> Vec<usize> {
+    fn construct<R: MyRng>(&self, tau: &Vec<Vec<(usize, f64)>>, eta: &Vec<Vec<f64>>, unique_visits: bool, rng: &mut R) -> Vec<usize> {
         let length = tau.len();
         let mut path = Vec::<usize>::with_capacity(length);
         let mut visited = vec![false; length];
@@ -246,7 +256,7 @@ where
                 added += 1;
             }
             let total_weight = neighbor_weights[added - 1]; // total weight is equal to last element in partial sum
-            let choice = rng.random_range(0.0..1.0);
+            let choice = rng.random_range_float(0.0..1.0);
             let mut iter = 1;
             while neighbor_weights[iter] / total_weight < choice {
                 iter += 1

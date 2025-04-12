@@ -28,6 +28,7 @@
 					borderColor: s.color,
 					borderWidth: 2,
 					fill: false,
+					pointRadius: 1,
 				})),
 			},
 			options: {
@@ -68,6 +69,7 @@
 				borderColor: s.color,
 				borderWidth: 2,
 				fill: false,
+				pointRadius: 1,
 			}));
 			chart.update();
 		}

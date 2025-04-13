@@ -19,7 +19,8 @@
 					onclick={() => onClick(task)}
 					class="w-full text-left p-2 border border-gray-200 bg-white hover:bg-gray-100 rounded-lg shadow-sm"
 				>
-					{task.id}
+					<strong>{task.algorithm} - {task.problem}</strong>
+					({task.id})
 				</button>
 			</li>
 		{/each}

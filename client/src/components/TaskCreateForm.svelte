@@ -30,64 +30,77 @@
 			stop_condition: {
 				max_iterations: maxIterations,
 			},
-			...(isBitstringProblem(problem) && { bistring_size: bitstringSize })
+			...(isBitstringProblem(problem) && {
+				bistring_size: bitstringSize,
+			}),
+			...(isTSP(problem) && {
+				tsp_instance: tspInstance,
+			}),
 		});
 	}
 </script>
 
-<form onsubmit={handleSumbit} class="flex flex-col p-4 gap-2">
-	<h1 class="text-xl font-bold">Problem</h1>
-	<label>
-		Problem:
-		<select bind:value={problem} class="border rounded">
-			{#each problemOptions as option}
-				<option value={option} selected={option == "OneMax"}>{option}</option>
-			{/each}
-		</select>
-	</label>
-	{#if isBitstringProblem(problem)}
-		<label>
-			Bitstring Size:
+<form onsubmit={handleSumbit} class="flex flex-col space-y-4">
+	<div class="flex flex-col space-y-2">
+		<h1 class="text-xl font-bold">Problem</h1>
+		<label class="flex flex-col">
+			Problem:
+			<select required bind:value={problem} class="border rounded">
+				{#each problemOptions as option}
+					<option value={option} selected={option == "OneMax"}
+						>{option}</option
+					>
+				{/each}
+			</select>
+		</label>
+		{#if isBitstringProblem(problem)}
+			<label class="flex flex-col">
+				Bitstring Size:
+				<input
+					type="number"
+					step="1"
+					bind:value={bitstringSize}
+					required
+					class="border rounded px-1"
+				/>
+			</label>
+		{/if}
+		{#if isTSP(problem)}
+			<label class="flex flex-col">
+				TSP Instance (EUC2D Format):
+				<textarea
+					bind:value={tspInstance}
+					class="border rounded p-1"
+					placeholder="Enter TSP instance..."
+				></textarea>
+			</label>
+		{/if}
+	</div>
+	<div class="flex flex-col space-y-2">
+		<h1 class="text-xl font-bold">Algoritm</h1>
+		<label class="flex flex-col">
+			Algorithm:
+			<select bind:value={algoritm} class="border rounded">
+				{#each algorithmOptions as option}
+					<option value={option.value}>{option.text}</option>
+				{/each}
+			</select>
+		</label>
+	</div>
+	<div class="flex flex-col space-y-2">
+		<h1 class="text-xl font-bold">Stop Condition</h1>
+		<label class="flex flex-col">
+			Max Iterations:
 			<input
 				type="number"
 				step="1"
-				bind:value={bitstringSize}
+				bind:value={maxIterations}
 				required
-				class="border rounded"
+				class="border rounded px-1"
 			/>
 		</label>
-	{/if}
-	{#if isTSP(problem)}
-		<label class="flex flex-col">
-			TSP Instance (EUC2D Format):
-			<textarea
-				bind:value={tspInstance}
-				class="border rounded"
-				placeholder="Enter TSP instance..."
-			></textarea>
-		</label>
-	{/if}
-	<h1 class="text-xl font-bold">Algoritm</h1>
-	<label>
-		Algorithm:
-		<select bind:value={algoritm} class="border rounded">
-			{#each algorithmOptions as option}
-				<option value={option.value}>{option.text}</option>
-			{/each}
-		</select>
-	</label>
-	<h1 class="text-xl font-bold">Stop Condition</h1>
-	<label>
-		Max Iterations:
-		<input
-			type="number"
-			step="1"
-			bind:value={maxIterations}
-			required
-			class="border rounded"
-		/>
-	</label>
+	</div>
 	<button type="submit" class="border rounded-lg py-2 font-bold">
-		Submit
+		Create Task
 	</button>
 </form>

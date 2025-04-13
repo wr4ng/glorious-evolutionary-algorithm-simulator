@@ -15,7 +15,7 @@
 	let finished: Task[] = $state([]);
 	let selectedTask: Task | null = $state(null);
 
-	let requestInput: string = $state("");
+	let createError = $state("");
 
 	interface GetTasksResponse {
 		in_progress: Task[];
@@ -43,21 +43,24 @@
 		}
 	}
 
-	async function createTask() {
+	//TODO: Create type for requestBody
+	async function createTask(requestBody: any) {
 		//TODO: Validate requestInput
 		try {
 			const response = await fetch(`${serverURL}/tasks`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: requestInput,
+				body: JSON.stringify(requestBody),
 			});
 			if (!response.ok) {
-				//TODO: Show error
-				console.log(response);
+				const responseText = await response.text();
+				createError = `Failed to create task: ${responseText}`;
+				return;
 			}
 			selectedTask = await response.json();
 		} catch (error) {
 			console.log(error);
+			createError = "Failed to send create task request...";
 		}
 	}
 
@@ -75,7 +78,7 @@
 			<TaskList tasks={finished} onClick={async (_: Task) => {}} />
 		</div>
 		<div class="w-1/2">
-			<TaskCreateForm />
+			<TaskCreateForm onSubmit={createTask} error={createError} />
 		</div>
 	</div>
 {/if}

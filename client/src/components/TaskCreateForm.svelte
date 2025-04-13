@@ -1,15 +1,26 @@
 <script lang="ts">
+	import { berlin52EUC2D } from "../lib/tsp";
+
+	interface TaskCreateFormProps {
+		onSubmit: (r: any) => void;
+		error: string;
+	}
+
+	let { onSubmit, error }: TaskCreateFormProps = $props();
+
 	const problemOptions = ["OneMax", "LeadingOnes", "TSP"];
 	const algorithmOptions = [
 		{ text: "(1+1) EA", value: "OnePlusOneEA" },
 		{ text: "Simulated Annealing", value: "SimulatedAnnealing" },
 	];
+	const tspInstanceOptions = ["berlin52", "Custom"];
 
 	let problem = $state("OneMax");
 	let bitstringSize = $state(1000);
-	let tspInstance = $state("");
+	let tspInstance = $state("berlin52");
+	let customTspInstance = $state("");
 
-	let algoritm = $state("OnePlusOneEA");
+	let algorithm = $state("OnePlusOneEA");
 
 	let maxIterations = $state(1000000);
 
@@ -23,20 +34,24 @@
 
 	async function handleSumbit(e: SubmitEvent) {
 		e.preventDefault();
-		//TODO: Validate object + send request
-		console.log({
+		//TODO: Validate object
+		const requestBody = {
 			problem: problem,
-			algoritm: algoritm,
-			stop_condition: {
+			algorithm: algorithm,
+			stop_cond: {
 				max_iterations: maxIterations,
 			},
 			...(isBitstringProblem(problem) && {
-				bistring_size: bitstringSize,
+				bitstring_size: bitstringSize,
 			}),
 			...(isTSP(problem) && {
-				tsp_instance: tspInstance,
+				tsp_instance:
+					tspInstance == "berlin52"
+						? berlin52EUC2D
+						: customTspInstance,
 			}),
-		});
+		};
+		onSubmit(requestBody);
 	}
 </script>
 
@@ -47,9 +62,7 @@
 			Problem:
 			<select required bind:value={problem} class="border rounded">
 				{#each problemOptions as option}
-					<option value={option} selected={option == "OneMax"}
-						>{option}</option
-					>
+					<option value={option}>{option}</option>
 				{/each}
 			</select>
 		</label>
@@ -67,9 +80,23 @@
 		{/if}
 		{#if isTSP(problem)}
 			<label class="flex flex-col">
-				TSP Instance (EUC2D Format):
-				<textarea
+				TSP Instance:
+				<select
+					required
 					bind:value={tspInstance}
+					class="border rounded"
+				>
+					{#each tspInstanceOptions as option}
+						<option value={option}>{option}</option>
+					{/each}
+				</select>
+			</label>
+		{/if}
+		{#if isTSP(problem) && tspInstance == "Custom"}
+			<label class="flex flex-col">
+				Custom TSP Instance (EUC2D Format):
+				<textarea
+					bind:value={customTspInstance}
 					class="border rounded p-1"
 					placeholder="Enter TSP instance..."
 				></textarea>
@@ -80,7 +107,7 @@
 		<h1 class="text-xl font-bold">Algoritm</h1>
 		<label class="flex flex-col">
 			Algorithm:
-			<select bind:value={algoritm} class="border rounded">
+			<select bind:value={algorithm} class="border rounded">
 				{#each algorithmOptions as option}
 					<option value={option.value}>{option.text}</option>
 				{/each}
@@ -100,6 +127,9 @@
 			/>
 		</label>
 	</div>
+	{#if error}
+		<span class="text-red-500 font-bold">{error}</span>
+	{/if}
 	<button type="submit" class="border rounded-lg py-2 font-bold">
 		Create Task
 	</button>

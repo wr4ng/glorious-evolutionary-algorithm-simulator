@@ -1,3 +1,7 @@
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 use eas::{
     algorithms::{
         EvolutionaryAlgorithm,
@@ -11,22 +15,40 @@ use rand::rng;
 
 use crate::{Algorithm, CreateTaskRequest, Problem};
 
-pub fn create_ea(request: CreateTaskRequest) -> Option<Box<dyn EvolutionaryAlgorithm + Send>> {
+#[derive(Debug)]
+pub enum CreateError {
+    MissingValue,
+    InvalidTSP,
+}
+
+impl IntoResponse for CreateError {
+    fn into_response(self) -> Response {
+        match self {
+            CreateError::MissingValue => (StatusCode::BAD_REQUEST, "missing value"),
+            CreateError::InvalidTSP => (StatusCode::BAD_REQUEST, "invalid tsp instance"),
+        }
+        .into_response()
+    }
+}
+
+pub fn create_ea(
+    request: CreateTaskRequest,
+) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, CreateError> {
     match request.problem {
         Problem::OneMax => match request.algorithm {
-            Algorithm::OnePlusOneEA => Some(Box::new(OnePlusOneEA::new(
-                request.bitstring_size? as usize,
+            Algorithm::OnePlusOneEA => Ok(Box::new(OnePlusOneEA::new(
+                request.bitstring_size.ok_or(CreateError::MissingValue)? as usize,
                 Bitflip,
                 OneMax,
                 &mut rng(),
             ))),
             Algorithm::SimulatedAnnealing => {
                 let c = DefaultTSPSchedule::from_max_iterations(
-                    request.bitstring_size? as u64,
+                    request.bitstring_size.ok_or(CreateError::MissingValue)? as u64,
                     request.stop_cond.max_iterations,
                 );
-                Some(Box::new(SimulatedAnnealing::new(
-                    request.bitstring_size? as usize,
+                Ok(Box::new(SimulatedAnnealing::new(
+                    request.bitstring_size.ok_or(CreateError::MissingValue)? as usize,
                     SingleBitflip,
                     OneMax,
                     c,
@@ -36,19 +58,19 @@ pub fn create_ea(request: CreateTaskRequest) -> Option<Box<dyn EvolutionaryAlgor
             Algorithm::ACO => todo!(),
         },
         Problem::LeadingOnes => match request.algorithm {
-            Algorithm::OnePlusOneEA => Some(Box::new(OnePlusOneEA::new(
-                request.bitstring_size? as usize,
+            Algorithm::OnePlusOneEA => Ok(Box::new(OnePlusOneEA::new(
+                request.bitstring_size.ok_or(CreateError::MissingValue)? as usize,
                 Bitflip,
                 LeadingOnes,
                 &mut rng(),
             ))),
             Algorithm::SimulatedAnnealing => {
                 let c = DefaultTSPSchedule::from_max_iterations(
-                    request.bitstring_size? as u64,
+                    request.bitstring_size.ok_or(CreateError::MissingValue)? as u64,
                     request.stop_cond.max_iterations,
                 );
-                Some(Box::new(SimulatedAnnealing::new(
-                    request.bitstring_size? as usize,
+                Ok(Box::new(SimulatedAnnealing::new(
+                    request.bitstring_size.ok_or(CreateError::MissingValue)? as usize,
                     SingleBitflip,
                     LeadingOnes,
                     c,
@@ -58,10 +80,11 @@ pub fn create_ea(request: CreateTaskRequest) -> Option<Box<dyn EvolutionaryAlgor
             Algorithm::ACO => todo!(),
         },
         Problem::TSP => {
-            let tsp = TSP::from_euc2d(&request.tsp_instance?)?;
+            let tsp = TSP::from_euc2d(&request.tsp_instance.ok_or(CreateError::MissingValue)?)
+                .ok_or(CreateError::InvalidTSP)?;
             match request.algorithm {
                 //TODO: Match on mutator
-                Algorithm::OnePlusOneEA => Some(Box::new(OnePlusOneEA::new(
+                Algorithm::OnePlusOneEA => Ok(Box::new(OnePlusOneEA::new(
                     tsp.num_cities(),
                     TwoOpt,
                     tsp,
@@ -72,7 +95,7 @@ pub fn create_ea(request: CreateTaskRequest) -> Option<Box<dyn EvolutionaryAlgor
                         tsp.num_cities() as u64,
                         request.stop_cond.max_iterations,
                     );
-                    Some(Box::new(SimulatedAnnealing::new(
+                    Ok(Box::new(SimulatedAnnealing::new(
                         tsp.num_cities(),
                         TwoOpt,
                         tsp,

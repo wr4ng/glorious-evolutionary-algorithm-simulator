@@ -17,15 +17,19 @@ use crate::{Algorithm, CreateTaskRequest, Problem};
 
 #[derive(Debug)]
 pub enum CreateError {
-    MissingValue,
+    MissingValue(String),
     InvalidTSP,
 }
 
 impl IntoResponse for CreateError {
     fn into_response(self) -> Response {
         match self {
-            CreateError::MissingValue => (StatusCode::BAD_REQUEST, "missing value"),
-            CreateError::InvalidTSP => (StatusCode::BAD_REQUEST, "invalid tsp instance"),
+            CreateError::MissingValue(msg) => {
+                (StatusCode::BAD_REQUEST, format!("missing value: {msg}"))
+            }
+            CreateError::InvalidTSP => {
+                (StatusCode::BAD_REQUEST, "invalid tsp instance".to_string())
+            }
         }
         .into_response()
     }
@@ -37,18 +41,27 @@ pub fn create_ea(
     match request.problem {
         Problem::OneMax => match request.algorithm {
             Algorithm::OnePlusOneEA => Ok(Box::new(OnePlusOneEA::new(
-                request.bitstring_size.ok_or(CreateError::MissingValue)? as usize,
+                request
+                    .bitstring_size
+                    .ok_or(CreateError::MissingValue("bistring_size".to_string()))?
+                    as usize,
                 Bitflip,
                 OneMax,
                 &mut rng(),
             ))),
             Algorithm::SimulatedAnnealing => {
                 let c = DefaultTSPSchedule::from_max_iterations(
-                    request.bitstring_size.ok_or(CreateError::MissingValue)? as u64,
+                    request
+                        .bitstring_size
+                        .ok_or(CreateError::MissingValue("bistring_size".to_string()))?
+                        as u64,
                     request.stop_cond.max_iterations,
                 );
                 Ok(Box::new(SimulatedAnnealing::new(
-                    request.bitstring_size.ok_or(CreateError::MissingValue)? as usize,
+                    request
+                        .bitstring_size
+                        .ok_or(CreateError::MissingValue("bistring_size".to_string()))?
+                        as usize,
                     SingleBitflip,
                     OneMax,
                     c,
@@ -59,18 +72,27 @@ pub fn create_ea(
         },
         Problem::LeadingOnes => match request.algorithm {
             Algorithm::OnePlusOneEA => Ok(Box::new(OnePlusOneEA::new(
-                request.bitstring_size.ok_or(CreateError::MissingValue)? as usize,
+                request
+                    .bitstring_size
+                    .ok_or(CreateError::MissingValue("bistring_size".to_string()))?
+                    as usize,
                 Bitflip,
                 LeadingOnes,
                 &mut rng(),
             ))),
             Algorithm::SimulatedAnnealing => {
                 let c = DefaultTSPSchedule::from_max_iterations(
-                    request.bitstring_size.ok_or(CreateError::MissingValue)? as u64,
+                    request
+                        .bitstring_size
+                        .ok_or(CreateError::MissingValue("bistring_size".to_string()))?
+                        as u64,
                     request.stop_cond.max_iterations,
                 );
                 Ok(Box::new(SimulatedAnnealing::new(
-                    request.bitstring_size.ok_or(CreateError::MissingValue)? as usize,
+                    request
+                        .bitstring_size
+                        .ok_or(CreateError::MissingValue("bistring_size".to_string()))?
+                        as usize,
                     SingleBitflip,
                     LeadingOnes,
                     c,
@@ -80,8 +102,12 @@ pub fn create_ea(
             Algorithm::ACO => todo!(),
         },
         Problem::TSP => {
-            let tsp = TSP::from_euc2d(&request.tsp_instance.ok_or(CreateError::MissingValue)?)
-                .ok_or(CreateError::InvalidTSP)?;
+            let tsp = TSP::from_euc2d(
+                &request
+                    .tsp_instance
+                    .ok_or(CreateError::MissingValue("tsp_instance".to_string()))?,
+            )
+            .ok_or(CreateError::InvalidTSP)?;
             match request.algorithm {
                 //TODO: Match on mutator
                 Algorithm::OnePlusOneEA => Ok(Box::new(OnePlusOneEA::new(

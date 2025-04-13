@@ -23,6 +23,7 @@
 	let algorithm = $state("OnePlusOneEA");
 
 	let maxIterations = $state(1000000);
+	let optimalFitness: number | undefined = $state(undefined);
 
 	function isBitstringProblem(problem: string) {
 		return problem == "OneMax" || problem == "LeadingOnes";
@@ -40,6 +41,9 @@
 			algorithm: algorithm,
 			stop_cond: {
 				max_iterations: maxIterations,
+				...(optimalFitness && {
+					optimal_fitness: optimalFitness,
+				}),
 			},
 			...(isBitstringProblem(problem) && {
 				bitstring_size: bitstringSize,
@@ -51,6 +55,7 @@
 						: customTspInstance,
 			}),
 		};
+		console.log(requestBody);
 		onSubmit(requestBody);
 	}
 </script>
@@ -120,9 +125,19 @@
 			Max Iterations:
 			<input
 				type="number"
+				min="1"
 				step="1"
 				bind:value={maxIterations}
 				required
+				class="border rounded px-1"
+			/>
+		</label>
+		<label class="flex flex-col">
+			Optimal Fitness (optional):
+			<input
+				type="number"
+				step="any"
+				bind:value={optimalFitness}
 				class="border rounded px-1"
 			/>
 		</label>

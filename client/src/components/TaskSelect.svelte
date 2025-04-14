@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Task } from "../types/task.ts";
 	import Dashboard from "./Dashboard.svelte";
+	import TaskCreateForm from "./TaskCreateForm.svelte";
 	import TaskList from "./TaskList.svelte";
 
 	interface TaskSelectProps {
@@ -14,7 +15,7 @@
 	let finished: Task[] = $state([]);
 	let selectedTask: Task | null = $state(null);
 
-	let requestInput: string = $state("");
+	let createError = $state("");
 
 	interface GetTasksResponse {
 		in_progress: Task[];
@@ -42,21 +43,24 @@
 		}
 	}
 
-	async function createTask() {
+	//TODO: Create type for requestBody
+	async function createTask(requestBody: any) {
 		//TODO: Validate requestInput
 		try {
 			const response = await fetch(`${serverURL}/tasks`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: requestInput,
+				body: JSON.stringify(requestBody),
 			});
 			if (!response.ok) {
-				//TODO: Show error
-				console.log(response);
+				const responseText = await response.text();
+				createError = `Failed to create task: ${responseText}`;
+				return;
 			}
 			selectedTask = await response.json();
 		} catch (error) {
 			console.log(error);
+			createError = "Failed to send create task request...";
 		}
 	}
 
@@ -73,18 +77,8 @@
 			<h1 class="mt-4 text-4xl font-extrabold">Completed Tasks</h1>
 			<TaskList tasks={finished} onClick={async (_: Task) => {}} />
 		</div>
-		<div class="w-1/2 flex flex-col gap-4">
-			<textarea
-				bind:value={requestInput}
-				class="flex-grow border p-2 rounded text-sm font-mono resize-none"
-				placeholder="Enter JSON..."
-			></textarea>
-			<button
-				onclick={createTask}
-				class="border rounded-lg py-2 font-bold"
-			>
-				Send Request
-			</button>
+		<div class="w-1/2">
+			<TaskCreateForm onSubmit={createTask} error={createError} />
 		</div>
 	</div>
 {/if}

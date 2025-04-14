@@ -1,5 +1,5 @@
 use axum::{Json, Router, extract::State, http::StatusCode, routing::get};
-use create::create_ea;
+use create::{CreateError, create_ea};
 use rand::rng;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -62,7 +62,7 @@ async fn ping_handler() -> String {
 async fn create_task(
     State(state): State<SharedState>,
     Json(request): Json<CreateTaskRequest>,
-) -> Result<Json<Task>, StatusCode> {
+) -> Result<Json<Task>, CreateError> {
     let id = Uuid::new_v4();
     let task = Task {
         id,
@@ -72,19 +72,14 @@ async fn create_task(
         stop_cond: request.stop_cond.clone(),
     };
 
+    let mut runner = create_ea(request.clone())?;
+
     //TODO: Push to instead if there are no threads avaiable to pick up task
     state
         .lock()
         .expect("failed to aquire mutex")
         .in_progress
         .insert(id, task.clone());
-
-    let mut runner = match create_ea(request.clone()) {
-        Some(r) => r,
-        None => {
-            return Err(StatusCode::BAD_REQUEST);
-        }
-    };
 
     thread::spawn(move || {
         println!("initial: {}", runner.current_fitness());

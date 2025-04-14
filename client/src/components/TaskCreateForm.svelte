@@ -14,11 +14,16 @@
 		{ text: "Simulated Annealing", value: "SimulatedAnnealing" },
 	];
 	const tspInstanceOptions = ["berlin52", "Custom"];
+	const tspMutatorOptions = [
+		{ text: "2-opt", value: "TwoOpt" },
+		{ text: "3-opt", value: "ThreeOpt" },
+	];
 
 	let problem = $state("OneMax");
 	let bitstringSize = $state(1000);
 	let tspInstance = $state("berlin52");
 	let customTspInstance = $state("");
+	let tspMutator = $state("TwoOpt");
 
 	let algorithm = $state("OnePlusOneEA");
 
@@ -53,6 +58,7 @@
 					tspInstance == "berlin52"
 						? berlin52EUC2D
 						: customTspInstance,
+				tsp_mutator: tspMutator,
 			}),
 		};
 		console.log(requestBody);
@@ -84,6 +90,18 @@
 			</label>
 		{/if}
 		{#if isTSP(problem)}
+			<label class="flex flex-col">
+				TSP Mutator:
+				<select
+					required
+					bind:value={tspMutator}
+					class="border rounded"
+				>
+					{#each tspMutatorOptions as option}
+						<option value={option.value}>{option.text}</option>
+					{/each}
+				</select>
+			</label>
 			<label class="flex flex-col">
 				TSP Instance:
 				<select

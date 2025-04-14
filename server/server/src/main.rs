@@ -149,8 +149,9 @@ async fn get_tasks(State(state): State<SharedState>) -> (StatusCode, Json<TasksR
 struct CreateTaskRequest {
     algorithm: Algorithm,
     problem: Problem,
-    bitstring_size: Option<u32>,
+    bitstring_size: Option<usize>,
     tsp_instance: Option<String>,
+    tsp_mutator: Option<TSPMutator>,
     stop_cond: StopCondition,
 }
 
@@ -169,11 +170,18 @@ enum Algorithm {
     SimulatedAnnealing,
     ACO,
 }
+
 #[derive(Deserialize, Serialize, Clone, Copy)]
 enum Problem {
     OneMax,
     LeadingOnes,
     TSP,
+}
+
+#[derive(Deserialize, Serialize, Clone, Copy)]
+enum TSPMutator {
+    TwoOpt,
+    ThreeOpt,
 }
 
 #[derive(Deserialize, Serialize, Clone)]

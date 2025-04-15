@@ -123,16 +123,16 @@
 					{/each}
 				</select>
 			</label>
-		{/if}
-		{#if isTSP(problem) && tspInstance == "Custom"}
-			<label class="flex flex-col">
-				Custom TSP Instance (EUC2D Format):
-				<textarea
-					bind:value={customTspInstance}
-					class="border rounded p-1"
-					placeholder="Enter TSP instance..."
-				></textarea>
-			</label>
+			{#if tspInstance == "Custom"}
+				<label class="flex flex-col">
+					Custom TSP Instance (EUC2D Format):
+					<textarea
+						bind:value={customTspInstance}
+						class="border rounded p-1"
+						placeholder="Enter TSP instance..."
+					></textarea>
+				</label>
+			{/if}
 		{/if}
 	</div>
 	<div class="flex flex-col space-y-2">

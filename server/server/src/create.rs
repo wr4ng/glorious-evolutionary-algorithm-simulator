@@ -52,9 +52,11 @@ pub fn create_ea(
             request.bitstring_size,
             request.tsp_instance,
             request.tsp_mutator,
-            request.stop_cond.max_iterations,
+            request
+                .cooling_rate
+                .ok_or(CreateError::MissingValue("cooling_rate".to_string()))?,
         ),
-        Algorithm::ACO => todo!(),
+        Algorithm::ACO => Err(CreateError::NotImplemented),
     }
 }
 
@@ -105,15 +107,12 @@ pub fn create_sa_runner(
     bitstring_size: Option<usize>,
     tsp_instance: Option<String>,
     tsp_mutator: Option<TSPMutator>,
-    max_iterations: u64,
+    cooling_rate: f64,
 ) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, CreateError> {
     Ok(match problem {
         Problem::OneMax => {
             let bitstring_size = bitstring_size.ok_or(CreateError::MissingValue("".to_string()))?;
-            let c = DefaultBitstringSchedule::from_max_iterations(
-                bitstring_size as u64,
-                max_iterations,
-            );
+            let c = DefaultBitstringSchedule::new(bitstring_size as u64, cooling_rate);
             Box::new(SimulatedAnnealing::new(
                 bitstring_size,
                 SingleBitflip,
@@ -124,10 +123,7 @@ pub fn create_sa_runner(
         }
         Problem::LeadingOnes => {
             let bitstring_size = bitstring_size.ok_or(CreateError::MissingValue("".to_string()))?;
-            let c = DefaultBitstringSchedule::from_max_iterations(
-                bitstring_size as u64,
-                max_iterations,
-            );
+            let c = DefaultBitstringSchedule::new(bitstring_size as u64, cooling_rate);
             Box::new(SimulatedAnnealing::new(
                 bitstring_size,
                 SingleBitflip,
@@ -141,8 +137,7 @@ pub fn create_sa_runner(
                 &tsp_instance.ok_or(CreateError::MissingValue("tsp_instance".to_string()))?,
             )
             .ok_or(CreateError::InvalidTSP)?;
-            let c =
-                DefaultTSPSchedule::from_max_iterations(tsp.num_cities() as u64, max_iterations);
+            let c = DefaultTSPSchedule::new(tsp.num_cities() as u64, cooling_rate);
             let mutator =
                 tsp_mutator.ok_or(CreateError::MissingValue("tsp_mutator".to_string()))?;
             match mutator {

@@ -33,7 +33,7 @@ impl DefaultBitstringSchedule {
 
 impl CoolingSchedule for DefaultBitstringSchedule {
     fn temperature(&self, t: u64) -> f64 {
-        if t == 1 {
+        if t == 0 {
             return self.size.pow(3) as f64;
         }
         // n^3 * (1 - 1/cn)^t
@@ -66,7 +66,7 @@ impl DefaultTSPSchedule {
 
 impl CoolingSchedule for DefaultTSPSchedule {
     fn temperature(&self, t: u64) -> f64 {
-        if t == 1 {
+        if t == 0 {
             return self.size.pow(3) as f64;
         }
         // n^3 * (1 - 1/cn^2)^t
@@ -136,10 +136,13 @@ where
             let difference = (neighbor_fitness - self.state.current_fitness).abs();
             let temp = self.cooling.temperature(self.state.iteration);
             let accept_probability = (-difference / temp).exp();
-            let accept = rng.random_bool(accept_probability);
-            if accept {
-                self.state.current_solution = neighbor;
-                self.state.current_fitness = neighbor_fitness
+            // Account for NaN when temp gets too close to 0
+            if accept_probability.is_finite() {
+                let accept = rng.random_bool(accept_probability);
+                if accept {
+                    self.state.current_solution = neighbor;
+                    self.state.current_fitness = neighbor_fitness
+                }
             }
         }
         self.state.iteration += 1;
@@ -158,7 +161,7 @@ where
             "iterations": self.state.iteration,
             "current_fitness": self.state.current_fitness,
             "current_solution": self.state.current_solution.to_string(),
-            "temperature": self.current_temperature(),
+            "temperature": format!("{:.5}", self.current_temperature()),
         })
     }
 }

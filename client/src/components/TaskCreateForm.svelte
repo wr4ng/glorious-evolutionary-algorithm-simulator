@@ -12,6 +12,7 @@
 	const algorithmOptions = [
 		{ text: "(1+1) EA", value: "OnePlusOneEA" },
 		{ text: "Simulated Annealing", value: "SimulatedAnnealing" },
+		{ text: "Ant Colony Optimization (ACO)", value: "ACO" },
 	];
 	const tspInstanceOptions = ["berlin52", "Custom"];
 	const tspMutatorOptions = [
@@ -26,6 +27,7 @@
 	let tspMutator = $state("TwoOpt");
 
 	let algorithm = $state("OnePlusOneEA");
+	let coolingRate = $state(1.0);
 
 	let maxIterations = $state(1000000);
 	let optimalFitness: number | undefined = $state(undefined);
@@ -36,6 +38,10 @@
 
 	function isTSP(problem: string) {
 		return problem == "TSP";
+	}
+
+	function needMutator(algorithm: string) {
+		return algorithm == "OnePlusOneEA" || algorithm == "SimulatedAnnealing";
 	}
 
 	async function handleSumbit(e: SubmitEvent) {
@@ -58,7 +64,12 @@
 					tspInstance == "berlin52"
 						? berlin52EUC2D
 						: customTspInstance,
-				tsp_mutator: tspMutator,
+				...(needMutator(algorithm) && {
+					tsp_mutator: tspMutator,
+				}),
+			}),
+			...(algorithm == "SimulatedAnnealing" && {
+				cooling_rate: coolingRate,
 			}),
 		};
 		console.log(requestBody);
@@ -89,19 +100,17 @@
 				/>
 			</label>
 		{/if}
-		{#if isTSP(problem)}
+		{#if isTSP(problem) && needMutator(algorithm)}
 			<label class="flex flex-col">
 				TSP Mutator:
-				<select
-					required
-					bind:value={tspMutator}
-					class="border rounded"
-				>
+				<select required bind:value={tspMutator} class="border rounded">
 					{#each tspMutatorOptions as option}
 						<option value={option.value}>{option.text}</option>
 					{/each}
 				</select>
 			</label>
+		{/if}
+		{#if isTSP(problem)}
 			<label class="flex flex-col">
 				TSP Instance:
 				<select
@@ -136,6 +145,18 @@
 				{/each}
 			</select>
 		</label>
+		{#if algorithm == "SimulatedAnnealing"}
+			<label class="flex flex-col">
+				Cooling rate (c):
+				<input
+					type="number"
+					step="any"
+					required
+					bind:value={coolingRate}
+					class="border rounded px-1"
+				/>
+			</label>
+		{/if}
 	</div>
 	<div class="flex flex-col space-y-2">
 		<h1 class="text-xl font-bold">Stop Condition</h1>

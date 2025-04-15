@@ -6,7 +6,7 @@ use eas::{
     algorithms::{
         EvolutionaryAlgorithm,
         one_plus_one_ea::OnePlusOneEA,
-        simulated_annealing::{DefaultBitstringSchedule, DefaultTSPSchedule, SimulatedAnnealing},
+        simulated_annealing::{CoolingSchedule, SimulatedAnnealing},
     },
     fitness::{leading_ones::LeadingOnes, one_max::OneMax, tsp::TSP},
     mutation::{Bitflip, SingleBitflip, TwoOpt},
@@ -112,7 +112,7 @@ pub fn create_sa_runner(
     Ok(match problem {
         Problem::OneMax => {
             let bitstring_size = bitstring_size.ok_or(CreateError::MissingValue("".to_string()))?;
-            let c = DefaultBitstringSchedule::new(bitstring_size as u64, cooling_rate);
+            let c = CoolingSchedule::new_default_bitstring(bitstring_size as u64, cooling_rate);
             Box::new(SimulatedAnnealing::new(
                 bitstring_size,
                 SingleBitflip,
@@ -123,7 +123,7 @@ pub fn create_sa_runner(
         }
         Problem::LeadingOnes => {
             let bitstring_size = bitstring_size.ok_or(CreateError::MissingValue("".to_string()))?;
-            let c = DefaultBitstringSchedule::new(bitstring_size as u64, cooling_rate);
+            let c = CoolingSchedule::new_default_bitstring(bitstring_size as u64, cooling_rate);
             Box::new(SimulatedAnnealing::new(
                 bitstring_size,
                 SingleBitflip,
@@ -137,7 +137,7 @@ pub fn create_sa_runner(
                 &tsp_instance.ok_or(CreateError::MissingValue("tsp_instance".to_string()))?,
             )
             .ok_or(CreateError::InvalidTSP)?;
-            let c = DefaultTSPSchedule::new(tsp.num_cities() as u64, cooling_rate);
+            let c = CoolingSchedule::new_default_tsp(tsp.num_cities() as u64, cooling_rate);
             let mutator =
                 tsp_mutator.ok_or(CreateError::MissingValue("tsp_mutator".to_string()))?;
             match mutator {

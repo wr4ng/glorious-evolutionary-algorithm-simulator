@@ -46,7 +46,6 @@
 						title: { display: true, text: "Temperature" },
 						position: "right",
 						display: "auto",
-						type: "logarithmic",
 					},
 				},
 			},

@@ -82,8 +82,6 @@ async fn create_task(
         .insert(id, task.clone());
 
     thread::spawn(move || {
-        println!("initial: {}", runner.current_fitness());
-
         //Insert channel
         let (tx, _) = channel::<serde_json::Value>(10); //TODO: Determine capacity
         state
@@ -111,9 +109,7 @@ async fn create_task(
                 let _ = tx.send(runner.status_json());
             }
         }
-
         let _ = tx.send(runner.status_json());
-        println!("result: {}", runner.current_fitness());
 
         // Keep lock on shared state while removing from in_progress and inserting into finished
         {
@@ -149,9 +145,11 @@ async fn get_tasks(State(state): State<SharedState>) -> (StatusCode, Json<TasksR
 struct CreateTaskRequest {
     algorithm: Algorithm,
     problem: Problem,
-    bitstring_size: Option<u32>,
+    bitstring_size: Option<usize>,
     tsp_instance: Option<String>,
+    tsp_mutator: Option<TSPMutator>,
     stop_cond: StopCondition,
+    cooling_rate: Option<f64>,
 }
 
 #[derive(Serialize, Clone)]
@@ -169,11 +167,18 @@ enum Algorithm {
     SimulatedAnnealing,
     ACO,
 }
+
 #[derive(Deserialize, Serialize, Clone, Copy)]
 enum Problem {
     OneMax,
     LeadingOnes,
     TSP,
+}
+
+#[derive(Deserialize, Serialize, Clone, Copy)]
+enum TSPMutator {
+    TwoOpt,
+    ThreeOpt,
 }
 
 #[derive(Deserialize, Serialize, Clone)]

@@ -64,11 +64,15 @@
 		}
 	}
 
+	function deselectTask() {
+		selectedTask = null;
+	}
+
 	getTasks();
 </script>
 
 {#if selectedTask}
-	<Dashboard {serverURL} task={selectedTask} />
+	<Dashboard {serverURL} task={selectedTask} back={deselectTask}/>
 {:else}
 	<div class="flex h-screen p-4 gap-4">
 		<div class="w-1/2">

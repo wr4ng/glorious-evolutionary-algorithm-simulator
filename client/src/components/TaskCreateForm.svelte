@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { berlin52EUC2D } from "../lib/tsp";
+	import { berlin52EUC2D, parseEUC2D } from "../lib/tsp";
 
 	interface TaskCreateFormProps {
 		onSubmit: (r: any) => void;
@@ -24,6 +24,8 @@
 	let bitstringSize = $state(1000);
 	let tspInstance = $state("berlin52");
 	let customTspInstance = $state("");
+	let customTspInstanceError = $state("");
+	let customTspInstanceValidated = $state(false);
 	let tspMutator = $state("TwoOpt");
 
 	let algorithm = $state("OnePlusOneEA");
@@ -42,6 +44,16 @@
 
 	function needMutator(algorithm: string) {
 		return algorithm == "OnePlusOneEA" || algorithm == "SimulatedAnnealing";
+	}
+
+	function validateCustomTSP() {
+		try {
+			const _ = parseEUC2D(customTspInstance);
+			customTspInstanceValidated = true;
+		} catch (error) {
+			console.log(error);
+			customTspInstanceError = "Invalid EUC2D instance";
+		}
 	}
 
 	async function handleSumbit(e: SubmitEvent) {
@@ -128,10 +140,29 @@
 					Custom TSP Instance (EUC2D Format):
 					<textarea
 						bind:value={customTspInstance}
+						oninput={() => {
+							customTspInstanceError = "";
+							customTspInstanceValidated = false;
+						}}
 						class="border rounded p-1"
 						placeholder="Enter TSP instance..."
 					></textarea>
 				</label>
+				{#if customTspInstanceError}
+					<span class="text-red-500 font-bold"
+						>{customTspInstanceError}</span
+					>
+				{/if}
+				{#if customTspInstanceValidated}
+					<span class="text-green-500 font-bold">Valid</span>
+				{/if}
+				<button
+					type="button"
+					onclick={validateCustomTSP}
+					class="border rounded-lg py-2 font-bold"
+				>
+					Validate TSP Instance
+				</button>
 			{/if}
 		{/if}
 	</div>

@@ -100,7 +100,7 @@ async fn create_task(
             }
             // If optimal solution is provided, stop if it is reached
             if let Some(optimal) = task.stop_cond.optimal_fitness {
-                if optimal == runner.current_fitness() {
+                if optimal >= runner.current_fitness() {
                     break;
                 }
             }

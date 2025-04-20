@@ -15,6 +15,7 @@
 	let finished: Task[] = $state([]);
 	let selectedTask: Task | null = $state(null);
 
+	let lastRequestBody: Object | null = $state(null);
 	let createError = $state("");
 
 	interface GetTasksResponse {
@@ -47,6 +48,7 @@
 	async function createTask(requestBody: any) {
 		//TODO: Validate requestInput
 		try {
+			lastRequestBody = requestBody;
 			const response = await fetch(`${serverURL}/tasks`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -64,6 +66,11 @@
 		}
 	}
 
+	async function rerunTask() {
+		deselectTask();
+		createTask(lastRequestBody);
+	}
+
 	function deselectTask() {
 		selectedTask = null;
 	}
@@ -72,7 +79,12 @@
 </script>
 
 {#if selectedTask}
-	<Dashboard {serverURL} task={selectedTask} back={deselectTask}/>
+	<Dashboard
+		{serverURL}
+		task={selectedTask}
+		back={deselectTask}
+		rerun={rerunTask}
+	/>
 {:else}
 	<div class="flex h-screen p-4 gap-4">
 		<div class="w-1/2">

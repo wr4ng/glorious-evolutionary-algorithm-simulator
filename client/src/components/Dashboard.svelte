@@ -13,9 +13,10 @@
 		serverURL: string;
 		task: Task;
 		back: () => void;
+		rerun: () => void;
 	}
 
-	let { serverURL, task, back }: DashboardProps = $props();
+	let { serverURL, task, back, rerun }: DashboardProps = $props();
 	var socket: WebSocket;
 	var status = $state("Disconnected...");
 
@@ -146,6 +147,14 @@
 	</div>
 	<div>
 		<h1 class="text-2xl font-bold">Controls</h1>
+		{#if status == "Disconnected..."}
+			<button
+				onclick={rerun}
+				class="border rounded-lg px-4 py-2 font-bold"
+			>
+				Rerun Task
+			</button>
+		{/if}
 		<button
 			onclick={handleBack}
 			class="border rounded-lg px-4 py-2 font-bold"

@@ -12,10 +12,12 @@
 	interface DashboardProps {
 		serverURL: string;
 		task: Task;
+		back: () => void;
 	}
 
-	let { serverURL, task }: DashboardProps = $props();
+	let { serverURL, task, back }: DashboardProps = $props();
 	var socket: WebSocket;
+	var status = $state("Disconnected...");
 
 	let onionPoints: Point[] = $state([]);
 	let nodes: Node[] = $state([]);
@@ -57,16 +59,19 @@
 		socket = new WebSocket(wsURL);
 
 		socket.onopen = (event) => {
+			status = "Connected";
 			//TODO: Show loading before connection opens
 			console.log(event);
 		};
 
 		socket.onclose = (event) => {
+			status = "Disconnected...";
 			//TODO: Show simulation is completed
 			console.log(event);
 		};
 
 		socket.onerror = (event) => {
+			status = "Disconnected...";
 			//TODO: Handle error
 			console.log(event);
 		};
@@ -96,6 +101,13 @@
 		};
 	}
 
+	function handleBack() {
+		if (socket) {
+			socket.close();
+		}
+		back();
+	}
+
 	const isBitstringProblem = ["OneMax", "LeadingOnes"].includes(task.problem);
 	const isPermutationProblem = ["TSP"].includes(task.problem);
 	const hasTemp = task.algorithm == "SimulatedAnnealing";
@@ -107,22 +119,38 @@
 	setupWebsocket();
 </script>
 
-<p>Task ID: {task.id}</p>
-<div class="grid grid-cols-2">
-	<div class="bg-red-100 max-h-120">
-		<Chart labels={[...iterations]} series={buildSeries()} />
-	</div>
-	<div class="bg-blue-100 max-h-120">
-		{#if isBitstringProblem}
-			<Onion pointData={onionPoints} />
-		{:else if isPermutationProblem}
-			<Graph {nodes} {edges} />
-		{:else}
-			<p>Invalid problem. No visualization to show.</p>
-		{/if}
-	</div>
-	<div class="p-4">
+<div class="flex flex-col p-2 space-y-4">
+	<div>
+		<h1 class="text-2xl font-bold">Stats</h1>
+		<p>Task ID: {task.id}</p>
+		<p>Status: {status}</p>
 		<p>Iteration: {iterations[iterations.length - 1]}</p>
 		<p>Fitness: {fitness[fitness.length - 1]}</p>
+	</div>
+	<div>
+		<h1 class="text-2xl font-bold">Visualizations</h1>
+		<div class="grid grid-cols-2 gap-2">
+			<div class="border rounded-lg max-h-120">
+				<Chart labels={[...iterations]} series={buildSeries()} />
+			</div>
+			<div class="border rounded-lg max-h-120">
+				{#if isBitstringProblem}
+					<Onion pointData={onionPoints} />
+				{:else if isPermutationProblem}
+					<Graph {nodes} {edges} />
+				{:else}
+					<p>Invalid problem. No visualization to show.</p>
+				{/if}
+			</div>
+		</div>
+	</div>
+	<div>
+		<h1 class="text-2xl font-bold">Controls</h1>
+		<button
+			onclick={handleBack}
+			class="border rounded-lg px-4 py-2 font-bold"
+		>
+			Back
+		</button>
 	</div>
 </div>

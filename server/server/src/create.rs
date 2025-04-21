@@ -41,17 +41,10 @@ pub fn create_ea(
     request: CreateTaskRequest,
 ) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, CreateError> {
     match request.algorithm {
-        Algorithm::OnePlusOneEA => create_oneplusone_runner(
-            request.problem,
-            request.tsp_mutator,
-        ),
-        Algorithm::SimulatedAnnealing => create_sa_runner(
-            request.problem,
-            request.tsp_mutator,
-            request
-                .cooling_rate
-                .ok_or(CreateError::MissingValue("cooling_rate".to_string()))?,
-        ),
+        Algorithm::OnePlusOneEA => create_oneplusone_runner(request.problem, request.tsp_mutator),
+        Algorithm::SimulatedAnnealing { cooling_rate } => {
+            create_sa_runner(request.problem, request.tsp_mutator, cooling_rate)
+        }
         Algorithm::ACO => Err(CreateError::NotImplemented),
     }
 }

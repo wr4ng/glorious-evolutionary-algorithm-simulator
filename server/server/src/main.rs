@@ -155,7 +155,6 @@ struct CreateTaskRequest {
     problem: Problem,
     tsp_mutator: Option<TSPMutator>,
     stop_cond: StopCondition,
-    cooling_rate: Option<f64>,
 }
 
 #[derive(Serialize, Clone)]
@@ -168,14 +167,15 @@ struct Task {
 }
 
 #[derive(Deserialize, Serialize, Clone, Copy, Debug)]
+#[serde(tag = "type")]
 enum Algorithm {
     OnePlusOneEA,
-    SimulatedAnnealing,
+    SimulatedAnnealing { cooling_rate: f64 },
     ACO,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(tag = "type", content = "problem_data")]
+#[serde(tag = "type")]
 enum Problem {
     OneMax { bitstring_size: usize },
     LeadingOnes { bitstring_size: usize },

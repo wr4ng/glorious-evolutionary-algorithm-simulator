@@ -109,9 +109,11 @@
 		back();
 	}
 
-	const isBitstringProblem = ["OneMax", "LeadingOnes"].includes(task.problem.type);
+	const isBitstringProblem = ["OneMax", "LeadingOnes"].includes(
+		task.problem.type,
+	);
 	const isPermutationProblem = ["TSP"].includes(task.problem.type);
-	const hasTemp = task.algorithm == "SimulatedAnnealing";
+	const hasTemp = task.algorithm.type == "SimulatedAnnealing";
 
 	if (task.problem.type == "TSP" && task.tsp_instance) {
 		nodes = parseEUC2D(task.tsp_instance);
@@ -131,17 +133,20 @@
 	<div>
 		<h1 class="text-2xl font-bold">Visualizations</h1>
 		<div class="grid grid-cols-2 gap-2">
-			<div class="border rounded-lg max-h-120">
+			<div class="border rounded-lg h-120">
 				<Chart labels={[...iterations]} series={buildSeries()} />
 			</div>
-			<div class="border rounded-lg max-h-120">
-				{#if isBitstringProblem}
-					<Onion pointData={onionPoints} />
-				{:else if isPermutationProblem}
-					<Graph {nodes} {edges} />
-				{:else}
-					<p>Invalid problem. No visualization to show.</p>
-				{/if}
+			<div class="h-120 border rounded-lg p-2">
+				<p class="h-6 font-bold text-xl">Instance</p>
+				<div class="h-110">
+					{#if isBitstringProblem}
+						<Onion pointData={onionPoints} />
+					{:else if isPermutationProblem}
+						<Graph {nodes} {edges} />
+					{:else}
+						<p>Invalid problem. No visualization to show.</p>
+					{/if}
+				</div>
 			</div>
 		</div>
 	</div>

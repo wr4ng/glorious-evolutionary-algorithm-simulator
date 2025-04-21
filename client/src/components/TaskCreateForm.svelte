@@ -62,22 +62,22 @@
 		const requestBody = {
 			problem: {
 				type: problem,
-				problem_data: {
-					...(isBitstringProblem(problem) && {
-						bitstring_size: bitstringSize,
-					}),
-					...(isTSP(problem) && {
-						tsp_instance:
-							tspInstance == "berlin52"
-								? berlin52EUC2D
-								: customTspInstance,
-					}),
-				},
+				...(isBitstringProblem(problem) && {
+					bitstring_size: bitstringSize,
+				}),
+				...(isTSP(problem) && {
+					tsp_instance:
+						tspInstance == "berlin52"
+							? berlin52EUC2D
+							: customTspInstance,
+				}),
 			},
-			algorithm: algorithm,
-			...(algorithm == "SimulatedAnnealing" && {
-				cooling_rate: coolingRate,
-			}),
+			algorithm: {
+				type: algorithm,
+				...(algorithm == "SimulatedAnnealing" && {
+					cooling_rate: coolingRate,
+				}),
+			},
 			...(isTSP(problem) &&
 				needMutator(algorithm) && {
 					tsp_mutator: tspMutator,

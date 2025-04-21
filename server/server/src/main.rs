@@ -64,11 +64,18 @@ async fn create_task(
     Json(request): Json<CreateTaskRequest>,
 ) -> Result<Json<Task>, CreateError> {
     let id = Uuid::new_v4();
+
+    let tsp_instance = if let Problem::TSP { tsp_instance } = &request.problem {
+        Some(tsp_instance.clone())
+    } else {
+        None
+    };
+
     let task = Task {
         id,
         algorithm: request.algorithm,
-        problem: request.problem,
-        tsp_instance: request.tsp_instance.clone(),
+        tsp_instance,
+        problem: request.problem.clone(),
         stop_cond: request.stop_cond.clone(),
     };
 
@@ -146,8 +153,6 @@ async fn get_tasks(State(state): State<SharedState>) -> (StatusCode, Json<TasksR
 struct CreateTaskRequest {
     algorithm: Algorithm,
     problem: Problem,
-    bitstring_size: Option<usize>,
-    tsp_instance: Option<String>,
     tsp_mutator: Option<TSPMutator>,
     stop_cond: StopCondition,
     cooling_rate: Option<f64>,
@@ -162,18 +167,19 @@ struct Task {
     stop_cond: StopCondition,
 }
 
-#[derive(Deserialize, Serialize, Clone, Copy)]
+#[derive(Deserialize, Serialize, Clone, Copy, Debug)]
 enum Algorithm {
     OnePlusOneEA,
     SimulatedAnnealing,
     ACO,
 }
 
-#[derive(Deserialize, Serialize, Clone, Copy)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(tag = "type", content = "problem_data")]
 enum Problem {
-    OneMax,
-    LeadingOnes,
-    TSP,
+    OneMax { bitstring_size: usize },
+    LeadingOnes { bitstring_size: usize },
+    TSP { tsp_instance: String },
 }
 
 #[derive(Deserialize, Serialize, Clone, Copy)]

@@ -1,6 +1,6 @@
 export interface Task {
 	id: string;
-	problem: string;
+	problem: { type: string };
 	tsp_instance: string | undefined;
 	algorithm: string;
 }

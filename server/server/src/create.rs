@@ -43,14 +43,10 @@ pub fn create_ea(
     match request.algorithm {
         Algorithm::OnePlusOneEA => create_oneplusone_runner(
             request.problem,
-            request.bitstring_size,
-            request.tsp_instance,
             request.tsp_mutator,
         ),
         Algorithm::SimulatedAnnealing => create_sa_runner(
             request.problem,
-            request.bitstring_size,
-            request.tsp_instance,
             request.tsp_mutator,
             request
                 .cooling_rate
@@ -62,34 +58,23 @@ pub fn create_ea(
 
 pub fn create_oneplusone_runner(
     problem: Problem,
-    bitstring_size: Option<usize>,
-    tsp_instance: Option<String>,
     tsp_mutator: Option<TSPMutator>,
 ) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, CreateError> {
     Ok(match problem {
-        Problem::OneMax => {
-            let bitstring_size = bitstring_size.ok_or(CreateError::MissingValue("".to_string()))?;
-            Box::new(OnePlusOneEA::new(
-                bitstring_size,
-                Bitflip,
-                OneMax,
-                &mut rng(),
-            ))
-        }
-        Problem::LeadingOnes => {
-            let bitstring_size = bitstring_size.ok_or(CreateError::MissingValue("".to_string()))?;
-            Box::new(OnePlusOneEA::new(
-                bitstring_size,
-                Bitflip,
-                LeadingOnes,
-                &mut rng(),
-            ))
-        }
-        Problem::TSP => {
-            let tsp = TSP::from_euc2d(
-                &tsp_instance.ok_or(CreateError::MissingValue("tsp_instance".to_string()))?,
-            )
-            .ok_or(CreateError::InvalidTSP)?;
+        Problem::OneMax { bitstring_size } => Box::new(OnePlusOneEA::new(
+            bitstring_size,
+            Bitflip,
+            OneMax,
+            &mut rng(),
+        )),
+        Problem::LeadingOnes { bitstring_size } => Box::new(OnePlusOneEA::new(
+            bitstring_size,
+            Bitflip,
+            LeadingOnes,
+            &mut rng(),
+        )),
+        Problem::TSP { tsp_instance } => {
+            let tsp = TSP::from_euc2d(&tsp_instance).ok_or(CreateError::InvalidTSP)?;
             let mutator =
                 tsp_mutator.ok_or(CreateError::MissingValue("tsp_mutator".to_string()))?;
             match mutator {
@@ -104,14 +89,11 @@ pub fn create_oneplusone_runner(
 
 pub fn create_sa_runner(
     problem: Problem,
-    bitstring_size: Option<usize>,
-    tsp_instance: Option<String>,
     tsp_mutator: Option<TSPMutator>,
     cooling_rate: f64,
 ) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, CreateError> {
     Ok(match problem {
-        Problem::OneMax => {
-            let bitstring_size = bitstring_size.ok_or(CreateError::MissingValue("".to_string()))?;
+        Problem::OneMax { bitstring_size } => {
             let c = DefaultBitstringSchedule::new(bitstring_size as u64, cooling_rate);
             Box::new(SimulatedAnnealing::new(
                 bitstring_size,
@@ -121,8 +103,7 @@ pub fn create_sa_runner(
                 &mut rng(),
             ))
         }
-        Problem::LeadingOnes => {
-            let bitstring_size = bitstring_size.ok_or(CreateError::MissingValue("".to_string()))?;
+        Problem::LeadingOnes { bitstring_size } => {
             let c = DefaultBitstringSchedule::new(bitstring_size as u64, cooling_rate);
             Box::new(SimulatedAnnealing::new(
                 bitstring_size,
@@ -132,11 +113,8 @@ pub fn create_sa_runner(
                 &mut rng(),
             ))
         }
-        Problem::TSP => {
-            let tsp = TSP::from_euc2d(
-                &tsp_instance.ok_or(CreateError::MissingValue("tsp_instance".to_string()))?,
-            )
-            .ok_or(CreateError::InvalidTSP)?;
+        Problem::TSP { tsp_instance } => {
+            let tsp = TSP::from_euc2d(&tsp_instance).ok_or(CreateError::InvalidTSP)?;
             let c = DefaultTSPSchedule::new(tsp.num_cities() as u64, cooling_rate);
             let mutator =
                 tsp_mutator.ok_or(CreateError::MissingValue("tsp_mutator".to_string()))?;

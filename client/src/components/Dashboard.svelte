@@ -109,11 +109,11 @@
 		back();
 	}
 
-	const isBitstringProblem = ["OneMax", "LeadingOnes"].includes(task.problem);
-	const isPermutationProblem = ["TSP"].includes(task.problem);
+	const isBitstringProblem = ["OneMax", "LeadingOnes"].includes(task.problem.type);
+	const isPermutationProblem = ["TSP"].includes(task.problem.type);
 	const hasTemp = task.algorithm == "SimulatedAnnealing";
 
-	if (task.problem == "TSP" && task.tsp_instance) {
+	if (task.problem.type == "TSP" && task.tsp_instance) {
 		nodes = parseEUC2D(task.tsp_instance);
 	}
 

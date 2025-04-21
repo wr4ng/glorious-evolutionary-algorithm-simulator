@@ -48,7 +48,7 @@
 
 	function validateCustomTSP() {
 		try {
-			const _ = parseEUC2D(customTspInstance);
+			parseEUC2D(customTspInstance);
 			customTspInstanceValidated = true;
 		} catch (error) {
 			console.log(error);
@@ -60,29 +60,34 @@
 		e.preventDefault();
 		//TODO: Validate object
 		const requestBody = {
-			problem: problem,
+			problem: {
+				type: problem,
+				problem_data: {
+					...(isBitstringProblem(problem) && {
+						bitstring_size: bitstringSize,
+					}),
+					...(isTSP(problem) && {
+						tsp_instance:
+							tspInstance == "berlin52"
+								? berlin52EUC2D
+								: customTspInstance,
+					}),
+				},
+			},
 			algorithm: algorithm,
+			...(algorithm == "SimulatedAnnealing" && {
+				cooling_rate: coolingRate,
+			}),
+			...(isTSP(problem) &&
+				needMutator(algorithm) && {
+					tsp_mutator: tspMutator,
+				}),
 			stop_cond: {
 				max_iterations: maxIterations,
 				...(optimalFitness && {
 					optimal_fitness: optimalFitness,
 				}),
 			},
-			...(isBitstringProblem(problem) && {
-				bitstring_size: bitstringSize,
-			}),
-			...(isTSP(problem) && {
-				tsp_instance:
-					tspInstance == "berlin52"
-						? berlin52EUC2D
-						: customTspInstance,
-				...(needMutator(algorithm) && {
-					tsp_mutator: tspMutator,
-				}),
-			}),
-			...(algorithm == "SimulatedAnnealing" && {
-				cooling_rate: coolingRate,
-			}),
 		};
 		console.log(requestBody);
 		onSubmit(requestBody);

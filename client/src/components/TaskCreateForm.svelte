@@ -42,8 +42,11 @@
 		return problem == "TSP";
 	}
 
-	function needMutator(algorithm: string) {
-		return algorithm == "OnePlusOneEA" || algorithm == "SimulatedAnnealing";
+	function needMutator(problem: string, algorithm: string) {
+		return (
+			isTSP(problem) &&
+			(algorithm == "OnePlusOneEA" || algorithm == "SimulatedAnnealing")
+		);
 	}
 
 	function validateCustomTSP() {
@@ -77,11 +80,10 @@
 				...(algorithm == "SimulatedAnnealing" && {
 					cooling_rate: coolingRate,
 				}),
-			},
-			...(isTSP(problem) &&
-				needMutator(algorithm) && {
+				...(needMutator(problem, algorithm) && {
 					tsp_mutator: tspMutator,
 				}),
+			},
 			stop_cond: {
 				max_iterations: maxIterations,
 				...(optimalFitness && {
@@ -115,16 +117,6 @@
 					required
 					class="border rounded px-1"
 				/>
-			</label>
-		{/if}
-		{#if isTSP(problem) && needMutator(algorithm)}
-			<label class="flex flex-col">
-				TSP Mutator:
-				<select required bind:value={tspMutator} class="border rounded">
-					{#each tspMutatorOptions as option}
-						<option value={option.value}>{option.text}</option>
-					{/each}
-				</select>
 			</label>
 		{/if}
 		{#if isTSP(problem)}
@@ -191,6 +183,16 @@
 					bind:value={coolingRate}
 					class="border rounded px-1"
 				/>
+			</label>
+		{/if}
+		{#if needMutator(problem, algorithm)}
+			<label class="flex flex-col">
+				TSP Mutator:
+				<select required bind:value={tspMutator} class="border rounded">
+					{#each tspMutatorOptions as option}
+						<option value={option.value}>{option.text}</option>
+					{/each}
+				</select>
 			</label>
 		{/if}
 	</div>

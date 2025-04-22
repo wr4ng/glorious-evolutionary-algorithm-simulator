@@ -146,7 +146,6 @@ async fn get_tasks(State(state): State<SharedState>) -> (StatusCode, Json<TasksR
 struct CreateTaskRequest {
     algorithm: Algorithm,
     problem: Problem,
-    tsp_mutator: Option<TSPMutator>,
     stop_cond: StopCondition,
 }
 
@@ -161,8 +160,13 @@ struct Task {
 #[derive(Deserialize, Serialize, Clone, Copy, Debug)]
 #[serde(tag = "type")]
 enum Algorithm {
-    OnePlusOneEA,
-    SimulatedAnnealing { cooling_rate: f64 },
+    OnePlusOneEA {
+        tsp_mutator: Option<TSPMutator>,
+    },
+    SimulatedAnnealing {
+        cooling_rate: f64,
+        tsp_mutator: Option<TSPMutator>,
+    },
     ACO,
 }
 
@@ -174,7 +178,7 @@ enum Problem {
     TSP { tsp_instance: String },
 }
 
-#[derive(Deserialize, Serialize, Clone, Copy)]
+#[derive(Deserialize, Serialize, Clone, Copy, Debug)]
 enum TSPMutator {
     TwoOpt,
     ThreeOpt,

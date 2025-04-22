@@ -65,16 +65,9 @@ async fn create_task(
 ) -> Result<Json<Task>, CreateError> {
     let id = Uuid::new_v4();
 
-    let tsp_instance = if let Problem::TSP { tsp_instance } = &request.problem {
-        Some(tsp_instance.clone())
-    } else {
-        None
-    };
-
     let task = Task {
         id,
         algorithm: request.algorithm,
-        tsp_instance,
         problem: request.problem.clone(),
         stop_cond: request.stop_cond.clone(),
     };
@@ -162,7 +155,6 @@ struct Task {
     id: Uuid,
     algorithm: Algorithm,
     problem: Problem,
-    tsp_instance: Option<String>,
     stop_cond: StopCondition,
 }
 

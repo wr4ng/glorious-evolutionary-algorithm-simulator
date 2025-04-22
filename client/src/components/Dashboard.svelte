@@ -115,8 +115,8 @@
 	const isPermutationProblem = ["TSP"].includes(task.problem.type);
 	const hasTemp = task.algorithm.type == "SimulatedAnnealing";
 
-	if (task.problem.type == "TSP" && task.tsp_instance) {
-		nodes = parseEUC2D(task.tsp_instance);
+	if (task.problem.type == "TSP" && task.problem.tsp_instance) {
+		nodes = parseEUC2D(task.problem.tsp_instance);
 	}
 
 	setupWebsocket();

@@ -154,8 +154,15 @@ struct Task {
 #[serde(tag = "type")]
 enum Algorithm {
     OnePlusOneEA,
-    SimulatedAnnealing { cooling_rate: f64 },
+    SimulatedAnnealing { cooling_schedule: CoolingSchedule },
     ACO,
+}
+
+#[derive(Deserialize, Serialize, Clone, Copy, Debug)]
+#[serde(tag = "type")]
+enum CoolingSchedule {
+    Static { temperature: f64 },
+    Exponential { cooling_rate: f64 },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

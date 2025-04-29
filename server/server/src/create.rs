@@ -36,8 +36,8 @@ impl IntoResponse for CreateError {
 pub fn create_ea(task: &Task) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, CreateError> {
     match task.algorithm {
         Algorithm::OnePlusOneEA => create_oneplusone_runner(&task.problem),
-        Algorithm::SimulatedAnnealing { cooling_rate } => {
-            create_sa_runner(&task.problem, cooling_rate)
+        Algorithm::SimulatedAnnealing { cooling_schedule } => {
+            create_sa_runner(&task.problem, cooling_schedule)
         }
         Algorithm::ACO => Err(CreateError::NotImplemented),
     }
@@ -68,11 +68,18 @@ pub fn create_oneplusone_runner(
 
 pub fn create_sa_runner(
     problem: &Problem,
-    cooling_rate: f64,
+    cooling_schedule: crate::CoolingSchedule,
 ) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, CreateError> {
     Ok(match problem {
         Problem::OneMax { bitstring_size } => {
-            let c = CoolingSchedule::new_default_bitstring(*bitstring_size as u64, cooling_rate);
+            let c = match cooling_schedule {
+                crate::CoolingSchedule::Static { temperature } => {
+                    CoolingSchedule::new_static(temperature)
+                }
+                crate::CoolingSchedule::Exponential { cooling_rate } => {
+                    CoolingSchedule::new_default_bitstring(*bitstring_size as u64, cooling_rate)
+                }
+            };
             Box::new(SimulatedAnnealing::new(
                 *bitstring_size,
                 SingleBitflip,
@@ -82,7 +89,14 @@ pub fn create_sa_runner(
             ))
         }
         Problem::LeadingOnes { bitstring_size } => {
-            let c = CoolingSchedule::new_default_bitstring(*bitstring_size as u64, cooling_rate);
+            let c = match cooling_schedule {
+                crate::CoolingSchedule::Static { temperature } => {
+                    CoolingSchedule::new_static(temperature)
+                }
+                crate::CoolingSchedule::Exponential { cooling_rate } => {
+                    CoolingSchedule::new_default_bitstring(*bitstring_size as u64, cooling_rate)
+                }
+            };
             Box::new(SimulatedAnnealing::new(
                 *bitstring_size,
                 SingleBitflip,
@@ -93,7 +107,14 @@ pub fn create_sa_runner(
         }
         Problem::TSP { tsp_instance } => {
             let tsp = TSP::from_euc2d(&tsp_instance).ok_or(CreateError::InvalidTSP)?;
-            let c = CoolingSchedule::new_default_tsp(tsp.num_cities() as u64, cooling_rate);
+            let c = match cooling_schedule {
+                crate::CoolingSchedule::Static { temperature } => {
+                    CoolingSchedule::new_static(temperature)
+                }
+                crate::CoolingSchedule::Exponential { cooling_rate } => {
+                    CoolingSchedule::new_default_tsp(tsp.num_cities() as u64, cooling_rate)
+                }
+            };
             Box::new(SimulatedAnnealing::new(
                 tsp.num_cities(),
                 TwoOpt,

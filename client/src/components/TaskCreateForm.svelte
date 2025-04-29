@@ -15,6 +15,7 @@
 		{ text: "Ant Colony Optimization (ACO)", value: "ACO" },
 	];
 	const tspInstanceOptions = ["berlin52", "Custom"];
+	const scheduleOptions = ["Static", "Exponential"];
 
 	let problem = $state("OneMax");
 	let bitstringSize = $state(1000);
@@ -24,7 +25,10 @@
 	let customTspInstanceValidated = $state(false);
 
 	let algorithm = $state("OnePlusOneEA");
+
+	let scheduleType = $state("Exponential");
 	let coolingRate = $state(1.0);
+	let staticTemperature = $state(0.0);
 
 	let maxIterations = $state(1000000);
 	let optimalFitness: number | undefined = $state(undefined);
@@ -66,7 +70,15 @@
 			algorithm: {
 				type: algorithm,
 				...(algorithm == "SimulatedAnnealing" && {
-					cooling_rate: coolingRate,
+					cooling_schedule: {
+						type: scheduleType,
+						...(scheduleType == "Static" && {
+							temperature: staticTemperature,
+						}),
+						...(scheduleType == "Exponential" && {
+							cooling_rate: coolingRate,
+						}),
+					},
 				}),
 			},
 			stop_cond: {
@@ -160,15 +172,39 @@
 		</label>
 		{#if algorithm == "SimulatedAnnealing"}
 			<label class="flex flex-col">
-				Cooling rate (c):
-				<input
-					type="number"
-					step="any"
-					required
-					bind:value={coolingRate}
-					class="border rounded px-1"
-				/>
+				Cooling Schedule Type:
+				<select bind:value={scheduleType} class="border rounded">
+					{#each scheduleOptions as option}
+						<option value={option}>{option}</option>
+					{/each}
+				</select>
 			</label>
+			{#if scheduleType == "Static"}
+				<label class="flex flex-col">
+					Static Temperature:
+					<input
+						type="number"
+						step="any"
+						min="0"
+						required
+						bind:value={staticTemperature}
+						class="border rounded px-1"
+					/>
+				</label>
+			{/if}
+			{#if scheduleType == "Exponential"}
+				<label class="flex flex-col">
+					Cooling rate (c):
+					<input
+						type="number"
+						step="any"
+						min="0"
+						required
+						bind:value={coolingRate}
+						class="border rounded px-1"
+					/>
+				</label>
+			{/if}
 		{/if}
 	</div>
 	<div class="flex flex-col space-y-2">

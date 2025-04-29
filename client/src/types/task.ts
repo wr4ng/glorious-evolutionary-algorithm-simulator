@@ -4,6 +4,14 @@ export interface Task {
 	algorithm: Algorithm;
 }
 
+export interface TaskResult {
+	id: string;
+	problem: Problem;
+	algorithm: Algorithm;
+    final_fitness: number;
+    final_iterations: number;
+}
+
 export interface Problem {
 	type: "OneMax" | "LeadingOnes" | "TSP";
 	bitstring_size: number | undefined;
@@ -12,5 +20,11 @@ export interface Problem {
 
 export interface Algorithm {
 	type: "OnePlusOneEA" | "SimulatedAnnealing" | "ACO";
-	tsp_mutator: string | undefined;
+	cooling_schedule: CoolingSchedule | undefined;
+}
+
+export interface CoolingSchedule {
+	type: "Static" | "Exponential";
+	temperature: number;
+	cooling_rate: number;
 }

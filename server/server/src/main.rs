@@ -115,6 +115,7 @@ async fn create_task(
                 algorithm: task.algorithm,
                 problem: task.problem,
                 final_fitness: runner.current_fitness(),
+                final_iterations: runner.iterations(),
             });
         }
     });
@@ -150,6 +151,28 @@ struct Task {
     stop_cond: StopCondition,
 }
 
+#[derive(Deserialize, Serialize, Clone, Debug)]
+struct StopCondition {
+    max_iterations: u64,
+    optimal_fitness: Option<f64>,
+}
+
+#[derive(Serialize, Clone)]
+struct TaskResult {
+    id: Uuid,
+    algorithm: Algorithm,
+    problem: Problem,
+    final_fitness: f64,
+    final_iterations: u64,
+}
+
+#[derive(Serialize)]
+struct TasksReturn {
+    in_progress: Vec<Task>,
+    queued: Vec<Task>,
+    finished: Vec<TaskResult>,
+}
+
 #[derive(Deserialize, Serialize, Clone, Copy, Debug)]
 #[serde(tag = "type")]
 enum Algorithm {
@@ -171,25 +194,4 @@ enum Problem {
     OneMax { bitstring_size: usize },
     LeadingOnes { bitstring_size: usize },
     TSP { tsp_instance: String },
-}
-
-#[derive(Deserialize, Serialize, Clone, Debug)]
-struct StopCondition {
-    max_iterations: u64,
-    optimal_fitness: Option<f64>,
-}
-
-#[derive(Serialize, Clone)]
-struct TaskResult {
-    id: Uuid,
-    algorithm: Algorithm,
-    problem: Problem,
-    final_fitness: f64,
-}
-
-#[derive(Serialize)]
-struct TasksReturn {
-    in_progress: Vec<Task>,
-    queued: Vec<Task>,
-    finished: Vec<TaskResult>,
 }

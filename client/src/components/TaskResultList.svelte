@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { Task } from "../types/task.ts";
+	import type { TaskResult } from "../types/task.ts";
 
 	interface TaskListProps {
-		tasks: Task[];
-		onClick: (task: Task) => Promise<void>;
+		tasks: TaskResult[];
+		onClick: (task: TaskResult) => Promise<void>;
 	}
 
 	const { tasks, onClick }: TaskListProps = $props();
@@ -36,6 +36,8 @@
 							{/if}
 						</p>
 					{/if}
+					<p>Final fitness: {task.final_fitness}</p>
+					<p>Final iterations: {task.final_iterations}</p>
 				</button>
 			</li>
 		{/each}

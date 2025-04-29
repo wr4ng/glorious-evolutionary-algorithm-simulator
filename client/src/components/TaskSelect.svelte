@@ -1,8 +1,9 @@
 <script lang="ts">
-	import type { Task } from "../types/task.ts";
+	import type { Task, TaskResult } from "../types/task.ts";
 	import Dashboard from "./Dashboard.svelte";
 	import TaskCreateForm from "./TaskCreateForm.svelte";
 	import TaskList from "./TaskList.svelte";
+    import TaskResultList from "./TaskResultList.svelte";
 
 	interface TaskSelectProps {
 		serverURL: string;
@@ -12,7 +13,7 @@
 
 	let in_progress: Task[] = $state([]);
 	let queued: Task[] = $state([]);
-	let finished: Task[] = $state([]);
+	let finished: TaskResult[] = $state([]);
 	let selectedTask: Task | null = $state(null);
 
 	let lastRequestBody: Object | null = $state(null);
@@ -21,7 +22,7 @@
 	interface GetTasksResponse {
 		in_progress: Task[];
 		queued: Task[];
-		finished: Task[];
+		finished: TaskResult[];
 	}
 
 	async function selectTask(task: Task) {
@@ -92,7 +93,7 @@
 			<h1 class="text-4xl font-extrabold">In-Progress Tasks</h1>
 			<TaskList tasks={in_progress} onClick={selectTask} />
 			<h1 class="mt-4 text-4xl font-extrabold">Completed Tasks</h1>
-			<TaskList tasks={finished} onClick={async (_: Task) => {}} />
+			<TaskResultList tasks={finished} onClick={async (_: Task) => {}} />
 		</div>
 		<div class="w-1/2">
 			<TaskCreateForm onSubmit={createTask} error={createError} />

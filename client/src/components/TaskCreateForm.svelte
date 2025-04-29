@@ -15,10 +15,7 @@
 		{ text: "Ant Colony Optimization (ACO)", value: "ACO" },
 	];
 	const tspInstanceOptions = ["berlin52", "Custom"];
-	const tspMutatorOptions = [
-		{ text: "2-opt", value: "TwoOpt" },
-		{ text: "3-opt", value: "ThreeOpt" },
-	];
+	const scheduleOptions = ["Static", "Exponential"];
 
 	let problem = $state("OneMax");
 	let bitstringSize = $state(1000);
@@ -26,10 +23,12 @@
 	let customTspInstance = $state("");
 	let customTspInstanceError = $state("");
 	let customTspInstanceValidated = $state(false);
-	let tspMutator = $state("TwoOpt");
 
 	let algorithm = $state("OnePlusOneEA");
+
+	let scheduleType = $state("Exponential");
 	let coolingRate = $state(1.0);
+	let staticTemperature = $state(0.0);
 
 	let maxIterations = $state(1000000);
 	let optimalFitness: number | undefined = $state(undefined);
@@ -42,13 +41,9 @@
 		return problem == "TSP";
 	}
 
-	function needMutator(algorithm: string) {
-		return algorithm == "OnePlusOneEA" || algorithm == "SimulatedAnnealing";
-	}
-
 	function validateCustomTSP() {
 		try {
-			const _ = parseEUC2D(customTspInstance);
+			parseEUC2D(customTspInstance);
 			customTspInstanceValidated = true;
 		} catch (error) {
 			console.log(error);
@@ -60,29 +55,38 @@
 		e.preventDefault();
 		//TODO: Validate object
 		const requestBody = {
-			problem: problem,
-			algorithm: algorithm,
+			problem: {
+				type: problem,
+				...(isBitstringProblem(problem) && {
+					bitstring_size: bitstringSize,
+				}),
+				...(isTSP(problem) && {
+					tsp_instance:
+						tspInstance == "berlin52"
+							? berlin52EUC2D
+							: customTspInstance,
+				}),
+			},
+			algorithm: {
+				type: algorithm,
+				...(algorithm == "SimulatedAnnealing" && {
+					cooling_schedule: {
+						type: scheduleType,
+						...(scheduleType == "Static" && {
+							temperature: staticTemperature,
+						}),
+						...(scheduleType == "Exponential" && {
+							cooling_rate: coolingRate,
+						}),
+					},
+				}),
+			},
 			stop_cond: {
 				max_iterations: maxIterations,
 				...(optimalFitness && {
 					optimal_fitness: optimalFitness,
 				}),
 			},
-			...(isBitstringProblem(problem) && {
-				bitstring_size: bitstringSize,
-			}),
-			...(isTSP(problem) && {
-				tsp_instance:
-					tspInstance == "berlin52"
-						? berlin52EUC2D
-						: customTspInstance,
-				...(needMutator(algorithm) && {
-					tsp_mutator: tspMutator,
-				}),
-			}),
-			...(algorithm == "SimulatedAnnealing" && {
-				cooling_rate: coolingRate,
-			}),
 		};
 		console.log(requestBody);
 		onSubmit(requestBody);
@@ -110,16 +114,6 @@
 					required
 					class="border rounded px-1"
 				/>
-			</label>
-		{/if}
-		{#if isTSP(problem) && needMutator(algorithm)}
-			<label class="flex flex-col">
-				TSP Mutator:
-				<select required bind:value={tspMutator} class="border rounded">
-					{#each tspMutatorOptions as option}
-						<option value={option.value}>{option.text}</option>
-					{/each}
-				</select>
 			</label>
 		{/if}
 		{#if isTSP(problem)}
@@ -178,15 +172,39 @@
 		</label>
 		{#if algorithm == "SimulatedAnnealing"}
 			<label class="flex flex-col">
-				Cooling rate (c):
-				<input
-					type="number"
-					step="any"
-					required
-					bind:value={coolingRate}
-					class="border rounded px-1"
-				/>
+				Cooling Schedule Type:
+				<select bind:value={scheduleType} class="border rounded">
+					{#each scheduleOptions as option}
+						<option value={option}>{option}</option>
+					{/each}
+				</select>
 			</label>
+			{#if scheduleType == "Static"}
+				<label class="flex flex-col">
+					Static Temperature:
+					<input
+						type="number"
+						step="any"
+						min="0"
+						required
+						bind:value={staticTemperature}
+						class="border rounded px-1"
+					/>
+				</label>
+			{/if}
+			{#if scheduleType == "Exponential"}
+				<label class="flex flex-col">
+					Cooling rate (c):
+					<input
+						type="number"
+						step="any"
+						min="0"
+						required
+						bind:value={coolingRate}
+						class="border rounded px-1"
+					/>
+				</label>
+			{/if}
 		{/if}
 	</div>
 	<div class="flex flex-col space-y-2">

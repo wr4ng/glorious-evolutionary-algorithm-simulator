@@ -73,6 +73,7 @@
 
 	function deselectTask() {
 		selectedTask = null;
+		getTasks();
 	}
 
 	getTasks();

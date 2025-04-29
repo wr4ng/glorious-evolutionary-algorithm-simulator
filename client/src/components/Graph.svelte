@@ -38,7 +38,7 @@
 	}
 </script>
 
-<div class="graph-container p-4" use:updateDimensions>
+<div class="graph-container" use:updateDimensions>
 	<svg {viewBox} preserveAspectRatio="xMidYMid meet">
 		{#each edges as edge}
 			<line
@@ -64,6 +64,7 @@
 	svg {
 		width: 100%;
 		height: 100%;
+		display: inline-block;
 	}
 
 	.edge {

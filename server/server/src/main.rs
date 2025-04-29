@@ -64,34 +64,27 @@ async fn create_task(
     Json(request): Json<CreateTaskRequest>,
 ) -> Result<Json<Task>, CreateError> {
     let id = Uuid::new_v4();
+
     let task = Task {
         id,
         algorithm: request.algorithm,
         problem: request.problem,
-        tsp_instance: request.tsp_instance.clone(),
-        stop_cond: request.stop_cond.clone(),
+        stop_cond: request.stop_cond,
     };
+    let task_result = task.clone();
 
-    let mut runner = create_ea(request.clone())?;
+    let mut runner = create_ea(&task)?;
 
+    let (tx, _) = channel::<serde_json::Value>(10); //TODO: Determine capacity
     //TODO: Push to instead if there are no threads avaiable to pick up task
-    state
-        .lock()
-        .expect("failed to aquire mutex")
-        .in_progress
-        .insert(id, task.clone());
+    {
+        let mut state = state.lock().expect("failed to aquire mutex");
+        state.in_progress.insert(id, task.clone());
+        state.in_progress_channels.insert(task.id, tx.clone());
+    }
 
     thread::spawn(move || {
-        //Insert channel
-        let (tx, _) = channel::<serde_json::Value>(10); //TODO: Determine capacity
-        state
-            .lock()
-            .expect("failed to aquire mutex")
-            .in_progress_channels
-            .insert(task.id, tx.clone());
-
         sleep(Duration::from_millis(100));
-
         let _ = tx.send(runner.status_json());
         loop {
             runner.iterate(&mut rng());
@@ -119,14 +112,14 @@ async fn create_task(
             state.in_progress_channels.remove(&task.id);
             state.finished.push(TaskResult {
                 id,
-                algorithm: request.algorithm,
-                problem: request.problem,
+                algorithm: task.algorithm,
+                problem: task.problem,
                 final_fitness: runner.current_fitness(),
             });
         }
     });
 
-    Ok(Json(task))
+    Ok(Json(task_result))
 }
 
 async fn get_tasks(State(state): State<SharedState>) -> (StatusCode, Json<TasksReturn>) {
@@ -146,43 +139,41 @@ async fn get_tasks(State(state): State<SharedState>) -> (StatusCode, Json<TasksR
 struct CreateTaskRequest {
     algorithm: Algorithm,
     problem: Problem,
-    bitstring_size: Option<usize>,
-    tsp_instance: Option<String>,
-    tsp_mutator: Option<TSPMutator>,
     stop_cond: StopCondition,
-    cooling_rate: Option<f64>,
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 struct Task {
     id: Uuid,
     algorithm: Algorithm,
     problem: Problem,
-    tsp_instance: Option<String>,
     stop_cond: StopCondition,
 }
 
-#[derive(Deserialize, Serialize, Clone, Copy)]
+#[derive(Deserialize, Serialize, Clone, Copy, Debug)]
+#[serde(tag = "type")]
 enum Algorithm {
     OnePlusOneEA,
-    SimulatedAnnealing,
+    SimulatedAnnealing { cooling_schedule: CoolingSchedule },
     ACO,
 }
 
-#[derive(Deserialize, Serialize, Clone, Copy)]
+#[derive(Deserialize, Serialize, Clone, Copy, Debug)]
+#[serde(tag = "type")]
+enum CoolingSchedule {
+    Static { temperature: f64 },
+    Exponential { cooling_rate: f64 },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(tag = "type")]
 enum Problem {
-    OneMax,
-    LeadingOnes,
-    TSP,
+    OneMax { bitstring_size: usize },
+    LeadingOnes { bitstring_size: usize },
+    TSP { tsp_instance: String },
 }
 
-#[derive(Deserialize, Serialize, Clone, Copy)]
-enum TSPMutator {
-    TwoOpt,
-    ThreeOpt,
-}
-
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 struct StopCondition {
     max_iterations: u64,
     optimal_fitness: Option<f64>,

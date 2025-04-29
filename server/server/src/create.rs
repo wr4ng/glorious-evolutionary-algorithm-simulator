@@ -6,7 +6,7 @@ use eas::{
     algorithms::{
         EvolutionaryAlgorithm,
         one_plus_one_ea::OnePlusOneEA,
-        simulated_annealing::{DefaultBitstringSchedule, DefaultTSPSchedule, SimulatedAnnealing},
+        simulated_annealing::{CoolingSchedule, SimulatedAnnealing},
     },
     fitness::{leading_ones::LeadingOnes, one_max::OneMax, tsp::TSP},
     mutation::{Bitflip, SingleBitflip, TwoOpt},
@@ -72,7 +72,7 @@ pub fn create_sa_runner(
 ) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, CreateError> {
     Ok(match problem {
         Problem::OneMax { bitstring_size } => {
-            let c = DefaultBitstringSchedule::new(*bitstring_size as u64, cooling_rate);
+            let c = CoolingSchedule::new_default_bitstring(*bitstring_size as u64, cooling_rate);
             Box::new(SimulatedAnnealing::new(
                 *bitstring_size,
                 SingleBitflip,
@@ -82,7 +82,7 @@ pub fn create_sa_runner(
             ))
         }
         Problem::LeadingOnes { bitstring_size } => {
-            let c = DefaultBitstringSchedule::new(*bitstring_size as u64, cooling_rate);
+            let c = CoolingSchedule::new_default_bitstring(*bitstring_size as u64, cooling_rate);
             Box::new(SimulatedAnnealing::new(
                 *bitstring_size,
                 SingleBitflip,
@@ -93,7 +93,7 @@ pub fn create_sa_runner(
         }
         Problem::TSP { tsp_instance } => {
             let tsp = TSP::from_euc2d(&tsp_instance).ok_or(CreateError::InvalidTSP)?;
-            let c = DefaultTSPSchedule::new(tsp.num_cities() as u64, cooling_rate);
+            let c = CoolingSchedule::new_default_tsp(tsp.num_cities() as u64, cooling_rate);
             Box::new(SimulatedAnnealing::new(
                 tsp.num_cities(),
                 TwoOpt,

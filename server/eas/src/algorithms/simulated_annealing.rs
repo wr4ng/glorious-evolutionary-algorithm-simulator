@@ -4,97 +4,77 @@ use crate::{fitness::FitnessFunction, mutation::Mutation, rng::MyRng, search_spa
 
 use super::{EvolutionaryAlgorithmCore, SimulationState};
 
-pub trait CoolingSchedule {
-    fn temperature(&self, t: u64) -> f64;
+pub enum CoolingSchedule {
+    Static(f64),
+    Exponential(f64, f64),
 }
 
-// Default general cooling schedule for bitstring problems
-// T(1) = n^3 where n should be initialized to the length of the bitstring (size)
-// T(t) = n^3 * (1 - 1/cn)^t where c is a parameter given to the cooling schedule.
-// A constructor is provided to calculate c such that T(t') = 1 for some value t'
-pub struct DefaultBitstringSchedule {
-    size: u64,
-    c: f64,
-}
-
-impl DefaultBitstringSchedule {
-    pub fn new(size: u64, c: f64) -> Self {
-        Self { size, c }
-    }
-
-    pub fn from_max_iterations(size: u64, max_iterations: u64) -> Self {
-        // -1 / (n * ((1/n^3)^(1/t) - 1))
-        let c = -1.0
-            / (size as f64
-                * (((1.0 / ((size as f64).powi(3))).powf(1.0 / max_iterations as f64)) - 1.0));
-        Self { size, c }
-    }
-}
-
-impl CoolingSchedule for DefaultBitstringSchedule {
-    fn temperature(&self, t: u64) -> f64 {
-        if t == 0 {
-            return self.size.pow(3) as f64;
+impl CoolingSchedule {
+    pub fn temperature(&self, t: u64) -> f64 {
+        match self {
+            CoolingSchedule::Static(static_temp) => *static_temp,
+            CoolingSchedule::Exponential(initial, alpha) => initial * alpha.powi(t as i32),
         }
-        // n^3 * (1 - 1/cn)^t
-        self.size.pow(3) as f64 * (1.0 - 1.0 / (self.c * self.size as f64)).powi(t as i32)
-    }
-}
-
-// Default cooling schedule for TSP (and other permutation based problems)
-// T(1) = n^3 where n should be initialized to the number of vertices (permutation length)
-// T(t) = n^3 * (1 - 1/cn^2)^t where c is a parameter given to the cooling schedule.
-// A constructor is provided to calculate c such that T(t') = 1 for some value t'
-pub struct DefaultTSPSchedule {
-    size: u64,
-    c: f64,
-}
-
-impl DefaultTSPSchedule {
-    pub fn new(size: u64, c: f64) -> Self {
-        Self { size, c }
     }
 
-    pub fn from_max_iterations(size: u64, max_iterations: u64) -> Self {
-        // -1 / (n^2 * ((1/n^3)^(1/t) - 1))
+    pub fn new_static(temperature: f64) -> Self {
+        CoolingSchedule::Static(temperature)
+    }
+
+    pub fn new_default_bitstring(size: u64, c: f64) -> Self {
+        let initial_temp = size.pow(3) as f64; // T(0) = n^3
+        let alpha = 1.0 - 1.0 / (c * size as f64); // alpha = 1 - 1/cn
+        CoolingSchedule::Exponential(initial_temp, alpha)
+    }
+
+    pub fn new_default_tsp(size: u64, c: f64) -> Self {
+        let initial_temp = size.pow(3) as f64; // T(0) = n^3
+        let alpha = 1.0 - 1.0 / (c * size.pow(2) as f64); // alpha = 1 - 1/cn^2
+        CoolingSchedule::Exponential(initial_temp, alpha)
+    }
+
+    pub fn from_max_iterations_tsp(size: u64, max_iterations: u64) -> Self {
+        // c = -1 / (n^2 * ((1/n^3)^(1/t) - 1))
         let c = -1.0
             / (size.pow(2) as f64
                 * (((1.0 / ((size as f64).powi(3))).powf(1.0 / max_iterations as f64)) - 1.0));
-        Self { size, c }
+        Self::new_default_tsp(size, c)
+    }
+
+    pub fn from_max_iterations_bitstring(size: u64, max_iterations: u64) -> Self {
+        // c = -1 / (n * ((1/n^3)^(1/t) - 1))
+        let c = -1.0
+            / (size as f64
+                * (((1.0 / ((size as f64).powi(3))).powf(1.0 / max_iterations as f64)) - 1.0));
+        Self::new_default_tsp(size, c)
     }
 }
 
-impl CoolingSchedule for DefaultTSPSchedule {
-    fn temperature(&self, t: u64) -> f64 {
-        if t == 0 {
-            return self.size.pow(3) as f64;
-        }
-        // n^3 * (1 - 1/cn^2)^t
-        self.size.pow(3) as f64 * (1.0 - 1.0 / (self.c * (self.size).pow(2) as f64)).powi(t as i32)
-    }
-}
-
-pub struct SimulatedAnnealing<S, F, M, C>
+pub struct SimulatedAnnealing<S, F, M>
 where
     S: SearchSpace,
     F: FitnessFunction<S>,
     M: Mutation<S>,
-    C: CoolingSchedule,
 {
     pub state: SimulationState<S>,
     fitness: F,
     mutator: M,
-    cooling: C,
+    cooling: CoolingSchedule,
 }
 
-impl<S, F, M, C> SimulatedAnnealing<S, F, M, C>
+impl<S, F, M> SimulatedAnnealing<S, F, M>
 where
     S: SearchSpace,
     F: FitnessFunction<S>,
     M: Mutation<S>,
-    C: CoolingSchedule,
 {
-    pub fn new<R: MyRng>(size: usize, mutator: M, fitness: F, cooling: C, mut rng: R) -> Self {
+    pub fn new<R: MyRng>(
+        size: usize,
+        mutator: M,
+        fitness: F,
+        cooling: CoolingSchedule,
+        mut rng: R,
+    ) -> Self {
         let current_solution = S::new_random(size, &mut rng);
         let current_fitness = fitness.evaluate(&current_solution);
         SimulatedAnnealing {
@@ -114,12 +94,11 @@ where
     }
 }
 
-impl<S, F, M, C> EvolutionaryAlgorithmCore for SimulatedAnnealing<S, F, M, C>
+impl<S, F, M> EvolutionaryAlgorithmCore for SimulatedAnnealing<S, F, M>
 where
     S: SearchSpace,
     F: FitnessFunction<S>,
     M: Mutation<S>,
-    C: CoolingSchedule,
 {
     fn iterate<R: MyRng>(&mut self, rng: &mut R) {
         let neighbor = self.mutator.apply(&self.state.current_solution, rng);

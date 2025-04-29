@@ -94,7 +94,6 @@
 				} else if (isPermutationProblem) {
 					edges = parsePermutation(message.current_solution);
 				}
-				//TODO: Handle permutation
 			} catch (error) {
 				//TODO: Handle error
 				console.log(error);

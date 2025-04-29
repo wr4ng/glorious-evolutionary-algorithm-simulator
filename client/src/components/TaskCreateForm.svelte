@@ -15,10 +15,6 @@
 		{ text: "Ant Colony Optimization (ACO)", value: "ACO" },
 	];
 	const tspInstanceOptions = ["berlin52", "Custom"];
-	const tspMutatorOptions = [
-		{ text: "2-opt", value: "TwoOpt" },
-		{ text: "3-opt", value: "ThreeOpt" },
-	];
 
 	let problem = $state("OneMax");
 	let bitstringSize = $state(1000);
@@ -26,7 +22,6 @@
 	let customTspInstance = $state("");
 	let customTspInstanceError = $state("");
 	let customTspInstanceValidated = $state(false);
-	let tspMutator = $state("TwoOpt");
 
 	let algorithm = $state("OnePlusOneEA");
 	let coolingRate = $state(1.0);
@@ -40,13 +35,6 @@
 
 	function isTSP(problem: string) {
 		return problem == "TSP";
-	}
-
-	function needMutator(problem: string, algorithm: string) {
-		return (
-			isTSP(problem) &&
-			(algorithm == "OnePlusOneEA" || algorithm == "SimulatedAnnealing")
-		);
 	}
 
 	function validateCustomTSP() {
@@ -79,9 +67,6 @@
 				type: algorithm,
 				...(algorithm == "SimulatedAnnealing" && {
 					cooling_rate: coolingRate,
-				}),
-				...(needMutator(problem, algorithm) && {
-					tsp_mutator: tspMutator,
 				}),
 			},
 			stop_cond: {
@@ -183,16 +168,6 @@
 					bind:value={coolingRate}
 					class="border rounded px-1"
 				/>
-			</label>
-		{/if}
-		{#if needMutator(problem, algorithm)}
-			<label class="flex flex-col">
-				TSP Mutator:
-				<select required bind:value={tspMutator} class="border rounded">
-					{#each tspMutatorOptions as option}
-						<option value={option.value}>{option.text}</option>
-					{/each}
-				</select>
 			</label>
 		{/if}
 	</div>

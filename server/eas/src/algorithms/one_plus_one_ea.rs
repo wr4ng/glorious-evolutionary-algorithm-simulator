@@ -86,7 +86,7 @@ where
         let num_mutations = rng.sample_poisson();
         let mut offspring = self.mutator.apply(&self.state.current_solution, rng);
 
-        for _ in 0..num_mutations {
+        for _ in 0..=num_mutations {
             offspring = self.mutator.apply(&offspring, rng);
         }
         let new_fitness = self.fitness_function.evaluate(&offspring);

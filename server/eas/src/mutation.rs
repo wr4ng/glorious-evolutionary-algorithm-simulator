@@ -1,5 +1,3 @@
-use crate::fitness::FitnessFunction;
-
 use super::rng::MyRng;
 use super::search_space::{Bitstring, Permutation, SearchSpace};
 

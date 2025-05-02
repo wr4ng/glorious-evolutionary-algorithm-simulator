@@ -11,7 +11,7 @@ pub async fn get_websocket_updates(
     ws: WebSocketUpgrade,
     Path(id): Path<Uuid>,
 ) -> axum::response::Response {
-    let chans = &state.lock().unwrap().in_progress_channels;
+    let chans = &state.lock().unwrap().schedule_channels;
     if let Some(tx) = chans.get(&id) {
         let rx = tx.subscribe(); // Clone receiver for this client
         return ws.on_upgrade(move |socket| handle_websocket(socket, rx));

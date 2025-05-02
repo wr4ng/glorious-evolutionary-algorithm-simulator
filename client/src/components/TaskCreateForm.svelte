@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { berlin52EUC2D, parseEUC2D } from "../lib/tsp";
+	import type { Task, TaskScheduleRequest } from "../types/task";
 
 	interface TaskCreateFormProps {
-		onSubmit: (r: any) => void;
+		onSubmit: (request: TaskScheduleRequest) => void;
 		error: string;
 	}
 
@@ -54,7 +55,7 @@
 	async function handleSumbit(e: SubmitEvent) {
 		e.preventDefault();
 		//TODO: Validate object
-		const requestBody = {
+		const requestBody: Task = {
 			problem: {
 				type: problem,
 				...(isBitstringProblem(problem) && {
@@ -89,7 +90,9 @@
 			},
 		};
 		console.log(requestBody);
-		onSubmit(requestBody);
+		onSubmit({
+			tasks: [requestBody, requestBody],
+		});
 	}
 </script>
 

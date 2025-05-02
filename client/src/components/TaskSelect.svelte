@@ -1,9 +1,12 @@
 <script lang="ts">
-	import type { Task, TaskResult } from "../types/task.ts";
+	import type {
+		TaskSchedule,
+		TaskScheduleRequest,
+		TaskScheduleResult,
+	} from "../types/task.ts";
 	import Dashboard from "./Dashboard.svelte";
 	import TaskCreateForm from "./TaskCreateForm.svelte";
-	import TaskList from "./TaskList.svelte";
-    import TaskResultList from "./TaskResultList.svelte";
+	import TaskResultList from "./TaskResultList.svelte";
 
 	interface TaskSelectProps {
 		serverURL: string;
@@ -11,92 +14,70 @@
 
 	let { serverURL }: TaskSelectProps = $props();
 
-	let in_progress: Task[] = $state([]);
-	let queued: Task[] = $state([]);
-	let finished: TaskResult[] = $state([]);
-	let selectedTask: Task | null = $state(null);
+	let results: TaskScheduleResult[] = $state([]);
+	let selectedTaskSchedule: TaskSchedule | null = $state(null);
 
-	let lastRequestBody: Object | null = $state(null);
 	let createError = $state("");
 
-	interface GetTasksResponse {
-		in_progress: Task[];
-		queued: Task[];
-		finished: TaskResult[];
-	}
-
-	async function selectTask(task: Task) {
-		selectedTask = task;
-		console.log("selected: " + task.id);
-	}
-
-	async function getTasks() {
+	async function getResults() {
 		try {
-			const response = await fetch(`${serverURL}/tasks`);
+			const response = await fetch(`${serverURL}/results`);
 			if (!response.ok) {
 				throw new Error(`server responded with: ${response.status}`);
 			}
-			const resp = (await response.json()) as GetTasksResponse;
-			in_progress = resp.in_progress;
-			queued = resp.queued;
-			finished = resp.finished;
+			const data = (await response.json()) as TaskScheduleResult[];
+			results = data;
 		} catch (error) {
 			console.log(error);
 		}
 	}
 
 	//TODO: Create type for requestBody
-	async function createTask(requestBody: any) {
+	async function createTaskSchedule(request: TaskScheduleRequest) {
 		//TODO: Validate requestInput
 		try {
-			lastRequestBody = requestBody;
-			const response = await fetch(`${serverURL}/tasks`, {
+			const response = await fetch(`${serverURL}/schedules`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(requestBody),
+				body: JSON.stringify(request),
 			});
 			if (!response.ok) {
 				const responseText = await response.text();
 				createError = `Failed to create task: ${responseText}`;
 				return;
 			}
-			selectedTask = await response.json();
+			selectedTaskSchedule = await response.json();
 		} catch (error) {
 			console.log(error);
-			createError = "Failed to send create task request...";
+			createError = "Failed to send create task schedule request...";
 		}
 	}
 
-	async function rerunTask() {
-		deselectTask();
-		createTask(lastRequestBody);
+	function deselectTaskSchedule() {
+		selectedTaskSchedule = null;
+		getResults();
 	}
 
-	function deselectTask() {
-		selectedTask = null;
-		getTasks();
-	}
-
-	getTasks();
+	getResults();
 </script>
 
-{#if selectedTask}
+{#if selectedTaskSchedule}
 	<Dashboard
 		{serverURL}
-		task={selectedTask}
-		back={deselectTask}
-		rerun={rerunTask}
+		taskSchedule={selectedTaskSchedule}
+		back={deselectTaskSchedule}
 	/>
 {:else}
 	<div class="flex h-screen p-4 gap-4">
 		<div class="w-1/2">
-			<h1 class="text-4xl font-extrabold">In-Progress Tasks</h1>
-			<TaskList tasks={in_progress} onClick={selectTask} />
-			<h1 class="mt-4 text-4xl font-extrabold">Completed Tasks</h1>
-			<TaskResultList tasks={finished} onClick={async (_: Task) => {}} />
+			<h1 class="mt-4 text-4xl font-extrabold">Results</h1>
+			<TaskResultList
+				{results}
+				onClick={async (_: TaskScheduleResult) => {}}
+			/>
 		</div>
 		<div class="w-1/2">
-			<TaskCreateForm onSubmit={createTask} error={createError} />
+			<TaskCreateForm onSubmit={createTaskSchedule} error={createError} />
 		</div>
 	</div>
 {/if}

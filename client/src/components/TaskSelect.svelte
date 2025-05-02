@@ -71,10 +71,7 @@
 	<div class="flex h-screen p-4 gap-4">
 		<div class="w-1/2">
 			<h1 class="mt-4 text-4xl font-extrabold">Results</h1>
-			<TaskResultList
-				{results}
-				onClick={async (_: TaskScheduleResult) => {}}
-			/>
+			<TaskResultList {results} />
 		</div>
 		<div class="w-1/2">
 			<TaskCreateForm onSubmit={createTaskSchedule} error={createError} />

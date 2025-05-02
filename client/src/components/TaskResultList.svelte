@@ -4,10 +4,9 @@
 
 	interface TaskListProps {
 		results: TaskScheduleResult[];
-		onClick: (task: TaskScheduleResult) => Promise<void>;
 	}
 
-	const { results, onClick }: TaskListProps = $props();
+	const { results }: TaskListProps = $props();
 </script>
 
 <ul>

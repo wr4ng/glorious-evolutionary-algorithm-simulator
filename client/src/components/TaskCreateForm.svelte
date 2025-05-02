@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { berlin52EUC2D, parseEUC2D } from "../lib/tsp";
 	import type { Task, TaskScheduleRequest } from "../types/task";
+	import TaskText from "./TaskText.svelte";
 
 	interface TaskCreateFormProps {
 		onSubmit: (request: TaskScheduleRequest) => void;
@@ -34,6 +35,8 @@
 	let maxIterations = $state(1000000);
 	let optimalFitness: number | undefined = $state(undefined);
 
+	let tasks: Task[] = $state([]);
+
 	function isBitstringProblem(problem: string) {
 		return problem == "OneMax" || problem == "LeadingOnes";
 	}
@@ -54,8 +57,16 @@
 
 	async function handleSumbit(e: SubmitEvent) {
 		e.preventDefault();
-		//TODO: Validate object
-		const requestBody: Task = {
+		if (tasks.length == 0) {
+			return;
+		}
+		onSubmit({
+			tasks: tasks,
+		});
+	}
+
+	function addCurrentTask() {
+		let task: Task = {
 			problem: {
 				type: problem,
 				...(isBitstringProblem(problem) && {
@@ -89,10 +100,7 @@
 				}),
 			},
 		};
-		console.log(requestBody);
-		onSubmit({
-			tasks: [requestBody, requestBody],
-		});
+		tasks = [...tasks, task];
 	}
 </script>
 
@@ -236,7 +244,17 @@
 	{#if error}
 		<span class="text-red-500 font-bold">{error}</span>
 	{/if}
-	<button type="submit" class="border rounded-lg py-2 font-bold">
-		Create Task
+	<button
+		type="button"
+		class="border rounded-lg py-2 font-bold"
+		onclick={addCurrentTask}
+	>
+		Add Task
 	</button>
+	<button type="submit" class="border rounded-lg p-2 font-bold">
+		Create Schedule
+	</button>
+	{#each tasks as task}
+		<TaskText {task} />
+	{/each}
 </form>

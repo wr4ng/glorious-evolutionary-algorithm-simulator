@@ -102,6 +102,10 @@
 		};
 		tasks = [...tasks, task];
 	}
+
+	function clearSchedule() {
+		tasks = [];
+	}
 </script>
 
 <form onsubmit={handleSumbit} class="flex flex-col space-y-4">
@@ -250,6 +254,9 @@
 		onclick={addCurrentTask}
 	>
 		Add Task
+	</button>
+	<button type="button" class="border rounded-lg p-2 font-bold" onclick={clearSchedule}>
+		Clear Schedule
 	</button>
 	<button type="submit" class="border rounded-lg p-2 font-bold">
 		Create Schedule

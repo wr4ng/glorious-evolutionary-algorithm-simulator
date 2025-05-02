@@ -74,6 +74,7 @@
 			<TaskResultList {results} />
 		</div>
 		<div class="w-1/2">
+			<h1 class="mt-4 text-4xl font-extrabold">Create Schedule</h1>
 			<TaskCreateForm onSubmit={createTaskSchedule} error={createError} />
 		</div>
 	</div>

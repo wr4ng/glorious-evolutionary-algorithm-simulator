@@ -2,12 +2,19 @@
 	import Chart from "./Chart.svelte";
 	import Graph from "./Graph.svelte";
 	import Onion from "./Onion.svelte";
-	import type { Algorithm, Problem, Task, TaskSchedule } from "../types/task";
+	import type {
+		Algorithm,
+		Problem,
+		Task,
+		TaskResult,
+		TaskSchedule,
+	} from "../types/task";
 	import type { Node, Edge, Point } from "../types/types";
 	import type { Series } from "../types/chart";
 	import { bitstringToOnionCoords } from "../lib/onion";
 	import { parsePermutation } from "../lib/graph";
 	import { parseEUC2D } from "../lib/tsp";
+	import TaskText from "./TaskText.svelte";
 
 	interface DashboardProps {
 		serverURL: string;
@@ -20,7 +27,7 @@
 	var status = $state("Disconnected...");
 
 	let currentTask: Task | null = $state(null);
-	let results: Result[] = $state([]);
+	let results: TaskResult[] = $state([]);
 
 	let onionPoints: Point[] = $state([]);
 	let nodes: Node[] = $state([]);
@@ -35,7 +42,7 @@
 		messageType: string;
 		task: Task | null;
 		data: SimulationUpdate | null;
-		result: Result | null;
+		result: TaskResult | null;
 	}
 
 	interface SimulationUpdate {
@@ -43,12 +50,6 @@
 		current_fitness: number;
 		current_solution: string;
 		temperature: number | undefined;
-	}
-
-	interface Result {
-		task: Task;
-		fitness: number;
-		iterations: number;
 	}
 
 	function buildSeries(): Series[] {
@@ -204,11 +205,55 @@
 	{/if}
 	<div>
 		<h1 class="text-2xl font-bold">Results</h1>
-		{#each results as result}
-			<p>
-				{result.task.algorithm.type} - {result.iterations} - {result.fitness}
-			</p>
-		{/each}
+		<div
+			class="text-gray-700 shadow-md bg-white rounded-xl overflow-hidden"
+		>
+			<table class="w-full text-left table-auto">
+				<thead>
+					<tr class="bg-gray-100">
+						<th class="p-4 border-b border-blue-gray-100"
+							>Algorithm</th
+						>
+						<th class="p-4 border-b border-blue-gray-100"
+							>Final Fitness</th
+						>
+						<th class="p-4 border-b border-blue-gray-100"
+							>Final Iterations</th
+						>
+					</tr>
+				</thead>
+				<tbody>
+					{#each results as result, i}
+						<tr class={i % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+							<td
+								class={"p-2 " +
+									(i === results.length - 1
+										? ""
+										: "border-b border-blue-gray-50")}
+							>
+								<TaskText task={result.task} />
+							</td>
+							<td
+								class={"p-2 " +
+									(i === results.length - 1
+										? ""
+										: "border-b border-blue-gray-50")}
+							>
+								{result.fitness}
+							</td>
+							<td
+								class={"p-2 " +
+									(i === results.length - 1
+										? ""
+										: "border-b border-blue-gray-50")}
+							>
+								{result.iterations}
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
 	</div>
 	<div>
 		<h1 class="text-2xl font-bold">Controls</h1>

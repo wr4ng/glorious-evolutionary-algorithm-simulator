@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { mapAlgorithmName } from "../lib/algorithm";
 	import type { Task } from "../types/task";
 
 	interface TaskTextProps {
@@ -9,7 +10,9 @@
 </script>
 
 <div>
-	<strong>{task.algorithm.type} - {task.problem.type}</strong>
+	<strong
+		>{mapAlgorithmName(task.algorithm.type)} - {task.problem.type}</strong
+	>
 	{#if task.algorithm.cooling_schedule}
 		<p>
 			Cooling Scheduel: {task.algorithm.cooling_schedule.type}

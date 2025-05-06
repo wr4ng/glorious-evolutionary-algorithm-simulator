@@ -1,27 +1,25 @@
-use axum::{Json, Router, extract::State, http::StatusCode, routing::get};
-use create::{CreateError, create_ea};
-use rand::rng;
+use axum::{
+    extract::State, routing::{get, post}, Json, Router
+};
+use schedule::create_task_schedule;
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::{HashMap, VecDeque},
+    collections::HashMap,
     sync::{Arc, Mutex},
-    thread::{self, sleep},
-    time::Duration,
 };
-use tokio::sync::broadcast::{Sender, channel};
+use tokio::sync::broadcast::Sender;
 use tower_http::cors::{Any, CorsLayer};
 use uuid::Uuid;
 use ws::get_websocket_updates;
 
 mod create;
+mod schedule;
 mod ws;
 
 #[derive()]
 struct AppState {
-    in_progress: HashMap<Uuid, Task>,
-    in_progress_channels: HashMap<Uuid, Sender<serde_json::Value>>,
-    queue: VecDeque<Task>,
-    finished: Vec<TaskResult>,
+    results: Vec<ScheduleResult>,
+    schedule_channels: HashMap<Uuid, Sender<serde_json::Value>>,
 }
 
 type SharedState = Arc<Mutex<AppState>>;
@@ -29,10 +27,8 @@ type SharedState = Arc<Mutex<AppState>>;
 #[tokio::main]
 async fn main() {
     let state: SharedState = Arc::new(Mutex::new(AppState {
-        in_progress: HashMap::new(),
-        in_progress_channels: HashMap::new(),
-        queue: VecDeque::new(),
-        finished: Vec::new(),
+        results: Vec::new(),
+        schedule_channels: HashMap::new(),
     }));
 
     //TODO: Proberly handle CORS
@@ -44,7 +40,8 @@ async fn main() {
     // build our application with a single route
     let app = Router::new()
         .route("/ping", get(ping_handler))
-        .route("/tasks", get(get_tasks).post(create_task))
+        .route("/results", get(get_results))
+        .route("/schedules", post(create_task_schedule))
         .route("/ws/{id}", get(get_websocket_updates))
         .layer(cors)
         .with_state(state);
@@ -59,93 +56,19 @@ async fn ping_handler() -> String {
     "pong".to_owned()
 }
 
-async fn create_task(
-    State(state): State<SharedState>,
-    Json(request): Json<CreateTaskRequest>,
-) -> Result<Json<Task>, CreateError> {
-    let id = Uuid::new_v4();
-
-    let task = Task {
-        id,
-        algorithm: request.algorithm,
-        problem: request.problem,
-        stop_cond: request.stop_cond,
-    };
-    let task_result = task.clone();
-
-    let mut runner = create_ea(&task)?;
-
-    let (tx, _) = channel::<serde_json::Value>(10); //TODO: Determine capacity
-    //TODO: Push to instead if there are no threads avaiable to pick up task
-    {
-        let mut state = state.lock().expect("failed to aquire mutex");
-        state.in_progress.insert(id, task.clone());
-        state.in_progress_channels.insert(task.id, tx.clone());
-    }
-
-    thread::spawn(move || {
-        sleep(Duration::from_millis(100));
-        let _ = tx.send(runner.status_json());
-        loop {
-            runner.iterate(&mut rng());
-            if runner.iterations() >= task.stop_cond.max_iterations {
-                break;
-            }
-            // If optimal solution is provided, stop if it is reached
-            if let Some(optimal) = task.stop_cond.optimal_fitness {
-                //TODO: Use fitness function to compare to avoid exact matching
-                if optimal == runner.current_fitness() {
-                    break;
-                }
-            }
-            //TODO: Don't use fixed update-rate
-            if runner.iterations() % 1000 == 0 {
-                let _ = tx.send(runner.status_json());
-            }
-        }
-        let _ = tx.send(runner.status_json());
-
-        // Keep lock on shared state while removing from in_progress and inserting into finished
-        {
-            let mut state = state.lock().expect("failed to aquire mutex");
-            state.in_progress.remove(&task.id);
-            state.in_progress_channels.remove(&task.id);
-            state.finished.push(TaskResult {
-                id,
-                algorithm: task.algorithm,
-                problem: task.problem,
-                final_fitness: runner.current_fitness(),
-                final_iterations: runner.iterations(),
-            });
-        }
-    });
-
-    Ok(Json(task_result))
-}
-
-async fn get_tasks(State(state): State<SharedState>) -> (StatusCode, Json<TasksReturn>) {
-    let state = state.lock().expect("couldn't aquire mutex");
-    let in_progress = state.in_progress.clone().into_values().collect();
-    let queued = state.queue.clone().into_iter().collect();
-    let finished = state.finished.clone();
-    let returns = TasksReturn {
-        in_progress,
-        queued,
-        finished,
-    };
-    (StatusCode::ACCEPTED, Json(returns))
-}
-
-#[derive(Deserialize, Clone)]
-struct CreateTaskRequest {
-    algorithm: Algorithm,
-    problem: Problem,
-    stop_cond: StopCondition,
+async fn get_results(State(state): State<SharedState>) -> Json<Vec<ScheduleResult>> {
+    let state = state.lock().expect("failed to aquire mutex");
+    let results = state.results.clone();
+    Json(results)
 }
 
 #[derive(Serialize, Clone, Debug)]
+struct ScheduleResult {
+    results: Vec<TaskResult>,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
 struct Task {
-    id: Uuid,
     algorithm: Algorithm,
     problem: Problem,
     stop_cond: StopCondition,
@@ -157,20 +80,11 @@ struct StopCondition {
     optimal_fitness: Option<f64>,
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 struct TaskResult {
-    id: Uuid,
-    algorithm: Algorithm,
-    problem: Problem,
-    final_fitness: f64,
-    final_iterations: u64,
-}
-
-#[derive(Serialize)]
-struct TasksReturn {
-    in_progress: Vec<Task>,
-    queued: Vec<Task>,
-    finished: Vec<TaskResult>,
+    task: Task,
+    fitness: f64,
+    iterations: u64,
 }
 
 #[derive(Deserialize, Serialize, Clone, Copy, Debug)]

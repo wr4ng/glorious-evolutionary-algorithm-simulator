@@ -15,6 +15,8 @@
 	import { parsePermutation } from "../lib/graph";
 	import { parseEUC2D } from "../lib/tsp";
 	import TaskText from "./TaskText.svelte";
+	import { taskToText } from "../lib/task";
+    import { downloadCSV } from "../lib/download";
 
 	interface DashboardProps {
 		serverURL: string;
@@ -167,6 +169,15 @@
 	const hasTemp = (algorithm: Algorithm) =>
 		algorithm.type == "SimulatedAnnealing";
 
+	function downloadResults() {
+		const header = "task, final_fitness, final_iterations\n";
+		const content = results.map((taskResult) => {
+			return `${taskToText(taskResult.task)}, ${taskResult.fitness}, ${taskResult.iterations}\n`;
+		}).join('');
+
+		downloadCSV(header + content);
+	}
+
 	setupWebsocket();
 </script>
 
@@ -203,16 +214,25 @@
 			</div>
 		</div>
 	{/if}
-	<div>
+	<div class="flex flex-col gap-2">
 		<h1 class="text-2xl font-bold">Results</h1>
+		{#if results.length > 0}
+			<button
+				type="button"
+				onclick={downloadResults}
+				class="border rounded-lg p-2 font-bold"
+			>
+				Download Results
+			</button>
+		{/if}
 		<div
-			class="text-gray-700 shadow-md bg-white rounded-xl overflow-hidden"
+			class="text-gray-700 shadow-md bg-white border rounded-xl overflow-hidden"
 		>
 			<table class="w-full text-left table-auto">
 				<thead>
 					<tr class="bg-gray-100">
 						<th class="p-4 border-b border-blue-gray-100"
-							>Algorithm</th
+							>Task</th
 						>
 						<th class="p-4 border-b border-blue-gray-100"
 							>Final Fitness</th
@@ -224,14 +244,14 @@
 				</thead>
 				<tbody>
 					{#each results as result, i}
-						<tr class={i % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+						<tr class={i % 2 === 1 ? "bg-gray-50" : "bg-white"}>
 							<td
 								class={"p-2 " +
 									(i === results.length - 1
 										? ""
 										: "border-b border-blue-gray-50")}
 							>
-								<TaskText task={result.task} />
+								<p>{taskToText(result.task)}</p>
 							</td>
 							<td
 								class={"p-2 " +

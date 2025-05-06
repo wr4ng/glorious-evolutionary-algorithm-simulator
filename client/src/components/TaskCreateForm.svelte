@@ -255,16 +255,18 @@
 	>
 		Add Task
 	</button>
-	<button
-		type="button"
-		class="border rounded-lg p-2 font-bold"
-		onclick={clearSchedule}
-	>
-		Clear Schedule
-	</button>
-	<button type="submit" class="border rounded-lg p-2 font-bold">
-		Create Schedule
-	</button>
+	{#if tasks.length > 0}
+		<button
+			type="button"
+			class="border rounded-lg p-2 font-bold"
+			onclick={clearSchedule}
+		>
+			Clear Schedule
+		</button>
+		<button type="submit" class="border rounded-lg p-2 font-bold">
+			Create Schedule
+		</button>
+	{/if}
 	<h1 class="text-xl font-bold">Current Schedule</h1>
 	{#each tasks as task}
 		<TaskText {task} />

@@ -2,6 +2,7 @@
 	import { berlin52EUC2D, parseEUC2D } from "../lib/tsp";
 	import type { Task, TaskScheduleRequest } from "../types/task";
 	import TaskText from "./TaskText.svelte";
+	import Button from "./ui/Button.svelte";
 
 	interface TaskCreateFormProps {
 		onSubmit: (request: TaskScheduleRequest) => void;
@@ -165,13 +166,11 @@
 				{#if customTspInstanceValidated}
 					<span class="text-green-500 font-bold">Valid</span>
 				{/if}
-				<button
+				<Button
+					text="Validate TSP Instance"
 					type="button"
 					onclick={validateCustomTSP}
-					class="border rounded-lg py-2 font-bold"
-				>
-					Validate TSP Instance
-				</button>
+				/>
 			{/if}
 		{/if}
 	</div>
@@ -248,24 +247,10 @@
 	{#if error}
 		<span class="text-red-500 font-bold">{error}</span>
 	{/if}
-	<button
-		type="button"
-		class="border rounded-lg py-2 font-bold"
-		onclick={addCurrentTask}
-	>
-		Add Task
-	</button>
+	<Button text="Add Task" type="button" onclick={addCurrentTask} />
 	{#if tasks.length > 0}
-		<button
-			type="button"
-			class="border rounded-lg p-2 font-bold"
-			onclick={clearSchedule}
-		>
-			Clear Schedule
-		</button>
-		<button type="submit" class="border rounded-lg p-2 font-bold">
-			Create Schedule
-		</button>
+		<Button text="Clear Schedule" type="button" onclick={clearSchedule} />
+		<Button text="Create Schedule" type="submit" />
 	{/if}
 	<h1 class="text-xl font-bold">Current Schedule</h1>
 	{#each tasks as task}

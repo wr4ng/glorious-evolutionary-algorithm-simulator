@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Button from "./ui/Button.svelte";
+
 	interface ServerSelectProps {
 		setServerURL: (url: string) => Promise<void>;
 		error: string;
@@ -27,13 +29,11 @@
 		required
 		class="bg-gray-50 border rounded-lg p-2.5"
 	/>
-	<button
+	<Button
+		text={loading ? "Loading..." : "Select"}
 		type="submit"
 		disabled={loading}
-		class="border rounded-lg py-2 font-bold"
-	>
-		{loading ? "Loading..." : "Select"}
-	</button>
+	/>
 	{#if error}
 		<p class="text-red-500 font-bold">{error}</p>
 	{/if}

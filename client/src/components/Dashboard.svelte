@@ -14,9 +14,9 @@
 	import { bitstringToOnionCoords } from "../lib/onion";
 	import { parsePermutation } from "../lib/graph";
 	import { parseEUC2D } from "../lib/tsp";
-	import TaskText from "./TaskText.svelte";
 	import { taskToText } from "../lib/task";
-    import { downloadCSV } from "../lib/download";
+	import { downloadCSV } from "../lib/download";
+	import Button from "./ui/Button.svelte";
 
 	interface DashboardProps {
 		serverURL: string;
@@ -171,9 +171,11 @@
 
 	function downloadResults() {
 		const header = "task, final_fitness, final_iterations\n";
-		const content = results.map((taskResult) => {
-			return `${taskToText(taskResult.task)}, ${taskResult.fitness}, ${taskResult.iterations}\n`;
-		}).join('');
+		const content = results
+			.map((taskResult) => {
+				return `${taskToText(taskResult.task)}, ${taskResult.fitness}, ${taskResult.iterations}\n`;
+			})
+			.join("");
 
 		downloadCSV(header + content);
 	}
@@ -216,24 +218,22 @@
 	{/if}
 	<div class="flex flex-col gap-2">
 		<h1 class="text-2xl font-bold">Results</h1>
-		{#if results.length > 0}
-			<button
-				type="button"
-				onclick={downloadResults}
-				class="border rounded-lg p-2 font-bold"
-			>
-				Download Results
-			</button>
-		{/if}
+		<div>
+			{#if results.length > 0}
+				<Button
+					text="Download Results"
+					type="button"
+					onclick={downloadResults}
+				/>
+			{/if}
+		</div>
 		<div
 			class="text-gray-700 shadow-md bg-white border rounded-xl overflow-hidden"
 		>
 			<table class="w-full text-left table-auto">
 				<thead>
 					<tr class="bg-gray-100">
-						<th class="p-4 border-b border-blue-gray-100"
-							>Task</th
-						>
+						<th class="p-4 border-b border-blue-gray-100">Task</th>
 						<th class="p-4 border-b border-blue-gray-100"
 							>Final Fitness</th
 						>
@@ -277,11 +277,6 @@
 	</div>
 	<div>
 		<h1 class="text-2xl font-bold">Controls</h1>
-		<button
-			onclick={handleBack}
-			class="border rounded-lg px-4 py-2 font-bold"
-		>
-			Back
-		</button>
+		<Button text="Back" onclick={handleBack} extraClass="px-4" />
 	</div>
 </div>

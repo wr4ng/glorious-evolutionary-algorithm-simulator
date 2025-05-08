@@ -71,7 +71,7 @@
 		<div class="w-1/2">
 			<TaskCreateForm {addTask} />
 		</div>
-		<div class="w-1/2 flex flex-col gap-2">
+		<div class="w-1/2 flex flex-col gap-4">
 			<ScheduleList schedule={tasks} {removeTask} />
 			{#if createError}
 				<span class="text-red-500 font-bold">{createError}</span>

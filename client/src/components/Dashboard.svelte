@@ -28,16 +28,17 @@
 	var socket: WebSocket;
 	var status = $state("Disconnected...");
 
-	let currentTask: Task | null = $state(null);
+	let tasks: Task[] = $state([]);
+	let currentTaskIndex: number = $state(0);
+
 	let results: TaskResult[] = $state([]);
 
+	let iterations: number[][] = $state([]);
+	let fitness: number[][] = $state([]);
+	let temperature: number[][] = $state([]);
 	let onionPoints: Point[] = $state([]);
 	let nodes: Node[] = $state([]);
 	let edges: Edge[] = $state([]);
-
-	let iterations: number[] = $state([]);
-	let fitness: number[] = $state([]);
-	let temperature: number[] = $state([]);
 
 	// Message types
 	interface Message {
@@ -54,18 +55,18 @@
 		temperature: number | undefined;
 	}
 
-	function buildSeries(): Series[] {
+	function buildSeries(i: number): Series[] {
 		let series: Series[] = [
 			{
-				data: [...fitness],
+				data: [...fitness[i]],
 				label: "Fitness",
 				color: "blue",
 				yAxisID: "yfit",
 			},
 		];
-		if (hasTemp(currentTask!.algorithm)) {
+		if (hasTemp(tasks[i].algorithm)) {
 			series.push({
-				data: [...temperature],
+				data: [...temperature[i]],
 				label: "Temperature",
 				color: "red",
 				yAxisID: "ytemp",
@@ -101,34 +102,46 @@
 				const message = JSON.parse(event.data) as Message;
 
 				if (message.messageType == "setTask" && message.task) {
-					currentTask = message.task;
+					tasks = [...tasks, message.task];
+					iterations = [...iterations, []];
+					fitness = [...fitness, []];
+					temperature = [...temperature, []];
+					currentTaskIndex = tasks.length - 1;
 					clearData();
 					if (
-						currentTask.problem.type == "TSP" &&
-						currentTask.problem.tsp_instance
+						message.task.problem.type == "TSP" &&
+						message.task.problem.tsp_instance
 					) {
-						nodes = parseEUC2D(currentTask.problem.tsp_instance);
+						nodes = parseEUC2D(message.task.problem.tsp_instance);
 					}
 					return;
 				}
 
 				if (message.messageType == "dataUpdate" && message.data) {
-					iterations = [...iterations, message.data.iterations];
-					fitness = [...fitness, message.data.current_fitness];
+					iterations[currentTaskIndex] = [
+						...iterations[currentTaskIndex],
+						message.data.iterations,
+					];
+					fitness[currentTaskIndex] = [
+						...fitness[currentTaskIndex],
+						message.data.current_fitness,
+					];
 
 					if (message.data.temperature) {
-						temperature = [
-							...temperature,
+						temperature[currentTaskIndex] = [
+							...temperature[currentTaskIndex],
 							message.data.temperature,
 						];
 					}
 
-					if (isBitstringProblem(currentTask!.problem)) {
+					if (isBitstringProblem(tasks[currentTaskIndex].problem)) {
 						const p = bitstringToOnionCoords(
 							message.data.current_solution,
 						);
 						onionPoints = [...onionPoints, p];
-					} else if (isPermutationProblem(currentTask!.problem)) {
+					} else if (
+						isPermutationProblem(tasks[currentTaskIndex].problem)
+					) {
 						edges = parsePermutation(message.data.current_solution);
 					}
 					return;
@@ -154,9 +167,6 @@
 	}
 
 	function clearData() {
-		iterations = [];
-		fitness = [];
-		temperature = [];
 		onionPoints = [];
 		nodes = [];
 		edges = [];
@@ -180,6 +190,17 @@
 		downloadCSV(header + content);
 	}
 
+	function updateTaskIndex(delta: number) {
+		const newIndex = currentTaskIndex + delta;
+		if (newIndex < 0) {
+			currentTaskIndex = 0;
+		} else if (newIndex >= tasks.length) {
+			currentTaskIndex = tasks.length - 1;
+		} else {
+			currentTaskIndex = newIndex;
+		}
+	}
+
 	setupWebsocket();
 </script>
 
@@ -189,24 +210,44 @@
 		<p>Task ID: {taskSchedule.id}</p>
 		<p>Status: {status}</p>
 	</div>
-	{#if currentTask}
+	{#if tasks.length > 0}
 		<div>
 			<h1 class="text-2xl font-bold">Current Task</h1>
-			<p>Iteration: {iterations[iterations.length - 1]}</p>
-			<p>Fitness: {fitness[fitness.length - 1]}</p>
+			{#if status == "Disconnected..."}
+				<div class="flex gap-2 items-center">
+					<Button
+						text="<"
+						disabled={currentTaskIndex == 0}
+						onclick={() => updateTaskIndex(-1)}
+					/>
+					<p>Current task: {currentTaskIndex + 1}</p>
+					<Button
+						text=">"
+						disabled={currentTaskIndex == tasks.length - 1}
+						onclick={() => updateTaskIndex(1)}
+					/>
+				</div>
+			{/if}
+			<p>
+				Iteration: {iterations[currentTaskIndex][iterations.length - 1]}
+			</p>
+			<p>Fitness: {fitness[currentTaskIndex][fitness.length - 1]}</p>
 		</div>
 		<div>
 			<h1 class="text-2xl font-bold">Visualizations</h1>
 			<div class="grid grid-cols-2 gap-2">
 				<div class="border rounded-lg h-120">
-					<Chart labels={[...iterations]} series={buildSeries()} />
+					<Chart
+						labels={[...iterations[currentTaskIndex]]}
+						series={buildSeries(currentTaskIndex)}
+					/>
 				</div>
 				<div class="h-120 border rounded-lg p-2">
 					<p class="h-6 font-bold text-xl">Instance</p>
 					<div class="h-110">
-						{#if isBitstringProblem(currentTask.problem)}
+						{#if isBitstringProblem(tasks[currentTaskIndex].problem)}
 							<Onion pointData={onionPoints} />
-						{:else if isPermutationProblem(currentTask.problem)}
+						{:else if isPermutationProblem(tasks[currentTaskIndex].problem)}
 							<Graph {nodes} {edges} />
 						{:else}
 							<p>Invalid problem. No visualization to show.</p>
@@ -244,32 +285,61 @@
 				</thead>
 				<tbody>
 					{#each results as result, i}
-						<tr class={i % 2 === 1 ? "bg-gray-50" : "bg-white"}>
-							<td
-								class={"p-2 " +
-									(i === results.length - 1
-										? ""
-										: "border-b border-blue-gray-50")}
-							>
-								<p>{taskToText(result.task)}</p>
-							</td>
-							<td
-								class={"p-2 " +
-									(i === results.length - 1
-										? ""
-										: "border-b border-blue-gray-50")}
-							>
-								{result.fitness}
-							</td>
-							<td
-								class={"p-2 " +
-									(i === results.length - 1
-										? ""
-										: "border-b border-blue-gray-50")}
-							>
-								{result.iterations}
-							</td>
-						</tr>
+						{#if i == currentTaskIndex}
+							<tr class="bg-gray-200">
+								<td
+									class={"p-2 " +
+										(i === results.length - 1
+											? ""
+											: "border-b border-blue-gray-50")}
+								>
+									<strong>{taskToText(result.task)}</strong>
+								</td>
+								<td
+									class={"p-2 " +
+										(i === results.length - 1
+											? ""
+											: "border-b border-blue-gray-50")}
+								>
+									{result.fitness}
+								</td>
+								<td
+									class={"p-2 " +
+										(i === results.length - 1
+											? ""
+											: "border-b border-blue-gray-50")}
+								>
+									{result.iterations}
+								</td>
+							</tr>
+						{:else}
+							<tr class={i % 2 === 1 ? "bg-gray-50" : "bg-white"}>
+								<td
+									class={"p-2 " +
+										(i === results.length - 1
+											? ""
+											: "border-b border-blue-gray-50")}
+								>
+									<strong>{taskToText(result.task)}</strong>
+								</td>
+								<td
+									class={"p-2 " +
+										(i === results.length - 1
+											? ""
+											: "border-b border-blue-gray-50")}
+								>
+									{result.fitness}
+								</td>
+								<td
+									class={"p-2 " +
+										(i === results.length - 1
+											? ""
+											: "border-b border-blue-gray-50")}
+								>
+									{result.iterations}
+								</td>
+							</tr>
+						{/if}
 					{/each}
 				</tbody>
 			</table>

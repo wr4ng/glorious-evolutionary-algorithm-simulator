@@ -1,15 +1,13 @@
 <script lang="ts">
 	import { berlin52EUC2D, parseEUC2D } from "../lib/tsp";
-	import type { Task, TaskScheduleRequest } from "../types/task";
-	import TaskText from "./TaskText.svelte";
+	import type { Task } from "../types/task";
 	import Button from "./ui/Button.svelte";
 
 	interface TaskCreateFormProps {
-		onSubmit: (request: TaskScheduleRequest) => void;
-		error: string;
+		addTask: (t: Task) => void;
 	}
 
-	let { onSubmit, error }: TaskCreateFormProps = $props();
+	let { addTask }: TaskCreateFormProps = $props();
 
 	const problemOptions = ["OneMax", "LeadingOnes", "TSP"];
 	const algorithmOptions = [
@@ -37,8 +35,6 @@
 	let optimalFitness: number | undefined = $state(undefined);
 
 	let autoOptimalFitness: boolean = $state(true);
-
-	let tasks: Task[] = $state([]);
 
 	function isBitstringProblem(problem: string) {
 		return problem == "OneMax" || problem == "LeadingOnes";
@@ -98,20 +94,7 @@
 				}),
 			},
 		};
-		tasks = [...tasks, task];
-	}
-
-	function submitSchedule() {
-		if (tasks.length == 0) {
-			return;
-		}
-		onSubmit({
-			tasks: tasks,
-		});
-	}
-
-	function clearSchedule() {
-		tasks = [];
+		addTask(task);
 	}
 
 	function checkAutoOptimalFitness() {
@@ -128,6 +111,7 @@
 	checkAutoOptimalFitness();
 </script>
 
+<h1 class="mt-4 text-4xl font-extrabold">Create Task</h1>
 <form
 	oninput={checkAutoOptimalFitness}
 	onchange={checkAutoOptimalFitness}
@@ -279,16 +263,5 @@
 			</div>
 		</label>
 	</div>
-	{#if error}
-		<span class="text-red-500 font-bold">{error}</span>
-	{/if}
 	<Button text="Add Task" type="submit" />
-	{#if tasks.length > 0}
-		<Button text="Clear Schedule" type="button" onclick={clearSchedule} />
-		<Button text="Create Schedule" type="button" onclick={submitSchedule} />
-	{/if}
-	<h1 class="text-xl font-bold">Current Schedule</h1>
-	{#each tasks as task}
-		<TaskText {task} />
-	{/each}
 </form>

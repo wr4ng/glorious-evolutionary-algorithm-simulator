@@ -1,12 +1,13 @@
 <script lang="ts">
 	import type {
+		Task,
 		TaskSchedule,
 		TaskScheduleRequest,
-		TaskScheduleResult,
 	} from "../types/task.ts";
 	import Dashboard from "./Dashboard.svelte";
+	import ScheduleList from "./ScheduleList.svelte";
 	import TaskCreateForm from "./TaskCreateForm.svelte";
-	import TaskResultList from "./TaskResultList.svelte";
+	import Button from "./ui/Button.svelte";
 
 	interface TaskSelectProps {
 		serverURL: string;
@@ -14,28 +15,16 @@
 
 	let { serverURL }: TaskSelectProps = $props();
 
-	let results: TaskScheduleResult[] = $state([]);
 	let selectedTaskSchedule: TaskSchedule | null = $state(null);
 
+	let tasks: Task[] = $state([]);
 	let createError = $state("");
 
-	async function getResults() {
+	async function submitSchedule() {
 		try {
-			const response = await fetch(`${serverURL}/results`);
-			if (!response.ok) {
-				throw new Error(`server responded with: ${response.status}`);
-			}
-			const data = (await response.json()) as TaskScheduleResult[];
-			results = data;
-		} catch (error) {
-			console.log(error);
-		}
-	}
-
-	//TODO: Create type for requestBody
-	async function createTaskSchedule(request: TaskScheduleRequest) {
-		//TODO: Validate requestInput
-		try {
+			let request: TaskScheduleRequest = {
+				tasks: tasks,
+			};
 			const response = await fetch(`${serverURL}/schedules`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -53,12 +42,22 @@
 		}
 	}
 
-	function deselectTaskSchedule() {
-		selectedTaskSchedule = null;
-		getResults();
+	function removeTask(i: number) {
+		console.log(i);
+		tasks.splice(i, 1);
 	}
 
-	getResults();
+	function addTask(t: Task) {
+		tasks = [...tasks, t];
+	}
+
+	function clearSchedule() {
+		tasks = [];
+	}
+
+	function deselectTaskSchedule() {
+		selectedTaskSchedule = null;
+	}
 </script>
 
 {#if selectedTaskSchedule}
@@ -68,14 +67,31 @@
 		back={deselectTaskSchedule}
 	/>
 {:else}
-	<div class="flex h-screen p-4 gap-4">
+	<div class="p-4 flex gap-4">
 		<div class="w-1/2">
-			<h1 class="mt-4 text-4xl font-extrabold">Results</h1>
-			<TaskResultList {results} />
+			<TaskCreateForm {addTask} />
 		</div>
-		<div class="w-1/2">
-			<h1 class="mt-4 text-4xl font-extrabold">Create Schedule</h1>
-			<TaskCreateForm onSubmit={createTaskSchedule} error={createError} />
+		<div class="w-1/2 flex flex-col gap-4">
+			<ScheduleList schedule={tasks} {removeTask} />
+			{#if createError}
+				<span class="text-red-500 font-bold">{createError}</span>
+			{/if}
+			{#if tasks.length > 0}
+				<div class="flex gap-2">
+					<Button
+						text="Create Schedule"
+						type="button"
+						onclick={submitSchedule}
+						extraClass="grow"
+					/>
+					<Button
+						text="Clear Schedule"
+						type="button"
+						onclick={clearSchedule}
+						extraClass="grow"
+					/>
+				</div>
+			{/if}
 		</div>
 	</div>
 {/if}

@@ -5,9 +5,9 @@ export function taskToText(t: Task): string {
 	let result = "";
 	result += mapAlgorithmName(t.algorithm.type)
 	if (t.algorithm.cooling_schedule) {
-		if (t.algorithm.cooling_schedule.temperature) {
-			result += ` (Temperature = ${t.algorithm.cooling_schedule.temperature})`
-		} else if (t.algorithm.cooling_schedule.cooling_rate) {
+		if (t.algorithm.cooling_schedule.type == "Static") {
+			result += ` (Fixed T = ${t.algorithm.cooling_schedule.temperature})`
+		} else if (t.algorithm.cooling_schedule.type == "Exponential") {
 			result += ` (c = ${t.algorithm.cooling_schedule.cooling_rate})`
 		}
 	}

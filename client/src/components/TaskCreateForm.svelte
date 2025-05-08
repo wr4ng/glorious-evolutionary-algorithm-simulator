@@ -36,6 +36,8 @@
 	let maxIterations = $state(1000000);
 	let optimalFitness: number | undefined = $state(undefined);
 
+	let autoOptimalFitness: boolean = $state(true);
+
 	let tasks: Task[] = $state([]);
 
 	function isBitstringProblem(problem: string) {
@@ -58,12 +60,7 @@
 
 	async function handleSumbit(e: SubmitEvent) {
 		e.preventDefault();
-		if (tasks.length == 0) {
-			return;
-		}
-		onSubmit({
-			tasks: tasks,
-		});
+		addCurrentTask();
 	}
 
 	function addCurrentTask() {
@@ -104,12 +101,39 @@
 		tasks = [...tasks, task];
 	}
 
+	function submitSchedule() {
+		if (tasks.length == 0) {
+			return;
+		}
+		onSubmit({
+			tasks: tasks,
+		});
+	}
+
 	function clearSchedule() {
 		tasks = [];
 	}
+
+	function checkAutoOptimalFitness() {
+		if (autoOptimalFitness) {
+			if (problem == "OneMax" || problem == "LeadingOnes") {
+				optimalFitness = bitstringSize;
+			} else if (problem == "TSP" && tspInstance == "berlin52") {
+				optimalFitness = 7542;
+			} else {
+				optimalFitness = undefined;
+			}
+		}
+	}
+	checkAutoOptimalFitness();
 </script>
 
-<form onsubmit={handleSumbit} class="flex flex-col space-y-4">
+<form
+	oninput={checkAutoOptimalFitness}
+	onchange={checkAutoOptimalFitness}
+	onsubmit={handleSumbit}
+	class="flex flex-col space-y-4"
+>
 	<div class="flex flex-col space-y-2">
 		<h1 class="text-xl font-bold">Problem</h1>
 		<label class="flex flex-col">
@@ -236,21 +260,32 @@
 		</label>
 		<label class="flex flex-col">
 			Optimal Fitness (optional):
-			<input
-				type="number"
-				step="any"
-				bind:value={optimalFitness}
-				class="border rounded px-1"
-			/>
+			<div class="flex gap-2">
+				<input
+					type="number"
+					step="any"
+					disabled={autoOptimalFitness}
+					bind:value={optimalFitness}
+					class="border rounded px-1 grow disabled:bg-gray-200"
+				/>
+				<label class="flex items-center gap-2">
+					Auto Optimal Fitness:
+					<input
+						type="checkbox"
+						bind:checked={autoOptimalFitness}
+						class="w-4 h-4"
+					/>
+				</label>
+			</div>
 		</label>
 	</div>
 	{#if error}
 		<span class="text-red-500 font-bold">{error}</span>
 	{/if}
-	<Button text="Add Task" type="button" onclick={addCurrentTask} />
+	<Button text="Add Task" type="submit" />
 	{#if tasks.length > 0}
 		<Button text="Clear Schedule" type="button" onclick={clearSchedule} />
-		<Button text="Create Schedule" type="submit" />
+		<Button text="Create Schedule" type="button" onclick={submitSchedule} />
 	{/if}
 	<h1 class="text-xl font-bold">Current Schedule</h1>
 	{#each tasks as task}

@@ -190,7 +190,7 @@
 			})
 			.join("");
 
-		downloadCSV(header + content);
+		downloadCSV(header + content, `data-${taskSchedule.id}`);
 	}
 
 	function updateTaskIndex(delta: number) {

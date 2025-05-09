@@ -223,7 +223,7 @@
 						disabled={currentTaskIndex == 0}
 						onclick={() => updateTaskIndex(-1)}
 					/>
-					<p>Current task: {currentTaskIndex + 1}</p>
+					<p>Current task: {currentTaskIndex + 1}/{tasks.length}</p>
 					<Button
 						text=">"
 						disabled={currentTaskIndex == tasks.length - 1}
@@ -232,9 +232,15 @@
 				</div>
 			{/if}
 			<p>
-				Iteration: {iterations[currentTaskIndex][iterations.length - 1]}
+				Iteration: {iterations[currentTaskIndex][
+					iterations[currentTaskIndex].length - 1
+				]}
 			</p>
-			<p>Fitness: {fitness[currentTaskIndex][fitness.length - 1]}</p>
+			<p>
+				Fitness: {fitness[currentTaskIndex][
+					fitness[currentTaskIndex].length - 1
+				]}
+			</p>
 		</div>
 		<div>
 			<h1 class="text-2xl font-bold">Visualizations</h1>

@@ -36,9 +36,9 @@
 	let iterations: number[][] = $state([]);
 	let fitness: number[][] = $state([]);
 	let temperature: number[][] = $state([]);
-	let onionPoints: Point[] = $state([]);
-	let nodes: Node[] = $state([]);
-	let edges: Edge[] = $state([]);
+	let onionPoints: Point[][] = $state([]);
+	let nodes: Node[][] = $state([]);
+	let edges: Edge[][] = $state([]);
 
 	// Message types
 	interface Message {
@@ -106,13 +106,17 @@
 					iterations = [...iterations, []];
 					fitness = [...fitness, []];
 					temperature = [...temperature, []];
+					onionPoints = [...onionPoints, []];
+					nodes = [...nodes, []];
+					edges = [...edges, []];
 					currentTaskIndex = tasks.length - 1;
-					clearData();
 					if (
 						message.task.problem.type == "TSP" &&
 						message.task.problem.tsp_instance
 					) {
-						nodes = parseEUC2D(message.task.problem.tsp_instance);
+						nodes[currentTaskIndex] = parseEUC2D(
+							message.task.problem.tsp_instance,
+						);
 					}
 					return;
 				}
@@ -138,11 +142,16 @@
 						const p = bitstringToOnionCoords(
 							message.data.current_solution,
 						);
-						onionPoints = [...onionPoints, p];
+						onionPoints[currentTaskIndex] = [
+							...onionPoints[currentTaskIndex],
+							p,
+						];
 					} else if (
 						isPermutationProblem(tasks[currentTaskIndex].problem)
 					) {
-						edges = parsePermutation(message.data.current_solution);
+						edges[currentTaskIndex] = parsePermutation(
+							message.data.current_solution,
+						);
 					}
 					return;
 				}
@@ -164,12 +173,6 @@
 			socket.close();
 		}
 		back();
-	}
-
-	function clearData() {
-		onionPoints = [];
-		nodes = [];
-		edges = [];
 	}
 
 	const isBitstringProblem = (problem: Problem) =>
@@ -207,7 +210,7 @@
 <div class="flex flex-col p-2 space-y-4">
 	<div>
 		<h1 class="text-2xl font-bold">Stats</h1>
-		<p>Task ID: {taskSchedule.id}</p>
+		<p>Schedule ID: {taskSchedule.id}</p>
 		<p>Status: {status}</p>
 	</div>
 	{#if tasks.length > 0}
@@ -246,9 +249,12 @@
 					<p class="h-6 font-bold text-xl">Instance</p>
 					<div class="h-110">
 						{#if isBitstringProblem(tasks[currentTaskIndex].problem)}
-							<Onion pointData={onionPoints} />
+							<Onion pointData={onionPoints[currentTaskIndex]} />
 						{:else if isPermutationProblem(tasks[currentTaskIndex].problem)}
-							<Graph {nodes} {edges} />
+							<Graph
+								nodes={nodes[currentTaskIndex]}
+								edges={edges[currentTaskIndex]}
+							/>
 						{:else}
 							<p>Invalid problem. No visualization to show.</p>
 						{/if}
@@ -281,6 +287,7 @@
 						<th class="p-4 border-b border-blue-gray-100"
 							>Final Iterations</th
 						>
+						<th class="border-b border-blue-gray-100"></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -311,6 +318,12 @@
 								>
 									{result.iterations}
 								</td>
+								<td
+									class={"p-2 " +
+										(i === results.length - 1
+											? ""
+											: "border-b border-blue-gray-50")}
+								></td>
 							</tr>
 						{:else}
 							<tr class={i % 2 === 1 ? "bg-gray-50" : "bg-white"}>
@@ -338,6 +351,18 @@
 								>
 									{result.iterations}
 								</td>
+								<td
+									class={"p-2 text-right shrink " +
+										(i === results.length - 1
+											? ""
+											: "border-b border-blue-gray-50")}
+									><Button
+										text="Select"
+										onclick={() => {
+											currentTaskIndex = i;
+										}}
+									/></td
+								>
 							</tr>
 						{/if}
 					{/each}

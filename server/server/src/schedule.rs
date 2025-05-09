@@ -16,6 +16,7 @@ use crate::{ScheduleResult, SharedState, Task, TaskResult, create::create_ea};
 #[derive(Deserialize)]
 pub struct CreateTaskScheduleRequest {
     tasks: Vec<Task>,
+    repeat_count: usize,
 }
 
 #[derive(Serialize, Clone)]
@@ -36,6 +37,11 @@ pub async fn create_task_schedule(
         return Err(StatusCode::BAD_REQUEST);
     }
 
+    //TODO: Better error
+    if request.repeat_count == 0 || request.repeat_count > 100 {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
     let schedule = TaskSchedule {
         id: schedule_id,
         tasks: request.tasks,
@@ -47,7 +53,15 @@ pub async fn create_task_schedule(
     let runners = match schedule
         .tasks
         .into_iter()
-        .map(|t| create_ea(&t).map(|r| (t, r)))
+        .map(|t| {
+            (
+                t.clone(),
+                (0..request.repeat_count)
+                    .map(|_| create_ea(&t))
+                    .collect::<Result<Vec<_>, _>>(),
+            )
+        })
+        .map(|(t, r)| r.map(|r| (t, r)))
         .collect::<Result<Vec<_>, _>>()
     {
         Ok(r) => r,
@@ -66,31 +80,32 @@ pub async fn create_task_schedule(
         sleep(Duration::from_millis(100));
 
         let mut results = Vec::new();
+        for (task, task_runners) in runners {
+            for mut runner in task_runners {
+                let _ = tx.send(json!({
+                    "messageType": "setTask",
+                    "task": task
+                }
+                ));
 
-        for (task, mut runner) in runners {
-            let _ = tx.send(json!({
-                "messageType": "setTask",
-                "task": task
+                run_task(&task, &mut runner, &tx);
+
+                let _ = tx.send(json!({
+                    "messageType": "result",
+                    "result": {
+                        "task": task,
+                        "iterations": runner.iterations(),
+                        "fitness": runner.current_fitness(),
+                    },
+                }));
+
+                let task_result = TaskResult {
+                    task: task.clone(),
+                    iterations: runner.iterations(),
+                    fitness: runner.current_fitness(),
+                };
+                results.push(task_result);
             }
-            ));
-
-            run_task(&task, &mut runner, &tx);
-
-            let _ = tx.send(json!({
-                "messageType": "result",
-                "result": {
-                    "task": task,
-                    "iterations": runner.iterations(),
-                    "fitness": runner.current_fitness(),
-                },
-            }));
-
-            let task_result = TaskResult {
-                task,
-                iterations: runner.iterations(),
-                fitness: runner.current_fitness(),
-            };
-            results.push(task_result);
         }
 
         // Remove channel + add results

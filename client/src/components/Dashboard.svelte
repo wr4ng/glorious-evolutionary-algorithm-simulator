@@ -280,6 +280,7 @@
 			<table class="w-full text-left table-auto">
 				<thead>
 					<tr class="bg-gray-100">
+						<th class="p-4 border-b border-blue-gray-100">#</th>
 						<th class="p-4 border-b border-blue-gray-100">Task</th>
 						<th class="p-4 border-b border-blue-gray-100"
 							>Final Fitness</th
@@ -294,6 +295,14 @@
 					{#each results as result, i}
 						{#if i == currentTaskIndex}
 							<tr class="bg-gray-200">
+								<td
+									class={"p-2 " +
+										(i === results.length - 1
+											? ""
+											: "border-b border-blue-gray-50")}
+								>
+									<strong>{i + 1}</strong>
+								</td>
 								<td
 									class={"p-2 " +
 										(i === results.length - 1
@@ -327,6 +336,14 @@
 							</tr>
 						{:else}
 							<tr class={i % 2 === 1 ? "bg-gray-50" : "bg-white"}>
+								<td
+									class={"p-2 " +
+										(i === results.length - 1
+											? ""
+											: "border-b border-blue-gray-50")}
+								>
+									<strong>{i + 1}</strong>
+								</td>
 								<td
 									class={"p-2 " +
 										(i === results.length - 1

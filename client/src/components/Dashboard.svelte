@@ -286,12 +286,12 @@
 			<table class="w-full text-left table-auto">
 				<thead>
 					<tr class="bg-gray-100">
-						<th class="p-4 border-b border-blue-gray-100">#</th>
-						<th class="p-4 border-b border-blue-gray-100">Task</th>
-						<th class="p-4 border-b border-blue-gray-100"
+						<th class="p-2 border-b border-blue-gray-100">#</th>
+						<th class="p-2 border-b border-blue-gray-100">Task</th>
+						<th class="p-2 border-b border-blue-gray-100"
 							>Final Fitness</th
 						>
-						<th class="p-4 border-b border-blue-gray-100"
+						<th class="p-2 border-b border-blue-gray-100"
 							>Final Iterations</th
 						>
 						<th class="border-b border-blue-gray-100"></th>
@@ -384,6 +384,7 @@
 										onclick={() => {
 											currentTaskIndex = i;
 										}}
+										extraClass="py-0"
 									/></td
 								>
 							</tr>

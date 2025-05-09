@@ -18,7 +18,7 @@
 
 <button
 	{type}
-	class={`border rounded-lg p-2 font-bold bg-gray-300 hover:bg-gray-400 text-gray-800 ${extraClass}`}
+	class={`border rounded-lg p-2 font-bold ${disabled ? "bg-gray-100" : "bg-gray-200 hover:bg-gray-300"} text-gray-800 ${extraClass}`}
 	{disabled}
 	{onclick}
 >

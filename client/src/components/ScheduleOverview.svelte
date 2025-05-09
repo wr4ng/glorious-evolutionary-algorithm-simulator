@@ -18,12 +18,16 @@
 	let selectedTaskSchedule: TaskSchedule | null = $state(null);
 
 	let tasks: Task[] = $state([]);
+	let repeatCount: number = $state(1);
 	let createError = $state("");
 
-	async function submitSchedule() {
+	async function submitSchedule(e: SubmitEvent) {
+		e.preventDefault();
+
 		try {
 			let request: TaskScheduleRequest = {
 				tasks: tasks,
+				repeat_count: repeatCount,
 			};
 			const response = await fetch(`${serverURL}/schedules`, {
 				method: "POST",
@@ -77,20 +81,33 @@
 				<span class="text-red-500 font-bold">{createError}</span>
 			{/if}
 			{#if tasks.length > 0}
-				<div class="flex gap-2">
-					<Button
-						text="Create Schedule"
-						type="button"
-						onclick={submitSchedule}
-						extraClass="grow"
-					/>
-					<Button
-						text="Clear Schedule"
-						type="button"
-						onclick={clearSchedule}
-						extraClass="grow"
-					/>
-				</div>
+				<form onsubmit={submitSchedule} class="flex flex-col space-y-4">
+					<label class="flex items-center gap-2">
+						Repeat Count:
+						<input
+							type="number"
+							step="1"
+							min="1"
+							max="100"
+							required
+							bind:value={repeatCount}
+							class="border rounded px-1"
+						/>
+					</label>
+					<div class="flex gap-2">
+						<Button
+							text="Create Schedule"
+							type="submit"
+							extraClass="grow"
+						/>
+						<Button
+							text="Clear Schedule"
+							type="button"
+							onclick={clearSchedule}
+							extraClass="grow"
+						/>
+					</div>
+				</form>
 			{/if}
 		</div>
 	</div>

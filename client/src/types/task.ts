@@ -39,6 +39,7 @@ export interface TaskSchedule {
 
 export interface TaskScheduleRequest {
 	tasks: Task[];
+	repeat_count: number;
 }
 
 export interface TaskScheduleResult {

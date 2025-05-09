@@ -1,16 +1,16 @@
 use axum::{
-    extract::State, routing::{get, post}, Json, Router
+    Router,
+    routing::{get, post},
 };
-use schedule::create_task_schedule;
+use schedule::{TaskSchedule, create_task_schedule};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
 };
-use tokio::sync::broadcast::Sender;
 use tower_http::cors::{Any, CorsLayer};
 use uuid::Uuid;
-use ws::get_websocket_updates;
+use ws::handle_websocket_connect;
 
 mod create;
 mod schedule;
@@ -18,8 +18,7 @@ mod ws;
 
 #[derive()]
 struct AppState {
-    results: Vec<ScheduleResult>,
-    schedule_channels: HashMap<Uuid, Sender<serde_json::Value>>,
+    pending_schedules: HashMap<Uuid, TaskSchedule>,
 }
 
 type SharedState = Arc<Mutex<AppState>>;
@@ -27,8 +26,7 @@ type SharedState = Arc<Mutex<AppState>>;
 #[tokio::main]
 async fn main() {
     let state: SharedState = Arc::new(Mutex::new(AppState {
-        results: Vec::new(),
-        schedule_channels: HashMap::new(),
+        pending_schedules: HashMap::new(),
     }));
 
     //TODO: Proberly handle CORS
@@ -40,9 +38,8 @@ async fn main() {
     // build our application with a single route
     let app = Router::new()
         .route("/ping", get(ping_handler))
-        .route("/results", get(get_results))
         .route("/schedules", post(create_task_schedule))
-        .route("/ws/{id}", get(get_websocket_updates))
+        .route("/ws/{id}", get(handle_websocket_connect))
         .layer(cors)
         .with_state(state);
 
@@ -56,17 +53,6 @@ async fn ping_handler() -> String {
     "pong".to_owned()
 }
 
-async fn get_results(State(state): State<SharedState>) -> Json<Vec<ScheduleResult>> {
-    let state = state.lock().expect("failed to aquire mutex");
-    let results = state.results.clone();
-    Json(results)
-}
-
-#[derive(Serialize, Clone, Debug)]
-struct ScheduleResult {
-    results: Vec<TaskResult>,
-}
-
 #[derive(Deserialize, Serialize, Clone, Debug)]
 struct Task {
     algorithm: Algorithm,
@@ -78,13 +64,6 @@ struct Task {
 struct StopCondition {
     max_iterations: u64,
     optimal_fitness: Option<f64>,
-}
-
-#[derive(Serialize, Clone, Debug)]
-struct TaskResult {
-    task: Task,
-    fitness: f64,
-    iterations: u64,
 }
 
 #[derive(Deserialize, Serialize, Clone, Copy, Debug)]

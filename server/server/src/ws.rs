@@ -43,7 +43,7 @@ async fn handle_schedule(mut socket: WebSocket, schedule: TaskSchedule) {
                 ),
             )
             .await;
-            run_task(&task, &mut runner, &mut socket).await;
+            run_task(&task, schedule.update_rate, &mut runner, &mut socket).await;
             let _ = send_json(
                 &mut socket,
                 json!({
@@ -68,6 +68,7 @@ async fn send_json(socket: &mut WebSocket, value: Value) -> Result<(), axum::Err
 
 async fn run_task(
     task: &Task,
+    update_rate: u64,
     runner: &mut Box<dyn EvolutionaryAlgorithm + Send>,
     socket: &mut WebSocket,
 ) {
@@ -91,8 +92,7 @@ async fn run_task(
                 break;
             }
         }
-        //TODO: Don't use fixed update-rate
-        if runner.iterations() % 1000 == 0 {
+        if runner.iterations() % update_rate == 0 {
             let _ = send_json(
                 socket,
                 json!({

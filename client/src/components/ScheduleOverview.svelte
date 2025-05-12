@@ -19,6 +19,7 @@
 
 	let tasks: Task[] = $state([]);
 	let repeatCount: number = $state(1);
+	let updateRate: number = $state(5000);
 	let createError = $state("");
 
 	async function submitSchedule(e: SubmitEvent) {
@@ -28,6 +29,7 @@
 			let request: TaskScheduleRequest = {
 				tasks: tasks,
 				repeat_count: repeatCount,
+				update_rate: updateRate,
 			};
 			const response = await fetch(`${serverURL}/schedules`, {
 				method: "POST",
@@ -91,6 +93,18 @@
 							max="100"
 							required
 							bind:value={repeatCount}
+							class="border rounded px-1"
+						/>
+					</label>
+					<label class="flex items-center gap-2">
+						Update rate:
+						<input
+							type="number"
+							step="1"
+							min="1000"
+							max="100000"
+							required
+							bind:value={updateRate}
 							class="border rounded px-1"
 						/>
 					</label>

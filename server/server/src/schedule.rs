@@ -7,14 +7,16 @@ use crate::{SharedState, Task, create::create_ea};
 #[derive(Deserialize)]
 pub struct CreateTaskScheduleRequest {
     tasks: Vec<Task>,
-    repeat_count: usize,
+    repeat_count: u64,
+    update_rate: u64,
 }
 
 #[derive(Serialize, Clone)]
 pub struct TaskSchedule {
     pub id: Uuid,
     pub tasks: Vec<Task>,
-    pub repeat_count: usize,
+    pub repeat_count: u64,
+    pub update_rate: u64,
 }
 
 //TODO: Error type
@@ -24,13 +26,23 @@ pub async fn create_task_schedule(
 ) -> Result<Json<TaskSchedule>, StatusCode> {
     let schedule_id = Uuid::new_v4();
 
+    // Validate repeat_count
     //TODO: Better error
-    if request.tasks.is_empty() {
+    //TODO: Determine ranges
+    if request.repeat_count == 0 || request.repeat_count > 100 {
         return Err(StatusCode::BAD_REQUEST);
     }
 
+    // Validate update_rate
     //TODO: Better error
-    if request.repeat_count == 0 || request.repeat_count > 100 {
+    //TODO: Determine ranges
+    if request.update_rate < 1000 || request.update_rate > 100000 {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    // Validate tasks
+    //TODO: Better error
+    if request.tasks.is_empty() {
         return Err(StatusCode::BAD_REQUEST);
     }
 
@@ -44,6 +56,7 @@ pub async fn create_task_schedule(
         id: schedule_id,
         tasks: request.tasks,
         repeat_count: request.repeat_count,
+        update_rate: request.update_rate,
     };
     let schedule_result = schedule.clone();
 
@@ -53,5 +66,6 @@ pub async fn create_task_schedule(
         .pending_schedules
         .insert(schedule_id, schedule);
 
+    println!("[{}] schedule created", schedule_id);
     Ok(Json(schedule_result))
 }

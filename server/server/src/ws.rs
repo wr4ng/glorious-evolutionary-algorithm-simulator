@@ -28,7 +28,7 @@ pub async fn handle_websocket_connect(
 }
 
 async fn handle_schedule(mut socket: WebSocket, schedule: TaskSchedule) {
-    println!("here!");
+    println!("[{}] schedule execution started", schedule.id);
     for task in schedule.tasks {
         for _ in 0..schedule.repeat_count {
             let Ok(mut runner) = create_ea(&task) else {
@@ -57,8 +57,8 @@ async fn handle_schedule(mut socket: WebSocket, schedule: TaskSchedule) {
             )
             .await;
         }
-        println!("done!");
     }
+    println!("[{}] schedule completed", schedule.id);
 }
 
 async fn send_json(socket: &mut WebSocket, value: Value) -> Result<(), axum::Error> {

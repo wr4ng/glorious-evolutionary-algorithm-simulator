@@ -231,6 +231,7 @@
 	</div>
 	<div class="flex flex-col space-y-2">
 		<h1 class="text-xl font-bold">Stop Condition</h1>
+		<p>Task stops when one of the following conditions are met:</p>
 		<label class="flex flex-col">
 			Max Iterations:
 			<input

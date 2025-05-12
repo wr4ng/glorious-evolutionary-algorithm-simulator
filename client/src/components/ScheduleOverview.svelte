@@ -99,14 +99,15 @@
 					<label class="flex items-center gap-2">
 						Update rate:
 						<input
-							type="number"
-							step="1"
+							type="range"
+							step="1000"
 							min="1000"
-							max="100000"
+							max="50000"
 							required
 							bind:value={updateRate}
 							class="border rounded px-1"
 						/>
+						{updateRate}
 					</label>
 					<div class="flex gap-2">
 						<Button

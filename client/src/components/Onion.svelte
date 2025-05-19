@@ -4,14 +4,14 @@
 		generateGaussPath,
 		mapPercentageToView,
 	} from "../lib/onion";
-	import type { Point } from "../types/types";
+	import type { OnionPoint } from "../types/onion";
 
 	interface OnionProps {
-		pointData: Point[];
+		pointData: OnionPoint[];
 	}
 
 	const { pointData }: OnionProps = $props();
-	let pointDataView: Point[] = $state([]);
+	let pointDataView: OnionPoint[] = $state([]);
 
 	const gaussPoints = generateGaussPoints();
 	const gaussPath = generateGaussPath(gaussPoints);
@@ -20,11 +20,11 @@
 		pointDataView = pointData.map((p) => mapPercentageToView(p));
 	});
 
-	let hoveredPoint: Point | null = $state(null);
+	let hoveredPoint: OnionPoint | null = $state(null);
 	let tooltipX = $state(0);
 	let tooltipY = $state(0);
 
-	function showTooltip(event: MouseEvent, point: Point) {
+	function showTooltip(event: MouseEvent, point: OnionPoint) {
 		hoveredPoint = point;
 		const svg = (event.currentTarget as SVGCircleElement).ownerSVGElement;
 		if (svg) {
@@ -98,7 +98,7 @@
 			class="tooltip"
 			style="position: absolute; left: {tooltipX}px; top: {tooltipY}px;"
 		>
-			x: {hoveredPoint.x.toFixed(2)}, y: {hoveredPoint.y.toFixed(2)}
+			{hoveredPoint.tooltip}
 		</div>
 	{/if}
 </div>

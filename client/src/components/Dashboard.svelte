@@ -9,7 +9,7 @@
 		TaskResult,
 		TaskSchedule,
 	} from "../types/task";
-	import type { Node, Edge, Point } from "../types/types";
+	import type { Node, Edge } from "../types/types";
 	import type { Series } from "../types/chart";
 	import { bitstringToOnionCoords } from "../lib/onion";
 	import { parsePermutation } from "../lib/graph";
@@ -17,6 +17,7 @@
 	import { taskToText } from "../lib/task";
 	import { downloadCSV } from "../lib/download";
 	import Button from "./ui/Button.svelte";
+    import type { OnionPoint } from "../types/onion";
 
 	interface DashboardProps {
 		serverURL: string;
@@ -38,7 +39,7 @@
 	let iterations: number[][] = $state([]);
 	let fitness: number[][] = $state([]);
 	let temperature: number[][] = $state([]);
-	let onionPoints: Point[][] = $state([]);
+	let onionPoints: OnionPoint[][] = $state([]);
 	let nodes: Node[][] = $state([]);
 	let edges: Edge[][] = $state([]);
 
@@ -143,6 +144,7 @@
 					if (isBitstringProblem(tasks[currentTaskIndex].problem)) {
 						const p = bitstringToOnionCoords(
 							message.data.current_solution,
+							`Iteration: ${message.data.iterations}, Fitness: ${message.data.current_fitness}`
 						);
 						onionPoints[currentTaskIndex] = [
 							...onionPoints[currentTaskIndex],

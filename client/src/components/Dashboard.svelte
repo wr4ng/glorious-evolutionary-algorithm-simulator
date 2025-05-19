@@ -277,6 +277,15 @@
 					/>
 				</label>
 			{/if}
+			{#if status == "Disconnected"}
+				<div>
+					<Button
+						text="Download task data"
+						type="button"
+						onclick={downloadCurrentTaskData}
+					/>
+				</div>
+			{/if}
 			<div class="grid grid-cols-2 gap-2">
 				<div class="border rounded-lg h-120">
 					<Chart
@@ -300,15 +309,6 @@
 					</div>
 				</div>
 			</div>
-			{#if status == "Disconnected"}
-				<div>
-					<Button
-						text="Download task data"
-						type="button"
-						onclick={downloadCurrentTaskData}
-					/>
-				</div>
-			{/if}
 		</div>
 	{/if}
 	<div class="flex flex-col gap-2">

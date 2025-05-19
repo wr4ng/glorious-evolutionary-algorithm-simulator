@@ -195,6 +195,28 @@
 		downloadCSV(header + content, `data-${taskSchedule.id}`);
 	}
 
+	function downloadCurrentTaskData() {
+		const currentTask = tasks[currentTaskIndex];
+		let header = "";
+		let content = "";
+
+		if (hasTemp(currentTask.algorithm)) {
+			header = "iteration, fitness, temperature\n";
+			for (let i = 0; i < iterations[currentTaskIndex].length; i++) {
+				content += `${iterations[currentTaskIndex][i]}, ${fitness[currentTaskIndex][i]}, ${temperature[currentTaskIndex][i]}\n`;
+			}
+		} else {
+			header = "iteration, fitness\n";
+			for (let i = 0; i < iterations[currentTaskIndex].length; i++) {
+				content += `${iterations[currentTaskIndex][i]}, ${fitness[currentTaskIndex][i]}\n`;
+			}
+		}
+		downloadCSV(
+			header + content,
+			`data-${taskSchedule.id}-task-${currentTaskIndex + 1}`,
+		);
+	}
+
 	function updateTaskIndex(delta: number) {
 		const newIndex = currentTaskIndex + delta;
 		if (newIndex < 0) {
@@ -216,7 +238,7 @@
 		<p><strong>Connection status:</strong> {status}</p>
 	</div>
 	{#if tasks.length > 0}
-		<div class="flex flex-col gap-4">
+		<div class="flex flex-col gap-2">
 			<h1 class="text-2xl font-bold">Current Task</h1>
 			{#if status == "Disconnected"}
 				<div class="flex gap-2 items-center">
@@ -245,8 +267,6 @@
 					]}
 				</p>
 			</div>
-		</div>
-		<div>
 			{#if hasTemp(tasks[currentTaskIndex].algorithm)}
 				<label class="flex items-center gap-2">
 					Show temperature:
@@ -280,6 +300,15 @@
 					</div>
 				</div>
 			</div>
+			{#if status == "Disconnected"}
+				<div>
+					<Button
+						text="Download task data"
+						type="button"
+						onclick={downloadCurrentTaskData}
+					/>
+				</div>
+			{/if}
 		</div>
 	{/if}
 	<div class="flex flex-col gap-2">

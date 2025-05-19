@@ -30,3 +30,5 @@ This will serve the frontend at `http://localhost:5173/`
 When opening the frontend you're prompted to enter the URL of the server
 (defaulted to `http://localhost:3000`). Upen entering the URL of a running server
 you're presented with the interface to create a simulation schedule to be run on the selected server.
+
+![Screenshot of client interface](./img/client-interface.png)

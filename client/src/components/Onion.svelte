@@ -26,17 +26,8 @@
 
 	function showTooltip(event: MouseEvent, point: OnionPoint) {
 		hoveredPoint = point;
-		const svg = (event.currentTarget as SVGCircleElement).ownerSVGElement;
-		if (svg) {
-			const pt = svg.createSVGPoint();
-			pt.x = event.clientX;
-			pt.y = event.clientY;
-			const screenCTM = svg.getScreenCTM();
-			if (screenCTM) {
-				tooltipX = event.clientX + 20;
-				tooltipY = event.clientY;
-			}
-		}
+		tooltipX = event.pageX + 10;
+		tooltipY = event.pageY + 10;
 	}
 
 	function hideTooltip() {

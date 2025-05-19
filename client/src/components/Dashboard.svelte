@@ -26,7 +26,9 @@
 
 	let { serverURL, taskSchedule, back }: DashboardProps = $props();
 	var socket: WebSocket;
-	var status = $state("Disconnected...");
+	var status = $state("Disconnected");
+
+	let showTemperature: boolean = $state(true);
 
 	let tasks: Task[] = $state([]);
 	let currentTaskIndex: number = $state(0);
@@ -64,7 +66,7 @@
 				yAxisID: "yfit",
 			},
 		];
-		if (hasTemp(tasks[i].algorithm)) {
+		if (showTemperature && hasTemp(tasks[i].algorithm)) {
 			series.push({
 				data: [...temperature[i]],
 				label: "Temperature",
@@ -86,13 +88,13 @@
 		};
 
 		socket.onclose = (event) => {
-			status = "Disconnected...";
+			status = "Disconnected";
 			//TODO: Show simulation is completed
 			console.log(event);
 		};
 
 		socket.onerror = (event) => {
-			status = "Disconnected...";
+			status = "Disconnected";
 			//TODO: Handle error
 			console.log(event);
 		};
@@ -209,14 +211,14 @@
 
 <div class="flex flex-col p-2 space-y-4">
 	<div>
-		<h1 class="text-2xl font-bold">Stats</h1>
-		<p>Schedule ID: {taskSchedule.id}</p>
-		<p>Status: {status}</p>
+		<h1 class="text-2xl font-bold">Schedule</h1>
+		<p><strong>Schedule ID:</strong> {taskSchedule.id}</p>
+		<p><strong>Connection status:</strong> {status}</p>
 	</div>
 	{#if tasks.length > 0}
-		<div>
+		<div class="flex flex-col gap-4">
 			<h1 class="text-2xl font-bold">Current Task</h1>
-			{#if status == "Disconnected..."}
+			{#if status == "Disconnected"}
 				<div class="flex gap-2 items-center">
 					<Button
 						text="<"
@@ -231,19 +233,30 @@
 					/>
 				</div>
 			{/if}
-			<p>
-				Iteration: {iterations[currentTaskIndex][
-					iterations[currentTaskIndex].length - 1
-				]}
-			</p>
-			<p>
-				Fitness: {fitness[currentTaskIndex][
-					fitness[currentTaskIndex].length - 1
-				]}
-			</p>
+			<div>
+				<p>
+					Iteration: {iterations[currentTaskIndex][
+						iterations[currentTaskIndex].length - 1
+					]}
+				</p>
+				<p>
+					Fitness: {fitness[currentTaskIndex][
+						fitness[currentTaskIndex].length - 1
+					]}
+				</p>
+			</div>
 		</div>
 		<div>
-			<h1 class="text-2xl font-bold">Visualizations</h1>
+			{#if hasTemp(tasks[currentTaskIndex].algorithm)}
+				<label class="flex items-center gap-2">
+					Show temperature:
+					<input
+						type="checkbox"
+						bind:checked={showTemperature}
+						class="w-4 h-4"
+					/>
+				</label>
+			{/if}
 			<div class="grid grid-cols-2 gap-2">
 				<div class="border rounded-lg h-120">
 					<Chart

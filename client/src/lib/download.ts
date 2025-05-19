@@ -1,4 +1,4 @@
-export function downloadCSV(content: string) {
+export function downloadCSV(content: string, filename: string) {
 	const blob = new Blob([content], {
 		type: "text/csv;charset=utf-8;",
 	});
@@ -6,7 +6,7 @@ export function downloadCSV(content: string) {
 	const link = document.createElement("a");
 
 	link.setAttribute("href", url);
-	link.setAttribute("download", "data.csv");
+	link.setAttribute("download", filename);
 
 	link.click();
 	URL.revokeObjectURL(url);

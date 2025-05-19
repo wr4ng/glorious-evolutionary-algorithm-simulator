@@ -9,7 +9,7 @@
 		TaskResult,
 		TaskSchedule,
 	} from "../types/task";
-	import type { Node, Edge, Point } from "../types/types";
+	import type { Node, Edge } from "../types/types";
 	import type { Series } from "../types/chart";
 	import { bitstringToOnionCoords } from "../lib/onion";
 	import { parsePermutation } from "../lib/graph";
@@ -17,6 +17,7 @@
 	import { taskToText } from "../lib/task";
 	import { downloadCSV } from "../lib/download";
 	import Button from "./ui/Button.svelte";
+    import type { OnionPoint } from "../types/onion";
 
 	interface DashboardProps {
 		serverURL: string;
@@ -26,7 +27,9 @@
 
 	let { serverURL, taskSchedule, back }: DashboardProps = $props();
 	var socket: WebSocket;
-	var status = $state("Disconnected...");
+	var status = $state("Disconnected");
+
+	let showTemperature: boolean = $state(true);
 
 	let tasks: Task[] = $state([]);
 	let currentTaskIndex: number = $state(0);
@@ -36,7 +39,7 @@
 	let iterations: number[][] = $state([]);
 	let fitness: number[][] = $state([]);
 	let temperature: number[][] = $state([]);
-	let onionPoints: Point[][] = $state([]);
+	let onionPoints: OnionPoint[][] = $state([]);
 	let nodes: Node[][] = $state([]);
 	let edges: Edge[][] = $state([]);
 
@@ -64,7 +67,7 @@
 				yAxisID: "yfit",
 			},
 		];
-		if (hasTemp(tasks[i].algorithm)) {
+		if (showTemperature && hasTemp(tasks[i].algorithm)) {
 			series.push({
 				data: [...temperature[i]],
 				label: "Temperature",
@@ -86,13 +89,13 @@
 		};
 
 		socket.onclose = (event) => {
-			status = "Disconnected...";
+			status = "Disconnected";
 			//TODO: Show simulation is completed
 			console.log(event);
 		};
 
 		socket.onerror = (event) => {
-			status = "Disconnected...";
+			status = "Disconnected";
 			//TODO: Handle error
 			console.log(event);
 		};
@@ -141,6 +144,7 @@
 					if (isBitstringProblem(tasks[currentTaskIndex].problem)) {
 						const p = bitstringToOnionCoords(
 							message.data.current_solution,
+							`Iteration: ${message.data.iterations}, Fitness: ${message.data.current_fitness}`
 						);
 						onionPoints[currentTaskIndex] = [
 							...onionPoints[currentTaskIndex],
@@ -190,7 +194,29 @@
 			})
 			.join("");
 
-		downloadCSV(header + content);
+		downloadCSV(header + content, `data-${taskSchedule.id}`);
+	}
+
+	function downloadCurrentTaskData() {
+		const currentTask = tasks[currentTaskIndex];
+		let header = "";
+		let content = "";
+
+		if (hasTemp(currentTask.algorithm)) {
+			header = "iteration, fitness, temperature\n";
+			for (let i = 0; i < iterations[currentTaskIndex].length; i++) {
+				content += `${iterations[currentTaskIndex][i]}, ${fitness[currentTaskIndex][i]}, ${temperature[currentTaskIndex][i]}\n`;
+			}
+		} else {
+			header = "iteration, fitness\n";
+			for (let i = 0; i < iterations[currentTaskIndex].length; i++) {
+				content += `${iterations[currentTaskIndex][i]}, ${fitness[currentTaskIndex][i]}\n`;
+			}
+		}
+		downloadCSV(
+			header + content,
+			`data-${taskSchedule.id}-task-${currentTaskIndex + 1}`,
+		);
 	}
 
 	function updateTaskIndex(delta: number) {
@@ -209,21 +235,21 @@
 
 <div class="flex flex-col p-2 space-y-4">
 	<div>
-		<h1 class="text-2xl font-bold">Stats</h1>
-		<p>Schedule ID: {taskSchedule.id}</p>
-		<p>Status: {status}</p>
+		<h1 class="text-2xl font-bold">Schedule</h1>
+		<p><strong>Schedule ID:</strong> {taskSchedule.id}</p>
+		<p><strong>Connection status:</strong> {status}</p>
 	</div>
 	{#if tasks.length > 0}
-		<div>
+		<div class="flex flex-col gap-2">
 			<h1 class="text-2xl font-bold">Current Task</h1>
-			{#if status == "Disconnected..."}
+			{#if status == "Disconnected"}
 				<div class="flex gap-2 items-center">
 					<Button
 						text="<"
 						disabled={currentTaskIndex == 0}
 						onclick={() => updateTaskIndex(-1)}
 					/>
-					<p>Current task: {currentTaskIndex + 1}</p>
+					<p>Current task: {currentTaskIndex + 1}/{tasks.length}</p>
 					<Button
 						text=">"
 						disabled={currentTaskIndex == tasks.length - 1}
@@ -231,13 +257,37 @@
 					/>
 				</div>
 			{/if}
-			<p>
-				Iteration: {iterations[currentTaskIndex][iterations.length - 1]}
-			</p>
-			<p>Fitness: {fitness[currentTaskIndex][fitness.length - 1]}</p>
-		</div>
-		<div>
-			<h1 class="text-2xl font-bold">Visualizations</h1>
+			<div>
+				<p>
+					Iteration: {iterations[currentTaskIndex][
+						iterations[currentTaskIndex].length - 1
+					]}
+				</p>
+				<p>
+					Fitness: {fitness[currentTaskIndex][
+						fitness[currentTaskIndex].length - 1
+					]}
+				</p>
+			</div>
+			{#if hasTemp(tasks[currentTaskIndex].algorithm)}
+				<label class="flex items-center gap-2">
+					Show temperature:
+					<input
+						type="checkbox"
+						bind:checked={showTemperature}
+						class="w-4 h-4"
+					/>
+				</label>
+			{/if}
+			{#if status == "Disconnected"}
+				<div>
+					<Button
+						text="Download task data"
+						type="button"
+						onclick={downloadCurrentTaskData}
+					/>
+				</div>
+			{/if}
 			<div class="grid grid-cols-2 gap-2">
 				<div class="border rounded-lg h-120">
 					<Chart
@@ -280,12 +330,12 @@
 			<table class="w-full text-left table-auto">
 				<thead>
 					<tr class="bg-gray-100">
-						<th class="p-4 border-b border-blue-gray-100">#</th>
-						<th class="p-4 border-b border-blue-gray-100">Task</th>
-						<th class="p-4 border-b border-blue-gray-100"
+						<th class="p-2 border-b border-blue-gray-100">#</th>
+						<th class="p-2 border-b border-blue-gray-100">Task</th>
+						<th class="p-2 border-b border-blue-gray-100"
 							>Final Fitness</th
 						>
-						<th class="p-4 border-b border-blue-gray-100"
+						<th class="p-2 border-b border-blue-gray-100"
 							>Final Iterations</th
 						>
 						<th class="border-b border-blue-gray-100"></th>
@@ -378,6 +428,7 @@
 										onclick={() => {
 											currentTaskIndex = i;
 										}}
+										extraClass="py-0"
 									/></td
 								>
 							</tr>

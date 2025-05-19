@@ -1,4 +1,4 @@
-import type { Point } from "../types/types.ts";
+import type { OnionPoint, Point } from "../types/onion.ts";
 
 // Gaussian function with mu=0 and sigma=1
 function gaussian(x: number) {
@@ -49,7 +49,7 @@ export function generateGaussPath(points: Point[]) {
 }
 
 // Maps a percentage point {x: [0; 1], y: [0; 1]} to view coordinates
-export function mapPercentageToView(p: Point) {
+export function mapPercentageToView(p: OnionPoint): OnionPoint {
 	// Compute gaussian value at given percentage
 	const gaussX = -xDiff + 2 * xDiff * p.y;
 	const gaussY = gaussian(gaussX);
@@ -62,15 +62,15 @@ export function mapPercentageToView(p: Point) {
 	// Map distance to view space
 	const px = 50 - 100 * xDistance;
 
-	return { x: px, y: py };
+	return { x: px, y: py, tooltip: p.tooltip};
 }
 
-export function bitstringToOnionCoords(bitstring: string) {
+export function bitstringToOnionCoords(bitstring: string, tooltip: string): OnionPoint {
 	const numOnes = (bitstring.match(/1/g) || []).length;
 	if (numOnes == bitstring.length) {
-		return { x: 1, y: 1 };
+		return { x: 1, y: 1, tooltip: tooltip };
 	} else if (numOnes == 0) {
-		return { x: 0, y: 0 };
+		return { x: 0, y: 0, tooltip: tooltip};
 	}
 	const vertical = numOnes / bitstring.length;
 
@@ -91,5 +91,5 @@ export function bitstringToOnionCoords(bitstring: string) {
 	let horizontal =
 		(averageOneIndex - minAverage) / (maxAverage - minAverage);
 
-	return { x: horizontal, y: vertical };
+	return { x: horizontal, y: vertical, tooltip: tooltip };
 }

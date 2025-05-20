@@ -3,7 +3,8 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use eas::algorithms::EvolutionaryAlgorithm;
-use rand::rng;
+use rand::SeedableRng;
+use rand_xoshiro::Xoshiro128PlusPlus;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
@@ -29,9 +30,11 @@ pub async fn handle_websocket_connect(
 
 async fn handle_schedule(mut socket: WebSocket, schedule: TaskSchedule) {
     println!("[{}] schedule execution started", schedule.id);
+    let mut rng = Xoshiro128PlusPlus::seed_from_u64(schedule.seed);
+
     for task in schedule.tasks {
         for _ in 0..schedule.repeat_count {
-            let Ok(mut runner) = create_ea(&task) else {
+            let Ok(mut runner) = create_ea(&task, &mut rng) else {
                 return;
             };
             let _ = send_json(
@@ -43,7 +46,14 @@ async fn handle_schedule(mut socket: WebSocket, schedule: TaskSchedule) {
                 ),
             )
             .await;
-            run_task(&task, schedule.update_rate, &mut runner, &mut socket).await;
+            run_task(
+                &task,
+                schedule.update_rate,
+                &mut runner,
+                &mut rng,
+                &mut socket,
+            )
+            .await;
             let _ = send_json(
                 &mut socket,
                 json!({
@@ -69,7 +79,8 @@ async fn send_json(socket: &mut WebSocket, value: Value) -> Result<(), axum::Err
 async fn run_task(
     task: &Task,
     update_rate: u64,
-    runner: &mut Box<dyn EvolutionaryAlgorithm + Send>,
+    runner: &mut Box<dyn EvolutionaryAlgorithm<Xoshiro128PlusPlus>>,
+    rng: &mut Xoshiro128PlusPlus,
     socket: &mut WebSocket,
 ) {
     let _ = send_json(
@@ -80,8 +91,9 @@ async fn run_task(
         }),
     )
     .await;
+
     loop {
-        runner.iterate(&mut rng());
+        runner.iterate(rng);
         if runner.iterations() >= task.stop_cond.max_iterations {
             break;
         }

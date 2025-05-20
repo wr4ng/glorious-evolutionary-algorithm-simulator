@@ -11,7 +11,8 @@ use eas::{
     fitness::{leading_ones::LeadingOnes, one_max::OneMax, tsp::TSP},
     mutation::{Bitflip, SingleBitflip, TwoOpt},
 };
-use rand::rng;
+use rand::Rng;
+use rand_xoshiro::Xoshiro128PlusPlus;
 
 use crate::{Algorithm, Problem, Task};
 
@@ -33,43 +34,48 @@ impl IntoResponse for CreateError {
     }
 }
 
-pub fn create_ea(task: &Task) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, CreateError> {
+pub fn create_ea<R: Rng>(
+    task: &Task,
+    rng: &mut R
+) -> Result<Box<dyn EvolutionaryAlgorithm<Xoshiro128PlusPlus>>, CreateError> {
     match task.algorithm {
-        Algorithm::OnePlusOneEA => create_oneplusone_runner(&task.problem),
+        Algorithm::OnePlusOneEA => create_oneplusone_runner(&task.problem, rng),
         Algorithm::SimulatedAnnealing { cooling_schedule } => {
-            create_sa_runner(&task.problem, cooling_schedule)
+            create_sa_runner(&task.problem, rng, cooling_schedule)
         }
         Algorithm::ACO => Err(CreateError::NotImplemented),
     }
 }
 
-pub fn create_oneplusone_runner(
+pub fn create_oneplusone_runner<R: Rng>(
     problem: &Problem,
-) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, CreateError> {
+    rng: &mut R
+) -> Result<Box<dyn EvolutionaryAlgorithm<Xoshiro128PlusPlus>>, CreateError> {
     Ok(match problem {
         Problem::OneMax { bitstring_size } => Box::new(OnePlusOneEA::new(
             *bitstring_size,
             Bitflip,
             OneMax,
-            &mut rng(),
+            rng,
         )),
         Problem::LeadingOnes { bitstring_size } => Box::new(OnePlusOneEA::new(
             *bitstring_size,
             Bitflip,
             LeadingOnes,
-            &mut rng(),
+            rng,
         )),
         Problem::TSP { tsp_instance } => {
             let tsp = TSP::from_euc2d(&tsp_instance).ok_or(CreateError::InvalidTSP)?;
-            Box::new(OnePlusOneEA::new(tsp.num_cities(), TwoOpt, tsp, &mut rng()))
+            Box::new(OnePlusOneEA::new(tsp.num_cities(), TwoOpt, tsp, rng))
         }
     })
 }
 
-pub fn create_sa_runner(
+pub fn create_sa_runner<R: Rng>(
     problem: &Problem,
+    rng: &mut R,
     cooling_schedule: crate::CoolingSchedule,
-) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, CreateError> {
+) -> Result<Box<dyn EvolutionaryAlgorithm<Xoshiro128PlusPlus>>, CreateError> {
     Ok(match problem {
         Problem::OneMax { bitstring_size } => {
             let c = match cooling_schedule {
@@ -85,7 +91,7 @@ pub fn create_sa_runner(
                 SingleBitflip,
                 OneMax,
                 c,
-                &mut rng(),
+                rng,
             ))
         }
         Problem::LeadingOnes { bitstring_size } => {
@@ -102,7 +108,7 @@ pub fn create_sa_runner(
                 SingleBitflip,
                 LeadingOnes,
                 c,
-                &mut rng(),
+                rng,
             ))
         }
         Problem::TSP { tsp_instance } => {
@@ -120,7 +126,7 @@ pub fn create_sa_runner(
                 TwoOpt,
                 tsp,
                 c,
-                &mut rng(),
+                rng,
             ))
         }
     })

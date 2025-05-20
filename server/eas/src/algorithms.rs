@@ -1,6 +1,6 @@
 use crate::{rng::MyRng, search_space::SearchSpace};
 use rand::rngs::ThreadRng;
-use rand_xoshiro::Xoshiro128PlusPlus;
+use rand_pcg::Pcg64;
 
 pub mod one_plus_one_ea;
 pub mod simulated_annealing;
@@ -45,8 +45,8 @@ impl<T: EvolutionaryAlgorithmCore + Send> EvolutionaryAlgorithm<ThreadRng> for T
     }
 }
 
-impl<T: EvolutionaryAlgorithmCore + Send> EvolutionaryAlgorithm<Xoshiro128PlusPlus> for T {
-    fn iterate(&mut self, rng: &mut Xoshiro128PlusPlus) {
+impl<T: EvolutionaryAlgorithmCore + Send> EvolutionaryAlgorithm<Pcg64> for T {
+    fn iterate(&mut self, rng: &mut Pcg64) {
         self.iterate(rng);
     }
 

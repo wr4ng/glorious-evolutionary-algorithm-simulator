@@ -4,7 +4,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use eas::algorithms::EvolutionaryAlgorithm;
 use rand::SeedableRng;
-use rand_xoshiro::Xoshiro128PlusPlus;
+use rand_pcg::Pcg64;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
@@ -30,7 +30,7 @@ pub async fn handle_websocket_connect(
 
 async fn handle_schedule(mut socket: WebSocket, schedule: TaskSchedule) {
     println!("[{}] schedule execution started", schedule.id);
-    let mut rng = Xoshiro128PlusPlus::seed_from_u64(schedule.seed);
+    let mut rng = Pcg64::seed_from_u64(schedule.seed);
 
     for task in schedule.tasks {
         for _ in 0..schedule.repeat_count {
@@ -79,8 +79,8 @@ async fn send_json(socket: &mut WebSocket, value: Value) -> Result<(), axum::Err
 async fn run_task(
     task: &Task,
     update_rate: u64,
-    runner: &mut Box<dyn EvolutionaryAlgorithm<Xoshiro128PlusPlus>>,
-    rng: &mut Xoshiro128PlusPlus,
+    runner: &mut Box<dyn EvolutionaryAlgorithm<Pcg64>>,
+    rng: &mut Pcg64,
     socket: &mut WebSocket,
 ) {
     let _ = send_json(

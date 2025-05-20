@@ -34,6 +34,7 @@ export interface StopCondition {
 
 export interface TaskSchedule {
 	id: string;
+	seed: number;
 	tasks: Task[];
 }
 
@@ -41,6 +42,7 @@ export interface TaskScheduleRequest {
 	tasks: Task[];
 	repeat_count: number;
 	update_rate: number;
+	seed: number;
 }
 
 export interface TaskScheduleResult {

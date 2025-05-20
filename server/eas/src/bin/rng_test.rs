@@ -6,7 +6,7 @@ use rand_xoshiro::Xoshiro128PlusPlus;
 use std::ops::Add;
 use std::time::{Duration, Instant};
 
-const NUM_SAMPLES: usize = 10_000_000;
+const NUM_SAMPLES: usize = 100_000_000;
 
 fn benchmark_rng<R: Rng>(mut rng: R, name: &str) -> Duration {
     let start = Instant::now();
@@ -93,9 +93,6 @@ fn benchmark_number_types<R: Rng + Clone>(rng: R, name: &str) {
 }
 
 fn compare_rngs() {
-    let thread_rng = rand::rng();
-    let thread_rng_duration = benchmark_rng(thread_rng, "ThreadRng");
-
     let std_rng = StdRng::from_os_rng();
     let std_rng_duration = benchmark_rng(std_rng, "StdRng");
 
@@ -108,18 +105,16 @@ fn compare_rngs() {
     let pcg64_rng = Pcg64::from_os_rng();
     let pcg64_duration = benchmark_rng(pcg64_rng, "Pcg64");
 
-    let baseline = thread_rng_duration;
+    let baseline = std_rng_duration;
     println!(
-        "ThreadRng: {:.6} seconds (baseline)",
+        "StdRng: {:.6} seconds (baseline)",
         baseline.as_secs_f64()
     );
-    print_result("StdRng", baseline, std_rng_duration);
     print_result("Xoshiro128PlusPlus", baseline, xoshiro_duration);
     print_result("ChaCha8Rng", baseline, chacha8_duration);
     print_result("Pcg64", baseline, pcg64_duration);
 
     // Benchmark different number types
-    benchmark_number_types(rand::rng(), "ThreadRng");
     benchmark_number_types(StdRng::from_os_rng(), "StdRng");
     benchmark_number_types(Xoshiro128PlusPlus::from_os_rng(), "Xoshiro128PlusPlus");
     benchmark_number_types(ChaCha8Rng::from_os_rng(), "ChaCha8Rng");

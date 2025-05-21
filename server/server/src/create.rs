@@ -4,9 +4,7 @@ use axum::{
 };
 use eas::{
     algorithms::{
-        EvolutionaryAlgorithm,
-        one_plus_one_ea::OnePlusOneEA,
-        simulated_annealing::{CoolingSchedule, SimulatedAnnealing},
+        mmas::{MMASbs, MMAStsp}, one_plus_one_ea::OnePlusOneEA, simulated_annealing::{CoolingSchedule, SimulatedAnnealing}, EvolutionaryAlgorithm
     },
     fitness::{leading_ones::LeadingOnes, one_max::OneMax, tsp::TSP},
     mutation::{Bitflip, SingleBitflip, TwoOpt},
@@ -39,7 +37,7 @@ pub fn create_ea(task: &Task) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, C
         Algorithm::SimulatedAnnealing { cooling_schedule } => {
             create_sa_runner(&task.problem, cooling_schedule)
         }
-        Algorithm::ACO => Err(CreateError::NotImplemented),
+        Algorithm::ACO {alpha, beta, evap_factor, ants} => create_aco_runner(&task.problem, alpha, beta, evap_factor, ants),
     }
 }
 
@@ -123,5 +121,41 @@ pub fn create_sa_runner(
                 &mut rng(),
             ))
         }
+    })
+}
+
+pub fn create_aco_runner(
+    problem: &Problem, alpha: f64, beta: f64, evap_factor: f64, ants: usize
+) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, CreateError> {
+    Ok(match problem {
+        Problem::OneMax { bitstring_size } => Box::new(MMASbs::new(
+            OneMax,
+            *bitstring_size,
+            ants,
+            alpha,
+            evap_factor,
+            &mut rng(),
+        )),
+        Problem::LeadingOnes { bitstring_size } => Box::new(MMASbs::new(
+            OneMax,
+            *bitstring_size,
+            ants,
+            alpha,
+            evap_factor,
+            &mut rng(),
+        )),
+        Problem::TSP { tsp_instance } => {
+            let tsp = TSP::from_euc2d(&tsp_instance).ok_or(CreateError::InvalidTSP)?;
+            let size = tsp.num_cities();
+            Box::new(MMAStsp::new(
+                tsp.distances(),
+                tsp,
+                size,
+                ants,
+                alpha,
+                beta,
+                evap_factor,
+                &mut rng(),))
+        }  
     })
 }

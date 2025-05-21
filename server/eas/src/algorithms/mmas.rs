@@ -22,7 +22,7 @@ impl <F> MMAStsp<F>
 where
     F: FitnessFunction<Permutation>
 {
-    pub fn new<R: MyRng>(graph: &Vec<Vec<f64>>, fitness_function: F, size: usize, ants: usize, alpha: f64, beta: f64, evap_factor: f64, rng: &mut R) -> Self{
+    pub fn new<R: MyRng>(graph: Vec<Vec<f64>>, fitness_function: F, size: usize, ants: usize, alpha: f64, beta: f64, evap_factor: f64, rng: &mut R) -> Self{
         let path = Permutation::new_random(size, rng);
         let current_solution = path;
         let current_fitness = fitness_function.evaluate(&current_solution);
@@ -148,7 +148,8 @@ where
         json!({
             "iterations": self.state.iteration,
             "current_fitness": self.state.current_fitness,
-            "current_solution": self.state.current_solution.to_string()
+            "current_solution": self.state.current_solution.to_string(),
+            "pheromones": self.pheromone
         })
     }
 }
@@ -157,11 +158,9 @@ pub struct MMASbs<F: FitnessFunction<Bitstring>>{
     pub state: SimulationState<Bitstring>,
     fitness_function: F,
     pheromone: Vec<f64>,
-    heuristic: Vec<f64>,
     size: usize,
     ants: usize,
     alpha: f64,
-    beta: f64,
     evap_factor: f64,
     t_min: f64,
     t_max: f64,
@@ -170,7 +169,7 @@ impl <F> MMASbs<F>
 where
     F: FitnessFunction<Bitstring>
 {
-    pub fn new<R: MyRng>(fitness_function: F, size: usize, ants: usize, alpha: f64, beta: f64, evap_factor: f64, rng: &mut R) -> Self{
+    pub fn new<R: MyRng>(fitness_function: F, size: usize, ants: usize, alpha: f64, evap_factor: f64, rng: &mut R) -> Self{
         let path = Bitstring::new_random(size, rng);
         let current_solution = path;
         let current_fitness = fitness_function.evaluate(&current_solution);
@@ -178,13 +177,12 @@ where
         let t_max = 1.0- 1.0/(size as f64);
 
         let pheromone = vec![0.5;size];
-        let mut heuristic = vec![0.0;size];
 
         MMASbs { state: SimulationState {
             iteration: 0,
             current_solution,
             current_fitness,
-        }, fitness_function, pheromone, heuristic, size, ants, alpha, beta, evap_factor, t_min, t_max}
+        }, fitness_function, pheromone, size, ants, alpha, evap_factor, t_min, t_max}
     }
 
     fn construct<R: MyRng>(&self, rng: &mut R) -> Bitstring{

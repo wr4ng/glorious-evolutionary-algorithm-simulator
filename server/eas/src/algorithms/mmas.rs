@@ -103,12 +103,12 @@ where
             // Apply new pheromones
             let perm = self.state.current_solution.permutation();
             let p_val = 1.0 / fit_val;
-            self.pheromone[perm[0]][perm[perm.len()-1]] = self.t_max.min(self.pheromone[perm[0]][perm[perm.len()-1]] + p_val);
-            // self.pheromone[perm[0]][perm[perm.len()-1]] = self.t_max.min(self.pheromone[perm[0]][perm[perm.len()-1]] + self.evap_factor);
+            // self.pheromone[perm[0]][perm[perm.len()-1]] = self.t_max.min(self.pheromone[perm[0]][perm[perm.len()-1]] + p_val);
+            self.pheromone[perm[0]][perm[perm.len()-1]] = self.t_max.min(self.pheromone[perm[0]][perm[perm.len()-1]] + self.evap_factor);
             self.pheromone[perm[perm.len()-1]][perm[0]] = self.pheromone[perm[0]][perm[perm.len()-1]];
             for i in 1..self.size{
-                self.pheromone[perm[i]][perm[i-1]] = self.t_max.min(self.pheromone[perm[i]][perm[i-1]] + p_val);
-                // self.pheromone[perm[i]][perm[i-1]] = self.t_max.min(self.pheromone[perm[i]][perm[i-1]] + self.evap_factor);
+                // self.pheromone[perm[i]][perm[i-1]] = self.t_max.min(self.pheromone[perm[i]][perm[i-1]] + p_val);
+                self.pheromone[perm[i]][perm[i-1]] = self.t_max.min(self.pheromone[perm[i]][perm[i-1]] + self.evap_factor);
                 self.pheromone[perm[i-1]][perm[i]] = self.pheromone[perm[i]][perm[i-1]]
             }
         }
@@ -149,7 +149,9 @@ where
             "iterations": self.state.iteration,
             "current_fitness": self.state.current_fitness,
             "current_solution": self.state.current_solution.to_string(),
-            "pheromones": self.pheromone
+            "pheromones": self.pheromone,
+            "t_max" : self.t_max,
+            "t_min" : self.t_min,
         })
     }
 }

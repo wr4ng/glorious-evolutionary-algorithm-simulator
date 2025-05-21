@@ -9,6 +9,7 @@ pub struct CreateTaskScheduleRequest {
     tasks: Vec<Task>,
     repeat_count: u64,
     update_rate: u64,
+    seed: u64,
 }
 
 #[derive(Serialize, Clone)]
@@ -17,6 +18,7 @@ pub struct TaskSchedule {
     pub tasks: Vec<Task>,
     pub repeat_count: u64,
     pub update_rate: u64,
+    pub seed: u64,
 }
 
 //TODO: Error type
@@ -47,7 +49,7 @@ pub async fn create_task_schedule(
     }
 
     for task in &request.tasks {
-        if create_ea(task).is_err() {
+        if create_ea(task, &mut rand::rng()).is_err() {
             return Err(StatusCode::BAD_REQUEST);
         }
     }
@@ -57,6 +59,7 @@ pub async fn create_task_schedule(
         tasks: request.tasks,
         repeat_count: request.repeat_count,
         update_rate: request.update_rate,
+        seed: request.seed,
     };
     let schedule_result = schedule.clone();
 

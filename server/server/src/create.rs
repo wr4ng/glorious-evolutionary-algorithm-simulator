@@ -4,12 +4,16 @@ use axum::{
 };
 use eas::{
     algorithms::{
-        mmas::{MMASbs, MMAStsp}, one_plus_one_ea::OnePlusOneEA, simulated_annealing::{CoolingSchedule, SimulatedAnnealing}, EvolutionaryAlgorithm
+        EvolutionaryAlgorithm,
+        mmas::{MMASbs, MMAStsp},
+        one_plus_one_ea::OnePlusOneEA,
+        simulated_annealing::{CoolingSchedule, SimulatedAnnealing},
     },
     fitness::{leading_ones::LeadingOnes, one_max::OneMax, tsp::TSP},
     mutation::{Bitflip, SingleBitflip, TwoOpt},
 };
-use rand::rng;
+use rand::Rng;
+use rand_pcg::Pcg64;
 
 use crate::{Algorithm, Problem, Task};
 
@@ -31,43 +35,50 @@ impl IntoResponse for CreateError {
     }
 }
 
-pub fn create_ea(task: &Task) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, CreateError> {
+pub fn create_ea<R: Rng>(
+    task: &Task,
+    rng: &mut R,
+) -> Result<Box<dyn EvolutionaryAlgorithm<Pcg64>>, CreateError> {
     match task.algorithm {
-        Algorithm::OnePlusOneEA => create_oneplusone_runner(&task.problem),
+        Algorithm::OnePlusOneEA => create_oneplusone_runner(&task.problem, rng),
         Algorithm::SimulatedAnnealing { cooling_schedule } => {
-            create_sa_runner(&task.problem, cooling_schedule)
+            create_sa_runner(&task.problem, rng, cooling_schedule)
         }
-        Algorithm::ACO {alpha, beta, evap_factor, ants} => create_aco_runner(&task.problem, alpha, beta, evap_factor, ants),
+        Algorithm::ACO {
+            alpha,
+            beta,
+            evap_factor,
+            ants,
+        } => create_aco_runner(&task.problem, rng, alpha, beta, evap_factor, ants),
     }
 }
 
-pub fn create_oneplusone_runner(
+pub fn create_oneplusone_runner<R: Rng>(
     problem: &Problem,
-) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, CreateError> {
+    rng: &mut R,
+) -> Result<Box<dyn EvolutionaryAlgorithm<Pcg64>>, CreateError> {
     Ok(match problem {
-        Problem::OneMax { bitstring_size } => Box::new(OnePlusOneEA::new(
-            *bitstring_size,
-            Bitflip,
-            OneMax,
-            &mut rng(),
-        )),
+        Problem::OneMax { bitstring_size } => {
+            Box::new(OnePlusOneEA::new(*bitstring_size, Bitflip, OneMax, rng))
+        }
         Problem::LeadingOnes { bitstring_size } => Box::new(OnePlusOneEA::new(
             *bitstring_size,
             Bitflip,
             LeadingOnes,
-            &mut rng(),
+            rng,
         )),
         Problem::TSP { tsp_instance } => {
             let tsp = TSP::from_euc2d(&tsp_instance).ok_or(CreateError::InvalidTSP)?;
-            Box::new(OnePlusOneEA::new(tsp.num_cities(), TwoOpt, tsp, &mut rng()))
+            Box::new(OnePlusOneEA::new(tsp.num_cities(), TwoOpt, tsp, rng))
         }
     })
 }
 
-pub fn create_sa_runner(
+pub fn create_sa_runner<R: Rng>(
     problem: &Problem,
+    rng: &mut R,
     cooling_schedule: crate::CoolingSchedule,
-) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, CreateError> {
+) -> Result<Box<dyn EvolutionaryAlgorithm<Pcg64>>, CreateError> {
     Ok(match problem {
         Problem::OneMax { bitstring_size } => {
             let c = match cooling_schedule {
@@ -83,7 +94,7 @@ pub fn create_sa_runner(
                 SingleBitflip,
                 OneMax,
                 c,
-                &mut rng(),
+                rng,
             ))
         }
         Problem::LeadingOnes { bitstring_size } => {
@@ -100,7 +111,7 @@ pub fn create_sa_runner(
                 SingleBitflip,
                 LeadingOnes,
                 c,
-                &mut rng(),
+                rng,
             ))
         }
         Problem::TSP { tsp_instance } => {
@@ -118,15 +129,20 @@ pub fn create_sa_runner(
                 TwoOpt,
                 tsp,
                 c,
-                &mut rng(),
+                rng,
             ))
         }
     })
 }
 
-pub fn create_aco_runner(
-    problem: &Problem, alpha: f64, beta: f64, evap_factor: f64, ants: usize
-) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, CreateError> {
+pub fn create_aco_runner<R: Rng>(
+    problem: &Problem,
+    rng: &mut R,
+    alpha: f64,
+    beta: f64,
+    evap_factor: f64,
+    ants: usize,
+) -> Result<Box<dyn EvolutionaryAlgorithm<Pcg64>>, CreateError> {
     Ok(match problem {
         Problem::OneMax { bitstring_size } => Box::new(MMASbs::new(
             OneMax,
@@ -134,7 +150,7 @@ pub fn create_aco_runner(
             ants,
             alpha,
             evap_factor,
-            &mut rng(),
+            rng,
         )),
         Problem::LeadingOnes { bitstring_size } => Box::new(MMASbs::new(
             OneMax,
@@ -142,7 +158,7 @@ pub fn create_aco_runner(
             ants,
             alpha,
             evap_factor,
-            &mut rng(),
+            rng,
         )),
         Problem::TSP { tsp_instance } => {
             let tsp = TSP::from_euc2d(&tsp_instance).ok_or(CreateError::InvalidTSP)?;
@@ -155,7 +171,9 @@ pub fn create_aco_runner(
                 alpha,
                 beta,
                 evap_factor,
-                &mut rng(),))
-        }  
+                rng,
+            ))
+        }
     })
 }
+

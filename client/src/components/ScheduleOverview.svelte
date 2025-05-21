@@ -20,6 +20,7 @@
 	let tasks: Task[] = $state([]);
 	let repeatCount: number = $state(1);
 	let updateRate: number = $state(5000);
+	let seed: number = $state(0);
 	let createError = $state("");
 
 	async function submitSchedule(e: SubmitEvent) {
@@ -30,6 +31,7 @@
 				tasks: tasks,
 				repeat_count: repeatCount,
 				update_rate: updateRate,
+				seed: seed,
 			};
 			const response = await fetch(`${serverURL}/schedules`, {
 				method: "POST",
@@ -42,10 +44,15 @@
 				return;
 			}
 			selectedTaskSchedule = await response.json();
+			console.log($state.snapshot(selectedTaskSchedule));
 		} catch (error) {
 			console.log(error);
 			createError = "Failed to send create task schedule request...";
 		}
+	}
+
+	function setRandomSeed() {
+		seed = Math.floor(Math.random() * 9007199254740991); // 2^53 - 1, which is largest integer to be correctly represented
 	}
 
 	function removeTask(i: number) {
@@ -108,6 +115,18 @@
 							class="border rounded px-1"
 						/>
 						{updateRate}
+					</label>
+					<label class="flex items-center gap-2">
+						Seed:
+						<input
+							type="number"
+							step="1"
+							min="0"
+							required
+							bind:value={seed}
+							class="border rounded px-1"
+						/>
+						<Button text="Randomize" onclick={setRandomSeed} />
 					</label>
 					<div class="flex gap-2">
 						<Button

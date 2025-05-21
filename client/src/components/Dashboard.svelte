@@ -17,7 +17,7 @@
 	import { taskToText } from "../lib/task";
 	import { downloadCSV } from "../lib/download";
 	import Button from "./ui/Button.svelte";
-    import type { OnionPoint } from "../types/onion";
+	import type { OnionPoint } from "../types/onion";
 
 	interface DashboardProps {
 		serverURL: string;
@@ -144,7 +144,7 @@
 					if (isBitstringProblem(tasks[currentTaskIndex].problem)) {
 						const p = bitstringToOnionCoords(
 							message.data.current_solution,
-							`Iteration: ${message.data.iterations}, Fitness: ${message.data.current_fitness}`
+							`Iteration: ${message.data.iterations}, Fitness: ${message.data.current_fitness}`,
 						);
 						onionPoints[currentTaskIndex] = [
 							...onionPoints[currentTaskIndex],
@@ -194,7 +194,7 @@
 			})
 			.join("");
 
-		downloadCSV(header + content, `data-${taskSchedule.id}`);
+		downloadCSV(header + content, `data-${taskSchedule.seed}`);
 	}
 
 	function downloadCurrentTaskData() {
@@ -215,7 +215,7 @@
 		}
 		downloadCSV(
 			header + content,
-			`data-${taskSchedule.id}-task-${currentTaskIndex + 1}`,
+			`data-${taskSchedule.seed}-task-${currentTaskIndex + 1}`,
 		);
 	}
 
@@ -237,6 +237,7 @@
 	<div>
 		<h1 class="text-2xl font-bold">Schedule</h1>
 		<p><strong>Schedule ID:</strong> {taskSchedule.id}</p>
+		<p><strong>Seed:</strong> {taskSchedule.seed}</p>
 		<p><strong>Connection status:</strong> {status}</p>
 	</div>
 	{#if tasks.length > 0}

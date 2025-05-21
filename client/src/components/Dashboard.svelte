@@ -42,6 +42,9 @@
 	let onionPoints: OnionPoint[][] = $state([]);
 	let nodes: Node[][] = $state([]);
 	let edges: Edge[][] = $state([]);
+	let pheromones: number[][][] = $state([])
+	let t_max: number = $state(1.0);
+	let t_min: number = $state(1.0);
 
 	// Message types
 	interface Message {
@@ -56,6 +59,9 @@
 		current_fitness: number;
 		current_solution: string;
 		temperature: number | undefined;
+		pheromones: number[][] | undefined;
+		t_max: number | undefined;
+		t_min: number | undefined;
 	}
 
 	function buildSeries(i: number): Series[] {
@@ -112,6 +118,7 @@
 					onionPoints = [...onionPoints, []];
 					nodes = [...nodes, []];
 					edges = [...edges, []];
+					pheromones = [... pheromones, []];
 					currentTaskIndex = tasks.length - 1;
 					if (
 						message.task.problem.type == "TSP" &&
@@ -156,6 +163,15 @@
 						edges[currentTaskIndex] = parsePermutation(
 							message.data.current_solution,
 						);
+						if ( message.data.pheromones) {
+							pheromones[currentTaskIndex] = message.data.pheromones;
+						}
+						if (message.data.t_max){
+							t_max = message.data.t_max;
+						}
+						if (message.data.t_min){
+							t_min = message.data.t_min;
+						}
 					}
 					return;
 				}
@@ -185,6 +201,8 @@
 		["TSP"].includes(problem.type);
 	const hasTemp = (algorithm: Algorithm) =>
 		algorithm.type == "SimulatedAnnealing";
+	const isACO = (algorithm: Algorithm) =>
+		algorithm.type == "ACO";
 
 	function downloadResults() {
 		const header = "task, final_fitness, final_iterations\n";
@@ -305,6 +323,9 @@
 							<Graph
 								nodes={nodes[currentTaskIndex]}
 								edges={edges[currentTaskIndex]}
+								pheromones={pheromones[currentTaskIndex]}
+								t_max = {t_max}
+								t_min = {t_min}
 							/>
 						{:else}
 							<p>Invalid problem. No visualization to show.</p>

@@ -3,8 +3,7 @@ use rand::rngs::ThreadRng;
 
 pub mod one_plus_one_ea;
 pub mod simulated_annealing;
-pub mod aco;
-pub mod aco2;
+pub mod mmas;
 
 // Shared state between all simulations. Probably the type to send to client
 #[derive(Debug)]

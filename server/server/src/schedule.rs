@@ -38,7 +38,7 @@ pub async fn create_task_schedule(
     // Validate update_rate
     //TODO: Better error
     //TODO: Determine ranges
-    if request.update_rate < 1000 || request.update_rate > 100000 {
+    if request.update_rate < 10 || request.update_rate > 100000 {
         return Err(StatusCode::BAD_REQUEST);
     }
 

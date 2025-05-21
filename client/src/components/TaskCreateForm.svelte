@@ -31,6 +31,11 @@
 	let coolingRate = $state(1.0);
 	let staticTemperature = $state(0.0);
 
+	let alpha = $state(1.0)
+	let beta = $state(1.0)
+	let evap_factor = $state(0.5)
+	let ants = $state(1)
+
 	let maxIterations = $state(1000000);
 	let optimalFitness: number | undefined = $state(undefined);
 
@@ -85,6 +90,12 @@
 							cooling_rate: coolingRate,
 						}),
 					},
+				}),
+				...(algorithm == "ACO" &&{
+					alpha: alpha,
+					beta: beta,
+					evap_factor: evap_factor,
+					ants: ants,
 				}),
 			},
 			stop_cond: {
@@ -227,6 +238,54 @@
 					/>
 				</label>
 			{/if}
+		{/if}
+		{#if algorithm == "ACO"}
+			<label class="flex flex-col">
+				alpha:
+				<input
+						type="number"
+						step="any"
+						min="0"
+						required
+						bind:value={alpha}
+						class="border rounded px-1"
+					/>
+			</label>
+			{#if isTSP(problem)}
+				<label class="flex flex-col">
+				beta:
+				<input
+						type="number"
+						step="any"
+						min="0"
+						required
+						bind:value={beta}
+						class="border rounded px-1"
+					/>
+			</label>
+			{/if}
+			<label class="flex flex-col">
+				Evaporation factor:
+				<input
+						type="number"
+						step="any"
+						min="0"
+						required
+						bind:value={evap_factor}
+						class="border rounded px-1"
+					/>
+			</label>
+			<label class="flex flex-col">
+				Amount of ants:
+				<input
+						type="number"
+						step="any"
+						min="0"
+						required
+						bind:value={ants}
+						class="border rounded px-1"
+					/>
+			</label>
 		{/if}
 	</div>
 	<div class="flex flex-col space-y-2">

@@ -107,8 +107,8 @@
 						Update rate:
 						<input
 							type="range"
-							step="1000"
-							min="1000"
+							step="10"
+							min="10"
 							max="50000"
 							required
 							bind:value={updateRate}

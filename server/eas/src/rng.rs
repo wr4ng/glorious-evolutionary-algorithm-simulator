@@ -2,11 +2,13 @@ use std::ops::Range;
 
 use rand::{seq::SliceRandom, Rng};
 
+
 pub trait MyRng {
     fn random(&mut self) -> bool;
     fn random_bool(&mut self, probability: f64) -> bool;
     fn random_ratio(&mut self, numerator: u32, denominator: u32) -> bool;
     fn random_range(&mut self, range: Range<usize>) -> usize;
+    fn random_range_float(&mut self, range: Range<f64>) -> f64;
     fn sample_geometric(&mut self, p: f64) -> u64;
     fn sample_poisson(&mut self) -> u64;
     fn shuffle_vec<T>(&mut self, v: &mut Vec<T>);
@@ -53,6 +55,10 @@ impl<T: Rng> MyRng for T {
 
     fn shuffle_vec<I>(&mut self, v: &mut Vec<I>) {
         v.shuffle(self);
+    }
+    
+    fn random_range_float(&mut self, range: Range<f64>) -> f64 {
+        self.random_range(range)
     }
 }
 
@@ -127,6 +133,10 @@ impl MyRng for MockRng {
     }
 
     fn shuffle_vec<T>(&mut self, _: &mut Vec<T>) {
+        todo!()
+    }
+    
+    fn random_range_float(&mut self, range: Range<f64>) -> f64 {
         todo!()
     }
 }

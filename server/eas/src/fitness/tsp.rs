@@ -43,6 +43,7 @@ impl TSP {
     pub fn distances(&self) -> Vec<Vec<f64>>{
         self.distances.clone()
     }
+
     //TODO: Should probably be Result<TSP, TSPParseError> or something
     pub fn from_euc2d(input: &str) -> Option<TSP> {
         //TODO: Read values from metadata section. Verify EUC2D type

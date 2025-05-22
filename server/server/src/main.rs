@@ -70,8 +70,15 @@ struct StopCondition {
 #[serde(tag = "type")]
 enum Algorithm {
     OnePlusOneEA,
-    SimulatedAnnealing { cooling_schedule: CoolingSchedule },
-    ACO{alpha: f64, beta: f64, evap_factor: f64, ants: usize},
+    SimulatedAnnealing {
+        cooling_schedule: CoolingSchedule,
+    },
+    ACO {
+        alpha: f64,
+        beta: f64,
+        evap_factor: f64,
+        ants: usize,
+    },
 }
 
 #[derive(Deserialize, Serialize, Clone, Copy, Debug)]

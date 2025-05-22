@@ -27,7 +27,7 @@ pub async fn handle_websocket_connect(
     else {
         return StatusCode::NOT_FOUND.into_response();
     };
-    return ws.on_upgrade(move |socket| handle_schedule(socket, schedule));
+    ws.on_upgrade(move |socket| handle_schedule(socket, schedule))
 }
 
 async fn handle_schedule(socket: WebSocket, schedule: TaskSchedule) {
@@ -60,7 +60,7 @@ async fn handle_schedule(socket: WebSocket, schedule: TaskSchedule) {
 
                 run_task(&task, schedule.update_rate, &mut runner, &mut rng, &mut tx).await;
 
-                if let Err(_) = send_json(
+                if send_json(
                     &mut tx,
                     json!({
                         "messageType": "result",
@@ -72,19 +72,24 @@ async fn handle_schedule(socket: WebSocket, schedule: TaskSchedule) {
                     }),
                 )
                 .await
+                .is_err()
                 {
-                    println!("[{}] schedule aborted early", schedule.id);
                     return;
                 }
             }
         }
-        println!("[{}] schedule completed", schedule.id);
+        println!("[{}] schedule completed successfully", schedule.id);
     });
 
     tokio::select! {
-        _ = &mut receive_task => simulation_task.abort(),
+        _ = &mut receive_task => {
+                println!("[{}] schedule aborted early", schedule.id);
+                simulation_task.abort()
+        },
         _ = &mut simulation_task => receive_task.abort(),
     }
+
+    println!("[{}] schedule done", schedule.id);
 }
 
 async fn send_json(
@@ -135,6 +140,7 @@ async fn run_task(
             {
                 return;
             }
+            let _ = socket.flush().await;
         }
     }
     let _ = send_json(

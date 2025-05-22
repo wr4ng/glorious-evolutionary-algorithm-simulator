@@ -136,7 +136,7 @@ impl MyRng for MockRng {
         todo!()
     }
     
-    fn random_range_float(&mut self, range: Range<f64>) -> f64 {
+    fn random_range_float(&mut self, _: Range<f64>) -> f64 {
         todo!()
     }
 }

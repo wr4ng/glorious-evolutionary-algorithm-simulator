@@ -13,7 +13,7 @@ fn main() {
 
     println!("Iteration, Fitness, Temperature");
     for i in 0..n {
-        let _ = sa.iterate(&mut rng);
+        sa.iterate(&mut rng);
         if i % 1000 == 0 {
             println!(
                 "{}, {}, {}",

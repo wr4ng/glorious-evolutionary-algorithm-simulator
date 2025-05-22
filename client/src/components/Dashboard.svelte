@@ -40,10 +40,14 @@
 	let iterations: number[][] = $state([]);
 	let fitness: number[][] = $state([]);
 	let temperature: number[][] = $state([]);
+	let currentSolution: string[] = $state([]);
+
 	let onionPoints: OnionPoint[][] = $state([]);
 	let nodes: Node[][] = $state([]);
 	let edges: Edge[][] = $state([]);
+
 	let pheromones: number[][][] = $state([]);
+	//TODO: Keep track of this for each task
 	let t_max: number = $state(1.0);
 	let t_min: number = $state(1.0);
 
@@ -116,6 +120,7 @@
 					iterations = [...iterations, []];
 					fitness = [...fitness, []];
 					temperature = [...temperature, []];
+					currentSolution = [...currentSolution, ""];
 					onionPoints = [...onionPoints, []];
 					nodes = [...nodes, []];
 					edges = [...edges, []];
@@ -148,6 +153,9 @@
 							message.data.temperature,
 						];
 					}
+
+					currentSolution[currentTaskIndex] =
+						message.data.current_solution;
 
 					if (isBitstringProblem(tasks[currentTaskIndex].problem)) {
 						const p = bitstringToOnionCoords(
@@ -278,15 +286,23 @@
 			{/if}
 			<div>
 				<p>
-					Iteration: {iterations[currentTaskIndex][
+					<strong>Iteration:</strong>
+					{iterations[currentTaskIndex][
 						iterations[currentTaskIndex].length - 1
 					]}
 				</p>
 				<p>
-					Fitness: {fitness[currentTaskIndex][
+					<strong>Fitness:</strong>
+					{fitness[currentTaskIndex][
 						fitness[currentTaskIndex].length - 1
 					]}
 				</p>
+				{#if isPermutationProblem(tasks[currentTaskIndex].problem)}
+					<p class="text-wrap">
+						<strong>Current solution:</strong><br />
+						{currentSolution[currentTaskIndex]}
+					</p>
+				{/if}
 			</div>
 			{#if hasTemp(tasks[currentTaskIndex].algorithm)}
 				<label class="flex items-center gap-2">

@@ -93,6 +93,6 @@ impl SearchSpace for Permutation {
             .iter()
             .map(|&v| v.to_string())
             .collect::<Vec<_>>()
-            .join(",")
+            .join(", ")
     }
 }

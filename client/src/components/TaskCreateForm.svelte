@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { berlin52EUC2D, parseEUC2D } from "../lib/tsp";
+	import { berlin52EUC2D, bier127EUC2D, parseEUC2D } from "../lib/tsp";
 	import type { Task } from "../types/task";
 	import Button from "./ui/Button.svelte";
 
@@ -15,7 +15,7 @@
 		{ text: "Simulated Annealing", value: "SimulatedAnnealing" },
 		{ text: "Ant Colony Optimization (ACO)", value: "ACO" },
 	];
-	const tspInstanceOptions = ["berlin52", "Custom"];
+	const tspInstanceOptions = ["berlin52", "bier127", "Custom"];
 	const scheduleOptions = ["Static", "Exponential"];
 
 	let problem = $state("OneMax");
@@ -31,10 +31,10 @@
 	let coolingRate = $state(1.0);
 	let staticTemperature = $state(0.0);
 
-	let alpha = $state(1.0)
-	let beta = $state(1.0)
-	let evap_factor = $state(0.5)
-	let ants = $state(1)
+	let alpha = $state(1.0);
+	let beta = $state(1.0);
+	let evap_factor = $state(0.5);
+	let ants = $state(1);
 
 	let maxIterations = $state(1000000);
 	let optimalFitness: number | undefined = $state(undefined);
@@ -64,6 +64,16 @@
 		addCurrentTask();
 	}
 
+	function getTspInstance() {
+		if (tspInstance == "berlin52") {
+			return berlin52EUC2D;
+		}
+		if (tspInstance == "bier127") {
+			return bier127EUC2D;
+		}
+		return customTspInstance;
+	}
+
 	function addCurrentTask() {
 		let task: Task = {
 			problem: {
@@ -72,10 +82,8 @@
 					bitstring_size: bitstringSize,
 				}),
 				...(isTSP(problem) && {
-					tsp_instance:
-						tspInstance == "berlin52"
-							? berlin52EUC2D
-							: customTspInstance,
+					tsp_instance: getTspInstance(),
+					tsp_name: tspInstance,
 				}),
 			},
 			algorithm: {
@@ -91,7 +99,7 @@
 						}),
 					},
 				}),
-				...(algorithm == "ACO" &&{
+				...(algorithm == "ACO" && {
 					alpha: alpha,
 					beta: beta,
 					evap_factor: evap_factor,
@@ -114,6 +122,8 @@
 				optimalFitness = bitstringSize;
 			} else if (problem == "TSP" && tspInstance == "berlin52") {
 				optimalFitness = 7542;
+			} else if (problem == "TSP" && tspInstance == "bier127") {
+				optimalFitness = 118282;
 			} else {
 				optimalFitness = undefined;
 			}
@@ -243,18 +253,18 @@
 			<label class="flex flex-col">
 				alpha:
 				<input
-						type="number"
-						step="any"
-						min="0"
-						required
-						bind:value={alpha}
-						class="border rounded px-1"
-					/>
+					type="number"
+					step="any"
+					min="0"
+					required
+					bind:value={alpha}
+					class="border rounded px-1"
+				/>
 			</label>
 			{#if isTSP(problem)}
 				<label class="flex flex-col">
-				beta:
-				<input
+					beta:
+					<input
 						type="number"
 						step="any"
 						min="0"
@@ -262,29 +272,29 @@
 						bind:value={beta}
 						class="border rounded px-1"
 					/>
-			</label>
+				</label>
 			{/if}
 			<label class="flex flex-col">
 				Evaporation factor:
 				<input
-						type="number"
-						step="any"
-						min="0"
-						required
-						bind:value={evap_factor}
-						class="border rounded px-1"
-					/>
+					type="number"
+					step="any"
+					min="0"
+					required
+					bind:value={evap_factor}
+					class="border rounded px-1"
+				/>
 			</label>
 			<label class="flex flex-col">
 				Amount of ants:
 				<input
-						type="number"
-						step="any"
-						min="0"
-						required
-						bind:value={ants}
-						class="border rounded px-1"
-					/>
+					type="number"
+					step="any"
+					min="0"
+					required
+					bind:value={ants}
+					class="border rounded px-1"
+				/>
 			</label>
 		{/if}
 	</div>

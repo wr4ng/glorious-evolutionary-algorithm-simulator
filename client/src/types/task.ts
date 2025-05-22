@@ -14,11 +14,16 @@ export interface Problem {
 	type: string; //"OneMax" | "LeadingOnes" | "TSP";
 	bitstring_size?: number;
 	tsp_instance?: string;
+	tsp_name?: string;
 }
 
 export interface Algorithm {
 	type: string; // "OnePlusOneEA" | "SimulatedAnnealing" | "ACO";
 	cooling_schedule?: CoolingSchedule;
+	alpha?: number;
+	beta?: number;
+	evap_factor?: number;
+	ants?: number;
 }
 
 export interface CoolingSchedule {

@@ -40,7 +40,7 @@ impl TSP {
         self.distances.len()
     }
 
-    pub fn distances(&self) -> Vec<Vec<f64>>{
+    pub fn distances(&self) -> Vec<Vec<f64>> {
         self.distances.clone()
     }
 
@@ -60,7 +60,7 @@ impl TSP {
         let coords = coords_str
             .lines()
             .map(|l| {
-                let mut parts = l.split(' ');
+                let mut parts = l.split_whitespace();
                 let (index, x, y) = match (parts.next(), parts.next(), parts.next()) {
                     (Some(a), Some(b), Some(c)) => (a, b, c),
                     _ => return None,

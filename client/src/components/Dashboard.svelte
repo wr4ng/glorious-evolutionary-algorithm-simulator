@@ -48,8 +48,8 @@
 
 	let pheromones: number[][][] = $state([]);
 	//TODO: Keep track of this for each task
-	let t_max: number = $state(1.0);
-	let t_min: number = $state(1.0);
+	let t_max: number[] = $state([1.0]);
+	let t_min: number[] = $state([1.0]);
 
 	// Message types
 	interface Message {
@@ -125,6 +125,8 @@
 					nodes = [...nodes, []];
 					edges = [...edges, []];
 					pheromones = [...pheromones, []];
+					t_min = [...t_min, 1.0];
+					t_max = [...t_max, 1.0];
 					currentTaskIndex = tasks.length - 1;
 					if (
 						message.task.problem.type == "TSP" &&
@@ -177,10 +179,10 @@
 								message.data.pheromones;
 						}
 						if (message.data.t_max) {
-							t_max = message.data.t_max;
+							t_max[currentTaskIndex] = message.data.t_max;
 						}
 						if (message.data.t_min) {
-							t_min = message.data.t_min;
+							t_min[currentTaskIndex] = message.data.t_min;
 						}
 					}
 					return;
@@ -352,8 +354,8 @@
 								pheromones={showPheromones
 									? pheromones[currentTaskIndex]
 									: []}
-								{t_max}
-								{t_min}
+								t_max={t_max[currentTaskIndex]}
+								t_min={t_min[currentTaskIndex]}
 							/>
 						{:else}
 							<p>Invalid problem. No visualization to show.</p>

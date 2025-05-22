@@ -106,15 +106,14 @@
 					<label class="flex items-center gap-2">
 						Update rate:
 						<input
-							type="range"
-							step="10"
-							min="10"
+							type="number"
+							step="1"
+							min="100"
 							max="50000"
 							required
 							bind:value={updateRate}
 							class="border rounded px-1"
 						/>
-						{updateRate}
 					</label>
 					<label class="flex items-center gap-2">
 						Seed:

@@ -32,3 +32,5 @@ When opening the frontend you're prompted to enter the URL of the server
 you're presented with the interface to create a simulation schedule to be run on the selected server.
 
 ![Screenshot of client interface](./img/client-interface.png)
+
+![Screenshot of client dashboard](./img/client-dashboard.png)

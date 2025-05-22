@@ -9,7 +9,7 @@ fn main() {
     println!("Initial state: {:?}", ea.state);
     let n = 100;
     for _ in 0..n {
-        let _ = ea.iterate(&mut rng);
+        ea.iterate(&mut rng);
     }
     println!("{} iterations: {:?}", n, ea.state);
 }

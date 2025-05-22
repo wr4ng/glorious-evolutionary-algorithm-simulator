@@ -20,7 +20,6 @@ use crate::{Algorithm, Problem, Task};
 #[derive(Debug)]
 pub enum CreateError {
     InvalidTSP,
-    NotImplemented,
 }
 
 impl IntoResponse for CreateError {
@@ -29,7 +28,6 @@ impl IntoResponse for CreateError {
             CreateError::InvalidTSP => {
                 (StatusCode::BAD_REQUEST, "invalid tsp instance".to_string())
             }
-            CreateError::NotImplemented => (StatusCode::BAD_REQUEST, "not implemented".to_string()),
         }
         .into_response()
     }
@@ -68,7 +66,7 @@ pub fn create_oneplusone_runner<R: Rng>(
             rng,
         )),
         Problem::TSP { tsp_instance } => {
-            let tsp = TSP::from_euc2d(&tsp_instance).ok_or(CreateError::InvalidTSP)?;
+            let tsp = TSP::from_euc2d(tsp_instance).ok_or(CreateError::InvalidTSP)?;
             Box::new(OnePlusOneEA::new(tsp.num_cities(), TwoOpt, tsp, rng))
         }
     })
@@ -115,7 +113,7 @@ pub fn create_sa_runner<R: Rng>(
             ))
         }
         Problem::TSP { tsp_instance } => {
-            let tsp = TSP::from_euc2d(&tsp_instance).ok_or(CreateError::InvalidTSP)?;
+            let tsp = TSP::from_euc2d(tsp_instance).ok_or(CreateError::InvalidTSP)?;
             let c = match cooling_schedule {
                 crate::CoolingSchedule::Static { temperature } => {
                     CoolingSchedule::new_static(temperature)
@@ -161,7 +159,7 @@ pub fn create_aco_runner<R: Rng>(
             rng,
         )),
         Problem::TSP { tsp_instance } => {
-            let tsp = TSP::from_euc2d(&tsp_instance).ok_or(CreateError::InvalidTSP)?;
+            let tsp = TSP::from_euc2d(tsp_instance).ok_or(CreateError::InvalidTSP)?;
             let size = tsp.num_cities();
             Box::new(MMAStsp::new(
                 tsp.distances(),
@@ -176,4 +174,3 @@ pub fn create_aco_runner<R: Rng>(
         }
     })
 }
-

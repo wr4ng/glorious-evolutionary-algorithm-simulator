@@ -30,6 +30,7 @@
 	var status = $state("Disconnected");
 
 	let showTemperature: boolean = $state(true);
+	let showPheromones: boolean = $state(true);
 
 	let tasks: Task[] = $state([]);
 	let currentTaskIndex: number = $state(0);
@@ -39,12 +40,16 @@
 	let iterations: number[][] = $state([]);
 	let fitness: number[][] = $state([]);
 	let temperature: number[][] = $state([]);
+	let currentSolution: string[] = $state([]);
+
 	let onionPoints: OnionPoint[][] = $state([]);
 	let nodes: Node[][] = $state([]);
 	let edges: Edge[][] = $state([]);
-	let pheromones: number[][][] = $state([])
-	let t_max: number = $state(1.0);
-	let t_min: number = $state(1.0);
+
+	let pheromones: number[][][] = $state([]);
+	//TODO: Keep track of this for each task
+	let t_max: number[] = $state([1.0]);
+	let t_min: number[] = $state([1.0]);
 
 	// Message types
 	interface Message {
@@ -115,10 +120,13 @@
 					iterations = [...iterations, []];
 					fitness = [...fitness, []];
 					temperature = [...temperature, []];
+					currentSolution = [...currentSolution, ""];
 					onionPoints = [...onionPoints, []];
 					nodes = [...nodes, []];
 					edges = [...edges, []];
-					pheromones = [... pheromones, []];
+					pheromones = [...pheromones, []];
+					t_min = [...t_min, 1.0];
+					t_max = [...t_max, 1.0];
 					currentTaskIndex = tasks.length - 1;
 					if (
 						message.task.problem.type == "TSP" &&
@@ -148,6 +156,9 @@
 						];
 					}
 
+					currentSolution[currentTaskIndex] =
+						message.data.current_solution;
+
 					if (isBitstringProblem(tasks[currentTaskIndex].problem)) {
 						const p = bitstringToOnionCoords(
 							message.data.current_solution,
@@ -163,14 +174,15 @@
 						edges[currentTaskIndex] = parsePermutation(
 							message.data.current_solution,
 						);
-						if ( message.data.pheromones) {
-							pheromones[currentTaskIndex] = message.data.pheromones;
+						if (message.data.pheromones) {
+							pheromones[currentTaskIndex] =
+								message.data.pheromones;
 						}
-						if (message.data.t_max){
-							t_max = message.data.t_max;
+						if (message.data.t_max) {
+							t_max[currentTaskIndex] = message.data.t_max;
 						}
-						if (message.data.t_min){
-							t_min = message.data.t_min;
+						if (message.data.t_min) {
+							t_min[currentTaskIndex] = message.data.t_min;
 						}
 					}
 					return;
@@ -201,8 +213,6 @@
 		["TSP"].includes(problem.type);
 	const hasTemp = (algorithm: Algorithm) =>
 		algorithm.type == "SimulatedAnnealing";
-	const isACO = (algorithm: Algorithm) =>
-		algorithm.type == "ACO";
 
 	function downloadResults() {
 		const header = "task, final_fitness, final_iterations\n";
@@ -278,15 +288,23 @@
 			{/if}
 			<div>
 				<p>
-					Iteration: {iterations[currentTaskIndex][
+					<strong>Iteration:</strong>
+					{iterations[currentTaskIndex][
 						iterations[currentTaskIndex].length - 1
 					]}
 				</p>
 				<p>
-					Fitness: {fitness[currentTaskIndex][
+					<strong>Fitness:</strong>
+					{fitness[currentTaskIndex][
 						fitness[currentTaskIndex].length - 1
 					]}
 				</p>
+				{#if isPermutationProblem(tasks[currentTaskIndex].problem)}
+					<p class="text-wrap">
+						<strong>Current solution:</strong><br />
+						{currentSolution[currentTaskIndex]}
+					</p>
+				{/if}
 			</div>
 			{#if hasTemp(tasks[currentTaskIndex].algorithm)}
 				<label class="flex items-center gap-2">
@@ -294,6 +312,16 @@
 					<input
 						type="checkbox"
 						bind:checked={showTemperature}
+						class="w-4 h-4"
+					/>
+				</label>
+			{/if}
+			{#if tasks[currentTaskIndex].algorithm.type == "ACO"}
+				<label class="flex items-center gap-2">
+					Show pheromones:
+					<input
+						type="checkbox"
+						bind:checked={showPheromones}
 						class="w-4 h-4"
 					/>
 				</label>
@@ -308,24 +336,26 @@
 				</div>
 			{/if}
 			<div class="grid grid-cols-2 gap-2">
-				<div class="border rounded-lg h-120">
+				<div class="border rounded-lg h-150">
 					<Chart
 						labels={[...iterations[currentTaskIndex]]}
 						series={buildSeries(currentTaskIndex)}
 					/>
 				</div>
-				<div class="h-120 border rounded-lg p-2">
+				<div class="h-150 border rounded-lg p-2">
 					<p class="h-6 font-bold text-xl">Instance</p>
-					<div class="h-110">
+					<div class="h-140">
 						{#if isBitstringProblem(tasks[currentTaskIndex].problem)}
 							<Onion pointData={onionPoints[currentTaskIndex]} />
 						{:else if isPermutationProblem(tasks[currentTaskIndex].problem)}
 							<Graph
 								nodes={nodes[currentTaskIndex]}
 								edges={edges[currentTaskIndex]}
-								pheromones={pheromones[currentTaskIndex]}
-								t_max = {t_max}
-								t_min = {t_min}
+								pheromones={showPheromones
+									? pheromones[currentTaskIndex]
+									: []}
+								t_max={t_max[currentTaskIndex]}
+								t_min={t_min[currentTaskIndex]}
 							/>
 						{:else}
 							<p>Invalid problem. No visualization to show.</p>

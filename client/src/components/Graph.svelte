@@ -11,35 +11,10 @@
 
 	let { nodes, edges, pheromones, t_max, t_min }: GraphProps = $props();
 
-	let width = $state(0);
-	let height = $state(0);
 	let viewBox = $state("0 0 100 100");
 
-	function pheromone_width(value: number){
-		let top = value - t_min;
-		let bot = t_max - t_min;
-		let division = top / bot;
-		let result = 1 + division * 9
-		return (result)
-	}
-
 	function updateDimensions(node: HTMLElement) {
-		const resizeObserver = new ResizeObserver((entries) => {
-			const entry = entries[0];
-			width = entry.contentRect.width;
-			height = entry.contentRect.height;
-
-			// Calculate viewBox based on nodes
-			if (nodes.length > 0) {
-				const padding = 10;
-				const minX = Math.min(...nodes.map((n) => n.x)) - padding;
-				const maxX = Math.max(...nodes.map((n) => n.x)) + padding;
-				const minY = Math.min(...nodes.map((n) => n.y)) - padding;
-				const maxY = Math.max(...nodes.map((n) => n.y)) + padding;
-				viewBox = `${minX} ${minY} ${maxX - minX} ${maxY - minY}`;
-			}
-		});
-
+		const resizeObserver = new ResizeObserver(() => calculateViewbox());
 		resizeObserver.observe(node);
 		return {
 			destroy() {
@@ -47,35 +22,75 @@
 			},
 		};
 	}
+
+	function calculateViewbox() {
+		// Calculate viewBox based on nodes
+		if (nodes.length > 0) {
+			const minX = Math.min(...nodes.map((n) => n.x));
+			const maxX = Math.max(...nodes.map((n) => n.x));
+			const minY = Math.min(...nodes.map((n) => n.y));
+			const maxY = Math.max(...nodes.map((n) => n.y));
+
+			const padding = Math.max(maxX - minX, maxY - minY) * 0.05;
+			viewBox = `${minX - padding} ${minY - padding} ${maxX - minX + 2 * padding} ${maxY - minY + 2 * padding}`;
+		}
+	}
+
+	function mapRange(
+		value: number,
+		fromMin: number,
+		fromMax: number,
+		toMin: number,
+		toMax: number,
+	) {
+		return (
+			((value - fromMin) / (fromMax - fromMin)) * (toMax - toMin) + toMin
+		);
+	}
+
+	$effect(() => {
+		// Recalculate viewbox when nodes/edges are updated (switching current task)
+		calculateViewbox();
+	});
 </script>
 
 <div class="graph-container" use:updateDimensions>
 	<svg {viewBox} preserveAspectRatio="xMidYMid meet">
 		{#each edges as edge}
-			<line 
+			<line
 				x1={nodes[edge.source].x}
 				y1={nodes[edge.source].y}
 				x2={nodes[edge.target].x}
 				y2={nodes[edge.target].y}
 				class="edge"
+				vector-effect="non-scaling-stroke"
+				stroke-width="1.5"
 			/>
 		{/each}
-		{#each pheromones as phero,i}
+		{#each pheromones as phero, i}
 			{#each phero as value, j}
 				{#if j > i}
-					<line 
+					<line
 						x1={nodes[i].x}
 						y1={nodes[i].y}
 						x2={nodes[j].x}
 						y2={nodes[j].y}
-						stroke-opacity="{20 + (value-t_min)/(t_max-t_min)*60}%"
-						style="stroke:red;stroke-width:{pheromone_width(value)};"
+						stroke-opacity="{mapRange(
+							value,
+							t_min,
+							t_max,
+							10,
+							50,
+						)}%"
+						vector-effect="non-scaling-stroke"
+						stroke="red"
+						stroke-width={mapRange(value, t_min, t_max, 0.2, 1.5)}
 					/>
 				{/if}
 			{/each}
 		{/each}
 		{#each nodes as node}
-			<circle cx={node.x} cy={node.y} r="5" class="node" />
+			<circle cx={node.x} cy={node.y} r="0.5%" class="node" />
 		{/each}
 	</svg>
 </div>
@@ -94,11 +109,9 @@
 
 	.edge {
 		stroke: #666;
-		stroke-width: 2;
 	}
 
 	.node {
 		fill: #0066cc;
 	}
-
 </style>

@@ -175,12 +175,15 @@ where
             }
         }
 
-        // Apply new pheromones
-        let perm = self.state.current_solution.permutation();
+        self.apply(&self.state.current_solution.clone());
+    }
+
+    fn apply(&mut self, p: &Permutation){
+        let perm = p.permutation();
         let p_val = if self.q == 0.0 {
             self.evap_factor
         } else {
-            self.q / self.state.current_fitness
+            self.q / self.fitness_function.evaluate(p)
         };
         self.pheromone[perm[0]][perm[perm.len() - 1]] = self
             .t_max

@@ -173,24 +173,24 @@ where
                 self.state.current_fitness = fit_val;
                 self.state.current_solution = path.clone();
             }
+        }
 
-            // Apply new pheromones
-            let perm = self.state.current_solution.permutation();
-            let p_val = if self.q == 0.0 {
-                self.evap_factor
-            } else {
-                self.q / fit_val
-            };
-            self.pheromone[perm[0]][perm[perm.len() - 1]] = self
-                .t_max
-                .min(self.pheromone[perm[0]][perm[perm.len() - 1]] + p_val);
-            self.pheromone[perm[perm.len() - 1]][perm[0]] =
-                self.pheromone[perm[0]][perm[perm.len() - 1]];
-            for i in 1..self.size {
-                self.pheromone[perm[i]][perm[i - 1]] =
-                    self.t_max.min(self.pheromone[perm[i]][perm[i - 1]] + p_val);
-                self.pheromone[perm[i - 1]][perm[i]] = self.pheromone[perm[i]][perm[i - 1]]
-            }
+        // Apply new pheromones
+        let perm = self.state.current_solution.permutation();
+        let p_val = if self.q == 0.0 {
+            self.evap_factor
+        } else {
+            self.q / self.state.current_fitness
+        };
+        self.pheromone[perm[0]][perm[perm.len() - 1]] = self
+            .t_max
+            .min(self.pheromone[perm[0]][perm[perm.len() - 1]] + p_val);
+        self.pheromone[perm[perm.len() - 1]][perm[0]] =
+            self.pheromone[perm[0]][perm[perm.len() - 1]];
+        for i in 1..self.size {
+            self.pheromone[perm[i]][perm[i - 1]] =
+                self.t_max.min(self.pheromone[perm[i]][perm[i - 1]] + p_val);
+            self.pheromone[perm[i - 1]][perm[i]] = self.pheromone[perm[i]][perm[i - 1]]
         }
     }
 }

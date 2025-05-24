@@ -71,7 +71,7 @@ struct StopCondition {
 enum Algorithm {
     OnePlusOneEA,
     SimulatedAnnealing { cooling_schedule: CoolingSchedule },
-    ACO{alpha: f64, beta: f64, evap_factor: f64, ants: usize},
+    ACO{alpha: f64, beta: f64, evap_factor: f64, ants: usize, p_best: Option<f64>, q: Option<f64>, nn: bool},
 }
 
 #[derive(Deserialize, Serialize, Clone, Copy, Debug)]

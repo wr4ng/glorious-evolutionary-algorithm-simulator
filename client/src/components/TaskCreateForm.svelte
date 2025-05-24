@@ -31,10 +31,15 @@
 	let coolingRate = $state(1.0);
 	let staticTemperature = $state(0.0);
 
-	let alpha = $state(1.0)
-	let beta = $state(1.0)
-	let evap_factor = $state(0.5)
-	let ants = $state(1)
+	let alpha = $state(1.0);
+	let beta = $state(1.0);
+	let evap_factor = $state(0.5);
+	let ants = $state(1);
+	let fit_based = $state(false);
+	let fit_based_update = $state(false);
+	let p_best = $state(0.05);
+	let q = $state(0.0);
+	let nearest_neighbor: boolean = $state(false);
 
 	let maxIterations = $state(1000000);
 	let optimalFitness: number | undefined = $state(undefined);
@@ -91,11 +96,18 @@
 						}),
 					},
 				}),
-				...(algorithm == "ACO" &&{
+				...(algorithm == "ACO" && {
 					alpha: alpha,
 					beta: beta,
 					evap_factor: evap_factor,
 					ants: ants,
+					...(fit_based && {
+						p_best: p_best,
+					}),
+					...(fit_based_update && {
+						q: q,
+					}),
+					nn: nearest_neighbor,
 				}),
 			},
 			stop_cond: {
@@ -240,52 +252,113 @@
 			{/if}
 		{/if}
 		{#if algorithm == "ACO"}
+		<div class="flex gap-2">
 			<label class="flex flex-col">
 				alpha:
 				<input
-						type="number"
-						step="any"
-						min="0"
-						required
-						bind:value={alpha}
-						class="border rounded px-1"
-					/>
+				type="number"
+					step="any"
+					min="0"
+					required
+					bind:value={alpha}
+					class="border rounded px-1"
+				/>
 			</label>
 			{#if isTSP(problem)}
 				<label class="flex flex-col">
-				beta:
-				<input
-						type="number"
-						step="any"
-						min="0"
-						required
-						bind:value={beta}
-						class="border rounded px-1"
+					beta:
+					<input
+					type="number"
+					step="any"
+					min="0"
+					required
+					bind:value={beta}
+					class="border rounded px-1"
 					/>
-			</label>
+				</label>
+				{/if}
+				<label class="flex flex-col">
+					Evaporation factor:
+				<input
+					type="number"
+					step="any"
+					min="0"
+					required
+					bind:value={evap_factor}
+					class="border rounded px-1"
+					/>
+				</label>
+				<label class="flex flex-col">
+					Amount of ants:
+					<input
+					type="number"
+					step="any"
+					min="0"
+					required
+					bind:value={ants}
+					class="border rounded px-1"
+					/>
+				</label>
+			</div>
+			{#if isTSP(problem)}
+				<div class="flex gap-2">
+					<label class="flex items-center gap-2">
+						Fitness based borders:
+						<input
+							type="checkbox"
+							bind:checked={fit_based}
+							class="w-4 h-4"
+						/>
+					</label>
+					{#if fit_based}
+						<label class="flex items-center gap-2">
+							p_best:
+							<input
+								type="number"
+								step="any"
+								min="0"
+								max="1"
+								required
+								bind:value={p_best}
+								class="border rounded px-1"
+							/>
+						</label>
+					{/if}
+				</div>
+				<div class="flex gap-2">
+					<label class="flex items-center gap-2">
+						Fitness based update:
+						<input
+							type="checkbox"
+							bind:checked={fit_based_update}
+							class="w-4 h-4"
+						/>
+					</label>
+					{#if fit_based_update}
+						<label class="flex items-center gap-2">
+							Q:
+							<input
+								type="number"
+								step="any"
+								min="1"
+								required
+								bind:value={q}
+								class="border rounded px-1"
+							/>
+						</label>
+					{/if}
+				</div>
+				<label class="flex flex-col">
+					<label class="flex items-center gap-2">
+						Nearest neighbor start:
+						<input
+							type="checkbox"
+							bind:checked={nearest_neighbor}
+							class="w-4 h-4"
+						/>
+					</label>
+				</label>
 			{/if}
-			<label class="flex flex-col">
-				Evaporation factor:
-				<input
-						type="number"
-						step="any"
-						min="0"
-						required
-						bind:value={evap_factor}
-						class="border rounded px-1"
-					/>
-			</label>
-			<label class="flex flex-col">
-				Amount of ants:
-				<input
-						type="number"
-						step="any"
-						min="0"
-						required
-						bind:value={ants}
-						class="border rounded px-1"
-					/>
-			</label>
 		{/if}
 	</div>
 	<div class="flex flex-col space-y-2">

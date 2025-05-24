@@ -37,7 +37,16 @@ pub fn create_ea(task: &Task) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, C
         Algorithm::SimulatedAnnealing { cooling_schedule } => {
             create_sa_runner(&task.problem, cooling_schedule)
         }
-        Algorithm::ACO {alpha, beta, evap_factor, ants} => create_aco_runner(&task.problem, alpha, beta, evap_factor, ants),
+        Algorithm::ACO {alpha, beta, evap_factor, ants, p_best, q, nn} => create_aco_runner(
+            &task.problem,
+            alpha,
+            beta,
+            evap_factor,
+            ants,
+            p_best.unwrap_or(0.0),
+            q.unwrap_or(0.0),
+            nn,
+        ),
     }
 }
 
@@ -125,7 +134,7 @@ pub fn create_sa_runner(
 }
 
 pub fn create_aco_runner(
-    problem: &Problem, alpha: f64, beta: f64, evap_factor: f64, ants: usize
+    problem: &Problem, alpha: f64, beta: f64, evap_factor: f64, ants: usize, p_best: f64, q: f64, nn: bool
 ) -> Result<Box<dyn EvolutionaryAlgorithm + Send>, CreateError> {
     Ok(match problem {
         Problem::OneMax { bitstring_size } => Box::new(MMASbs::new(
@@ -137,7 +146,7 @@ pub fn create_aco_runner(
             &mut rng(),
         )),
         Problem::LeadingOnes { bitstring_size } => Box::new(MMASbs::new(
-            OneMax,
+            LeadingOnes,
             *bitstring_size,
             ants,
             alpha,
@@ -155,6 +164,9 @@ pub fn create_aco_runner(
                 alpha,
                 beta,
                 evap_factor,
+                nn,
+                p_best,
+                q,
                 &mut rng(),))
         }  
     })

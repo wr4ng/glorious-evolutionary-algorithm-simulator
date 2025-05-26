@@ -5,7 +5,7 @@ use crate::{
     search_space::{Bitstring, Permutation, SearchSpace},
 };
 use serde_json::json;
-use std::vec;
+use std::{usize, vec};
 
 pub struct MMAStsp<F: FitnessFunction<Permutation>> {
     pub state: SimulationState<Permutation>,
@@ -17,8 +17,10 @@ pub struct MMAStsp<F: FitnessFunction<Permutation>> {
     alpha: f64,
     beta: f64,
     evap_factor: f64,
+    update_strategy: PheromoneUpdateStrategy,
     t_min: f64,
     t_max: f64,
+    q: f64,
 }
 impl<F> MMAStsp<F>
 where
@@ -32,16 +34,30 @@ where
         alpha: f64,
         beta: f64,
         evap_factor: f64,
+        update_strategy: PheromoneUpdateStrategy,
+        near_neigh: bool,
+        p_best: f64,
+        q: f64,
         rng: &mut R,
     ) -> Self {
-        let path = Permutation::new_random(size, rng);
+        let path = if near_neigh {
+            Self::nearest_neighbor(&graph, size)
+        } else {
+            Permutation::new_random(size, rng)
+        };
         let current_solution = path;
         let current_fitness = fitness_function.evaluate(&current_solution);
-        let t_min = 1.0 / ((size * size) as f64);
-        let t_max = 1.0 - 1.0 / (size as f64);
-        // let p_best: f64 = 0.05;
-        // let t_max = 1.0/(evap_factor) * 1.0/current_fitness;
-        // let t_min = t_max * (1.0 - p_best.powf(1.0 / size as f64)) / ((size as f64 - 1.0) * p_best.powf(1.0 / size as f64));
+
+        let (t_min, t_max) = if p_best == 0.0 {
+            (1.0 / ((size * size) as f64), 1.0 - 1.0 / (size as f64))
+        } else {
+            (
+                1.0 / (evap_factor) * 1.0 / current_fitness
+                    * (1.0 - p_best.powf(1.0 / size as f64))
+                    / (((size as f64) / 2.0 - 1.0) * p_best.powf(1.0 / size as f64)),
+                1.0 / (evap_factor) * 1.0 / current_fitness,
+            )
+        };
 
         let pheromone = vec![vec![t_max; size]; size];
         let mut heuristic = vec![vec![0.0; size]; size];
@@ -67,9 +83,34 @@ where
             alpha,
             beta,
             evap_factor,
+            update_strategy,
             t_min,
             t_max,
+            q,
         }
+    }
+
+    fn nearest_neighbor(graph: &Vec<Vec<f64>>, size: usize) -> Permutation {
+        let mut path = Vec::<usize>::with_capacity(size);
+        let mut visited = vec![false; size];
+        visited[0] = true;
+        let mut neighbors = &graph[0];
+        while path.len() != size {
+            let mut min_neighbor = (f64::MAX, 0); //TODO
+            for i in 0..neighbors.len() {
+                if visited[i] {
+                    continue;
+                }
+                if neighbors[i] < min_neighbor.0 {
+                    min_neighbor = (neighbors[i], i)
+                }
+            }
+            visited[min_neighbor.1] = true;
+            neighbors = &graph[min_neighbor.1];
+            path.push(min_neighbor.1);
+        }
+
+        Permutation::new(path)
     }
 
     fn construct<R: MyRng>(&self, rng: &mut R) -> Permutation {
@@ -119,34 +160,55 @@ where
     }
 
     fn update(&mut self, paths: &Vec<Permutation>) {
+        let mut generation_best = (f64::MAX, Permutation::new(vec![0]));
         for path in paths {
             // Check if there is a new better solution
             let fit_val = self.fitness_function.evaluate(path);
-            if self
-                .fitness_function
-                .compare(fit_val, self.state.current_fitness)
+            if self.fitness_function.compare(fit_val, generation_best.0)
                 == std::cmp::Ordering::Greater
             {
-                self.state.current_fitness = fit_val;
-                self.state.current_solution = path.clone();
+                generation_best = (fit_val, path.clone());
             }
+        }
+        if self
+            .fitness_function
+            .compare(generation_best.0, self.state.current_fitness)
+            == std::cmp::Ordering::Greater
+        {
+            (self.state.current_fitness, self.state.current_solution) = generation_best.clone();
+        }
 
-            // Apply new pheromones
-            let perm = self.state.current_solution.permutation();
-            // let p_val = 1.0 / fit_val;
-            // self.pheromone[perm[0]][perm[perm.len()-1]] = self.t_max.min(self.pheromone[perm[0]][perm[perm.len()-1]] + p_val);
-            self.pheromone[perm[0]][perm[perm.len() - 1]] = self
-                .t_max
-                .min(self.pheromone[perm[0]][perm[perm.len() - 1]] + self.evap_factor);
-            self.pheromone[perm[perm.len() - 1]][perm[0]] =
-                self.pheromone[perm[0]][perm[perm.len() - 1]];
-            for i in 1..self.size {
-                // self.pheromone[perm[i]][perm[i-1]] = self.t_max.min(self.pheromone[perm[i]][perm[i-1]] + p_val);
-                self.pheromone[perm[i]][perm[i - 1]] = self
-                    .t_max
-                    .min(self.pheromone[perm[i]][perm[i - 1]] + self.evap_factor);
-                self.pheromone[perm[i - 1]][perm[i]] = self.pheromone[perm[i]][perm[i - 1]]
+        match self.update_strategy {
+            PheromoneUpdateStrategy::AllAnts => {
+                for path in paths {
+                    self.apply(path);
+                }
             }
+            PheromoneUpdateStrategy::GenerationBest => {
+                self.apply(&generation_best.1.clone());
+            }
+            PheromoneUpdateStrategy::BestSoFar => {
+                self.apply(&self.state.current_solution.clone());
+            }
+        }
+    }
+
+    fn apply(&mut self, p: &Permutation) {
+        let perm = p.permutation();
+        let p_val = if self.q == 0.0 {
+            self.evap_factor
+        } else {
+            self.q / self.fitness_function.evaluate(p)
+        };
+        self.pheromone[perm[0]][perm[perm.len() - 1]] = self
+            .t_max
+            .min(self.pheromone[perm[0]][perm[perm.len() - 1]] + p_val);
+        self.pheromone[perm[perm.len() - 1]][perm[0]] =
+            self.pheromone[perm[0]][perm[perm.len() - 1]];
+        for i in 1..self.size {
+            self.pheromone[perm[i]][perm[i - 1]] =
+                self.t_max.min(self.pheromone[perm[i]][perm[i - 1]] + p_val);
+            self.pheromone[perm[i - 1]][perm[i]] = self.pheromone[perm[i]][perm[i - 1]]
         }
     }
 }
@@ -313,3 +375,8 @@ where
     }
 }
 
+pub enum PheromoneUpdateStrategy {
+    BestSoFar,
+    GenerationBest,
+    AllAnts,
+}

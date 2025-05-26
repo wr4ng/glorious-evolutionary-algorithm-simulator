@@ -4,10 +4,7 @@ use axum::{
 };
 use eas::{
     algorithms::{
-        EvolutionaryAlgorithm,
-        mmas::{MMASbs, MMAStsp},
-        one_plus_one_ea::OnePlusOneEA,
-        simulated_annealing::{CoolingSchedule, SimulatedAnnealing},
+        mmas::{MMASbs, MMAStsp, PheromoneUpdateStrategy}, one_plus_one_ea::OnePlusOneEA, simulated_annealing::{CoolingSchedule, SimulatedAnnealing}, EvolutionaryAlgorithm
     },
     fitness::{leading_ones::LeadingOnes, one_max::OneMax, tsp::TSP},
     mutation::{Bitflip, SingleBitflip, TwoOpt},
@@ -42,12 +39,17 @@ pub fn create_ea<R: Rng>(
         Algorithm::SimulatedAnnealing { cooling_schedule } => {
             create_sa_runner(&task.problem, rng, cooling_schedule)
         }
-        Algorithm::ACO {
+        Algorithm::ACO {alpha, beta, evap_factor, ants, p_best, q, nn} => create_aco_runner(
+            &task.problem,
             alpha,
             beta,
             evap_factor,
             ants,
-        } => create_aco_runner(&task.problem, rng, alpha, beta, evap_factor, ants),
+            p_best.unwrap_or(0.0),
+            q.unwrap_or(0.0),
+            nn,
+            rng
+        ),
     }
 }
 
@@ -134,12 +136,7 @@ pub fn create_sa_runner<R: Rng>(
 }
 
 pub fn create_aco_runner<R: Rng>(
-    problem: &Problem,
-    rng: &mut R,
-    alpha: f64,
-    beta: f64,
-    evap_factor: f64,
-    ants: usize,
+    problem: &Problem, alpha: f64, beta: f64, evap_factor: f64, ants: usize, p_best: f64, q: f64, nn: bool, rng: &mut R
 ) -> Result<Box<dyn EvolutionaryAlgorithm<Pcg64>>, CreateError> {
     Ok(match problem {
         Problem::OneMax { bitstring_size } => Box::new(MMASbs::new(
@@ -151,7 +148,7 @@ pub fn create_aco_runner<R: Rng>(
             rng,
         )),
         Problem::LeadingOnes { bitstring_size } => Box::new(MMASbs::new(
-            OneMax,
+            LeadingOnes,
             *bitstring_size,
             ants,
             alpha,
@@ -169,8 +166,11 @@ pub fn create_aco_runner<R: Rng>(
                 alpha,
                 beta,
                 evap_factor,
-                rng,
-            ))
-        }
+                PheromoneUpdateStrategy::GenerationBest,
+                nn,
+                p_best,
+                q,
+                rng))
+        }  
     })
 }

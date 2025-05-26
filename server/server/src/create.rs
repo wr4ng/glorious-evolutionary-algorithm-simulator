@@ -4,7 +4,7 @@ use axum::{
 };
 use eas::{
     algorithms::{
-        mmas::{MMASbs, MMAStsp}, one_plus_one_ea::OnePlusOneEA, simulated_annealing::{CoolingSchedule, SimulatedAnnealing}, EvolutionaryAlgorithm
+        mmas::{MMASbs, MMAStsp, PheromoneUpdateStrategy}, one_plus_one_ea::OnePlusOneEA, simulated_annealing::{CoolingSchedule, SimulatedAnnealing}, EvolutionaryAlgorithm
     },
     fitness::{leading_ones::LeadingOnes, one_max::OneMax, tsp::TSP},
     mutation::{Bitflip, SingleBitflip, TwoOpt},
@@ -164,6 +164,7 @@ pub fn create_aco_runner(
                 alpha,
                 beta,
                 evap_factor,
+                PheromoneUpdateStrategy::GenerationBest,
                 nn,
                 p_best,
                 q,

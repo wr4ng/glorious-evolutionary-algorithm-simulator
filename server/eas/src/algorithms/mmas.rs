@@ -5,7 +5,7 @@ use crate::{
     search_space::{Bitstring, Permutation, SearchSpace},
 };
 use serde_json::json;
-use std::{path, usize, vec};
+use std::{usize, vec};
 
 pub struct MMAStsp<F: FitnessFunction<Permutation>> {
     pub state: SimulationState<Permutation>,
@@ -17,10 +17,12 @@ pub struct MMAStsp<F: FitnessFunction<Permutation>> {
     alpha: f64,
     beta: f64,
     evap_factor: f64,
+    update_strategy: PheromoneUpdateStrategy,
     t_min: f64,
     t_max: f64,
     q: f64,
 }
+
 impl<F> MMAStsp<F>
 where
     F: FitnessFunction<Permutation>,
@@ -33,6 +35,7 @@ where
         alpha: f64,
         beta: f64,
         evap_factor: f64,
+        update_strategy: PheromoneUpdateStrategy,
         near_neigh: bool,
         p_best: f64,
         q: f64,
@@ -52,15 +55,10 @@ where
             (
                 1.0 / (evap_factor) * 1.0 / current_fitness
                     * (1.0 - p_best.powf(1.0 / size as f64))
-                    / ((size as f64 - 1.0) * p_best.powf(1.0 / size as f64)),
+                    / (((size as f64) / 2.0 - 1.0) * p_best.powf(1.0 / size as f64)),
                 1.0 / (evap_factor) * 1.0 / current_fitness,
             )
         };
-
-        // let t_min = 1.0/((size * size) as f64);
-        // let t_max = 1.0- 1.0/(size as f64);
-        // let t_max = 1.0/(evap_factor) * 1.0/current_fitness;
-        // let t_min = t_max * (1.0 - p_best.powf(1.0 / size as f64)) / ((size as f64 - 1.0) * p_best.powf(1.0 / size as f64));
 
         let pheromone = vec![vec![t_max; size]; size];
         let mut heuristic = vec![vec![0.0; size]; size];
@@ -86,6 +84,7 @@ where
             alpha,
             beta,
             evap_factor,
+            update_strategy,
             t_min,
             t_max,
             q,
@@ -162,23 +161,40 @@ where
     }
 
     fn update(&mut self, paths: &Vec<Permutation>) {
+        let mut generation_best = (f64::MAX, Permutation::new(vec![0]));
         for path in paths {
             // Check if there is a new better solution
             let fit_val = self.fitness_function.evaluate(path);
-            if self
-                .fitness_function
-                .compare(fit_val, self.state.current_fitness)
+            if self.fitness_function.compare(fit_val, generation_best.0)
                 == std::cmp::Ordering::Greater
             {
-                self.state.current_fitness = fit_val;
-                self.state.current_solution = path.clone();
+                generation_best = (fit_val, path.clone());
             }
         }
+        if self
+            .fitness_function
+            .compare(generation_best.0, self.state.current_fitness)
+            == std::cmp::Ordering::Greater
+        {
+            (self.state.current_fitness, self.state.current_solution) = generation_best.clone();
+        }
 
-        self.apply(&self.state.current_solution.clone());
+        match self.update_strategy {
+            PheromoneUpdateStrategy::AllAnts => {
+                for path in paths {
+                    self.apply(path);
+                }
+            }
+            PheromoneUpdateStrategy::GenerationBest => {
+                self.apply(&generation_best.1.clone());
+            }
+            PheromoneUpdateStrategy::BestSoFar => {
+                self.apply(&self.state.current_solution.clone());
+            }
+        }
     }
 
-    fn apply(&mut self, p: &Permutation){
+    fn apply(&mut self, p: &Permutation) {
         let perm = p.permutation();
         let p_val = if self.q == 0.0 {
             self.evap_factor
@@ -358,4 +374,10 @@ where
             "current_solution": self.state.current_solution.to_string()
         })
     }
+}
+
+pub enum PheromoneUpdateStrategy {
+    BestSoFar,
+    GenerationBest,
+    AllAnts,
 }

@@ -24,6 +24,7 @@ export interface Algorithm {
 	beta?: number;
 	evap_factor?: number;
 	ants?: number;
+	update_strategy?: string;
 }
 
 export interface CoolingSchedule {

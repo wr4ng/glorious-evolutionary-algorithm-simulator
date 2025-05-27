@@ -15,7 +15,7 @@ export function taskToText(t: Task): string {
 	// ACO
 	if (t.algorithm.type == "ACO") {
 		if (t.problem.type == "TSP") {
-			result += ` (α=${t.algorithm.alpha} β=${t.algorithm.beta} ρ=${t.algorithm.evap_factor} ants=${t.algorithm.ants})`;
+			result += ` (α=${t.algorithm.alpha} β=${t.algorithm.beta} ρ=${t.algorithm.evap_factor} ants=${t.algorithm.ants} ${t.algorithm.update_strategy})`;
 		}
 		else {
 			result += ` (α=${t.algorithm.alpha} ρ=${t.algorithm.evap_factor} ants=${t.algorithm.ants})`;

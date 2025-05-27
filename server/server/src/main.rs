@@ -70,8 +70,19 @@ struct StopCondition {
 #[serde(tag = "type")]
 enum Algorithm {
     OnePlusOneEA,
-    SimulatedAnnealing { cooling_schedule: CoolingSchedule },
-    ACO{alpha: f64, beta: f64, evap_factor: f64, ants: usize, p_best: Option<f64>, q: Option<f64>, nn: bool},
+    SimulatedAnnealing {
+        cooling_schedule: CoolingSchedule,
+    },
+    ACO {
+        alpha: f64,
+        beta: f64,
+        evap_factor: f64,
+        ants: usize,
+        p_best: Option<f64>,
+        q: Option<f64>,
+        nn: bool,
+        update_strategy: UpdateStrategy,
+    },
 }
 
 #[derive(Deserialize, Serialize, Clone, Copy, Debug)]
@@ -87,4 +98,11 @@ enum Problem {
     OneMax { bitstring_size: usize },
     LeadingOnes { bitstring_size: usize },
     TSP { tsp_instance: String },
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+enum UpdateStrategy {
+    BestSoFar,
+    GenerationBest,
+    AllAnts,
 }

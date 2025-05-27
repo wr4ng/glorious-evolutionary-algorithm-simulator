@@ -17,6 +17,7 @@
 	];
 	const tspInstanceOptions = ["berlin52", "bier127", "Custom"];
 	const scheduleOptions = ["Static", "Exponential"];
+	const strategyOptions = ["BestSoFar", "GenerationBest", "AllAnts"];
 
 	let problem = $state("OneMax");
 	let bitstringSize = $state(1000);
@@ -40,6 +41,7 @@
 	let p_best = $state(0.05);
 	let q = $state(0.0);
 	let nearest_neighbor: boolean = $state(false);
+	let updateStrategy: string = $state(strategyOptions[0]);
 
 	let maxIterations = $state(1000000);
 	let optimalFitness: number | undefined = $state(undefined);
@@ -116,6 +118,7 @@
 						q: q,
 					}),
 					nn: nearest_neighbor,
+					update_strategy: updateStrategy,
 				}),
 			},
 			stop_cond: {
@@ -311,6 +314,14 @@
 				</label>
 			</div>
 			{#if isTSP(problem)}
+				<label class="flex items-center gap-2">
+					Pheromone update strategy:
+					<select bind:value={updateStrategy} class="border rounded">
+						{#each strategyOptions as option}
+							<option value={option}>{option}</option>
+						{/each}
+					</select>
+				</label>
 				<div class="flex gap-2">
 					<label class="flex items-center gap-2">
 						Fitness based borders:

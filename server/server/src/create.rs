@@ -4,7 +4,10 @@ use axum::{
 };
 use eas::{
     algorithms::{
-        mmas::{MMASbs, MMAStsp, PheromoneUpdateStrategy}, one_plus_one_ea::OnePlusOneEA, simulated_annealing::{CoolingSchedule, SimulatedAnnealing}, EvolutionaryAlgorithm
+        EvolutionaryAlgorithm,
+        mmas::{MMASbs, MMAStsp, PheromoneUpdateStrategy},
+        one_plus_one_ea::OnePlusOneEA,
+        simulated_annealing::{CoolingSchedule, SimulatedAnnealing},
     },
     fitness::{leading_ones::LeadingOnes, one_max::OneMax, tsp::TSP},
     mutation::{Bitflip, SingleBitflip, TwoOpt},
@@ -12,7 +15,7 @@ use eas::{
 use rand::Rng;
 use rand_pcg::Pcg64;
 
-use crate::{Algorithm, Problem, Task};
+use crate::{Algorithm, Problem, Task, UpdateStrategy};
 
 #[derive(Debug)]
 pub enum CreateError {
@@ -39,7 +42,16 @@ pub fn create_ea<R: Rng>(
         Algorithm::SimulatedAnnealing { cooling_schedule } => {
             create_sa_runner(&task.problem, rng, cooling_schedule)
         }
-        Algorithm::ACO {alpha, beta, evap_factor, ants, p_best, q, nn} => create_aco_runner(
+        Algorithm::ACO {
+            alpha,
+            beta,
+            evap_factor,
+            ants,
+            p_best,
+            q,
+            nn,
+            update_strategy,
+        } => create_aco_runner(
             &task.problem,
             alpha,
             beta,
@@ -48,7 +60,8 @@ pub fn create_ea<R: Rng>(
             p_best.unwrap_or(0.0),
             q.unwrap_or(0.0),
             nn,
-            rng
+            update_strategy,
+            rng,
         ),
     }
 }
@@ -136,7 +149,16 @@ pub fn create_sa_runner<R: Rng>(
 }
 
 pub fn create_aco_runner<R: Rng>(
-    problem: &Problem, alpha: f64, beta: f64, evap_factor: f64, ants: usize, p_best: f64, q: f64, nn: bool, rng: &mut R
+    problem: &Problem,
+    alpha: f64,
+    beta: f64,
+    evap_factor: f64,
+    ants: usize,
+    p_best: f64,
+    q: f64,
+    nn: bool,
+    strategy: UpdateStrategy,
+    rng: &mut R,
 ) -> Result<Box<dyn EvolutionaryAlgorithm<Pcg64>>, CreateError> {
     Ok(match problem {
         Problem::OneMax { bitstring_size } => Box::new(MMASbs::new(
@@ -166,11 +188,20 @@ pub fn create_aco_runner<R: Rng>(
                 alpha,
                 beta,
                 evap_factor,
-                PheromoneUpdateStrategy::GenerationBest,
+                map_strategy(strategy),
                 nn,
                 p_best,
                 q,
-                rng))
-        }  
+                rng,
+            ))
+        }
     })
+}
+
+fn map_strategy(strategy: UpdateStrategy) -> PheromoneUpdateStrategy {
+    match strategy {
+        UpdateStrategy::BestSoFar => PheromoneUpdateStrategy::BestSoFar,
+        UpdateStrategy::GenerationBest => PheromoneUpdateStrategy::GenerationBest,
+        UpdateStrategy::AllAnts => PheromoneUpdateStrategy::AllAnts,
+    }
 }

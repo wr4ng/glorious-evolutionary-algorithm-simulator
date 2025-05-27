@@ -262,51 +262,51 @@
 			{/if}
 		{/if}
 		{#if algorithm == "ACO"}
-		<div class="flex gap-2">
-			<label class="flex flex-col">
-				alpha:
-				<input
-					type="number"
-					step="any"
-					min="0"
-					required
-					bind:value={alpha}
-					class="border rounded px-1"
-				/>
-			</label>
-			{#if isTSP(problem)}
-				<label class="flex flex-col">
-					beta:
+			<div class="flex flex-wrap gap-2">
+				<label class="flex flex-col flex-grow">
+					Alpha (α):
 					<input
-					type="number"
-					step="any"
-					min="0"
-					required
-					bind:value={beta}
-					class="border rounded px-1"
+						type="number"
+						step="any"
+						min="0"
+						required
+						bind:value={alpha}
+						class="border rounded px-1"
 					/>
 				</label>
+				{#if isTSP(problem)}
+					<label class="flex flex-col flex-grow">
+						Beta (β):
+						<input
+							type="number"
+							step="any"
+							min="0"
+							required
+							bind:value={beta}
+							class="border rounded px-1"
+						/>
+					</label>
 				{/if}
-				<label class="flex flex-col">
-					Evaporation factor:
-				<input
-					type="number"
-					step="any"
-					min="0"
-					required
-					bind:value={evap_factor}
-					class="border rounded px-1"
+				<label class="flex flex-col flex-grow">
+					Evaporation factor (ρ):
+					<input
+						type="number"
+						step="any"
+						min="0"
+						required
+						bind:value={evap_factor}
+						class="border rounded px-1"
 					/>
 				</label>
-				<label class="flex flex-col">
+				<label class="flex flex-col flex-grow">
 					Amount of ants:
 					<input
-					type="number"
-					step="any"
-					min="0"
-					required
-					bind:value={ants}
-					class="border rounded px-1"
+						type="number"
+						step="any"
+						min="0"
+						required
+						bind:value={ants}
+						class="border rounded px-1"
 					/>
 				</label>
 			</div>

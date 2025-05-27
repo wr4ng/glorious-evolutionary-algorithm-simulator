@@ -18,6 +18,7 @@
 	let selectedTaskSchedule: TaskSchedule | null = $state(null);
 
 	let tasks: Task[] = $state([]);
+	let previousTask: Task | null = $state(null);
 	let repeatCount: number = $state(1);
 	let updateRate: number = $state(5000);
 	let seed: number = $state(0);
@@ -62,6 +63,7 @@
 
 	function addTask(t: Task) {
 		tasks = [...tasks, t];
+		previousTask = t;
 	}
 
 	function clearSchedule() {
@@ -82,7 +84,7 @@
 {:else}
 	<div class="p-4 flex gap-4">
 		<div class="w-1/2">
-			<TaskCreateForm {addTask} />
+			<TaskCreateForm {addTask} {previousTask}/>
 		</div>
 		<div class="w-1/2 flex flex-col gap-4">
 			<ScheduleList schedule={tasks} {removeTask} />

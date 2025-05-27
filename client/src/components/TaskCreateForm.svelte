@@ -5,9 +5,10 @@
 
 	interface TaskCreateFormProps {
 		addTask: (t: Task) => void;
+		previousTask: Task | null;
 	}
 
-	let { addTask }: TaskCreateFormProps = $props();
+	let { addTask, previousTask }: TaskCreateFormProps = $props();
 
 	const problemOptions = ["OneMax", "LeadingOnes", "TSP"];
 	const algorithmOptions = [
@@ -131,6 +132,69 @@
 		addTask(task);
 	}
 
+	function loadPreviousTask() {
+		if (!previousTask) return;
+		problem = previousTask.problem.type;
+
+		if (previousTask.problem.bitstring_size) {
+			bitstringSize = previousTask.problem.bitstring_size;
+		}
+		if (previousTask.problem.tsp_name) {
+			tspInstance = previousTask.problem.tsp_name;
+			if (tspInstance == "Custom") {
+				customTspInstance = previousTask.problem.tsp_instance
+					? previousTask.problem.tsp_instance
+					: "";
+			}
+		}
+
+		algorithm = previousTask.algorithm.type;
+		if (previousTask.algorithm.cooling_schedule) {
+			scheduleType = previousTask.algorithm.cooling_schedule.type;
+			if (previousTask.algorithm.cooling_schedule.temperature) {
+				staticTemperature =
+					previousTask.algorithm.cooling_schedule.temperature;
+			}
+			if (previousTask.algorithm.cooling_schedule.cooling_rate) {
+				coolingRate =
+					previousTask.algorithm.cooling_schedule.cooling_rate;
+			}
+		}
+
+		if (previousTask.algorithm.alpha) {
+			alpha = previousTask.algorithm.alpha;
+		}
+		if (previousTask.algorithm.beta) {
+			beta = previousTask.algorithm.beta;
+		}
+		if (previousTask.algorithm.evap_factor) {
+			evap_factor = previousTask.algorithm.evap_factor;
+		}
+		if (previousTask.algorithm.ants) {
+			ants = previousTask.algorithm.ants;
+		}
+		if (previousTask.algorithm.p_best) {
+			fit_based = true;
+			p_best = previousTask.algorithm.p_best;
+		}
+		if (previousTask.algorithm.q) {
+			fit_based_update = true;
+			q = previousTask.algorithm.q;
+		}
+		if (previousTask.algorithm.nn) {
+			nearest_neighbor = previousTask.algorithm.nn;
+		}
+		if (previousTask.algorithm.update_strategy) {
+			updateStrategy = previousTask.algorithm.update_strategy;
+		}
+
+		maxIterations = previousTask.stop_cond.max_iterations;
+		if (previousTask.stop_cond.optimal_fitness) {
+			autoOptimalFitness = false;
+			optimalFitness = previousTask.stop_cond.optimal_fitness;
+		}
+	}
+
 	function checkAutoOptimalFitness() {
 		if (autoOptimalFitness) {
 			if (problem == "OneMax" || problem == "LeadingOnes") {
@@ -144,6 +208,8 @@
 			}
 		}
 	}
+
+	loadPreviousTask();
 	checkAutoOptimalFitness();
 </script>
 

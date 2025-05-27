@@ -24,6 +24,9 @@ export interface Algorithm {
 	beta?: number;
 	evap_factor?: number;
 	ants?: number;
+	p_best?: number;
+	q?: number;
+	nn?: boolean;
 	update_strategy?: string;
 }
 

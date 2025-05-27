@@ -95,9 +95,16 @@ enum CoolingSchedule {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(tag = "type")]
 enum Problem {
-    OneMax { bitstring_size: usize },
-    LeadingOnes { bitstring_size: usize },
-    TSP { tsp_instance: String },
+    OneMax {
+        bitstring_size: usize,
+    },
+    LeadingOnes {
+        bitstring_size: usize,
+    },
+    TSP {
+        tsp_instance: String,
+        tsp_name: String,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]

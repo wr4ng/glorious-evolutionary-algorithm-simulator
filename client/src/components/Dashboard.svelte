@@ -288,6 +288,10 @@
 			{/if}
 			<div>
 				<p>
+					<strong>Task:</strong>
+					{taskToText(tasks[currentTaskIndex])}
+				</p>
+				<p>
 					<strong>Iteration:</strong>
 					{iterations[currentTaskIndex][
 						iterations[currentTaskIndex].length - 1

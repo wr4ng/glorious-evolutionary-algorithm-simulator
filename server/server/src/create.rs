@@ -80,7 +80,7 @@ pub fn create_oneplusone_runner<R: Rng>(
             LeadingOnes,
             rng,
         )),
-        Problem::TSP { tsp_instance } => {
+        Problem::TSP { tsp_instance, tsp_name: _ } => {
             let tsp = TSP::from_euc2d(tsp_instance).ok_or(CreateError::InvalidTSP)?;
             Box::new(OnePlusOneEA::new(tsp.num_cities(), TwoOpt, tsp, rng))
         }
@@ -127,7 +127,7 @@ pub fn create_sa_runner<R: Rng>(
                 rng,
             ))
         }
-        Problem::TSP { tsp_instance } => {
+        Problem::TSP { tsp_instance, tsp_name: _ } => {
             let tsp = TSP::from_euc2d(tsp_instance).ok_or(CreateError::InvalidTSP)?;
             let c = match cooling_schedule {
                 crate::CoolingSchedule::Static { temperature } => {
@@ -177,7 +177,7 @@ pub fn create_aco_runner<R: Rng>(
             evap_factor,
             rng,
         )),
-        Problem::TSP { tsp_instance } => {
+        Problem::TSP { tsp_instance, tsp_name: _ } => {
             let tsp = TSP::from_euc2d(tsp_instance).ok_or(CreateError::InvalidTSP)?;
             let size = tsp.num_cities();
             Box::new(MMAStsp::new(

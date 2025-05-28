@@ -73,9 +73,9 @@ where
         mutator: M,
         fitness: F,
         cooling: CoolingSchedule,
-        mut rng: R,
+        rng: &mut R,
     ) -> Self {
-        let current_solution = S::new_random(size, &mut rng);
+        let current_solution = S::new_random(size, rng);
         let current_fitness = fitness.evaluate(&current_solution);
         SimulatedAnnealing {
             state: SimulationState {

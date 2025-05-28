@@ -56,7 +56,7 @@ fn main() {
 
 fn rls_onemax_optimize(size: usize) -> u64 {
     let c = CoolingSchedule::new_static(0.0);
-    let mut rls = SimulatedAnnealing::new(size, SingleBitflip, OneMax, c, rng());
+    let mut rls = SimulatedAnnealing::new(size, SingleBitflip, OneMax, c, &mut rng());
     loop {
         rls.iterate(&mut rng());
         if rls.current_fitness() as usize == size {
@@ -68,7 +68,7 @@ fn rls_onemax_optimize(size: usize) -> u64 {
 
 fn sa_onemax_optimize(size: usize, c: f64) -> u64 {
     let c = CoolingSchedule::new_default_bitstring(size as u64, c);
-    let mut rls = SimulatedAnnealing::new(size, SingleBitflip, OneMax, c, rng());
+    let mut rls = SimulatedAnnealing::new(size, SingleBitflip, OneMax, c, &mut rng());
     loop {
         rls.iterate(&mut rng());
         if rls.current_fitness() as usize == size {

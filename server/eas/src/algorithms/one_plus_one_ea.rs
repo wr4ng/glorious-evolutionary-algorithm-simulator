@@ -19,8 +19,8 @@ where
     F: FitnessFunction<S>,
     M: Mutation<S>,
 {
-    pub fn new<R: MyRng>(size: usize, mutator: M, fitness_function: F, mut rng: R) -> Self {
-        let current_solution = S::new_random(size, &mut rng);
+    pub fn new<R: MyRng>(size: usize, mutator: M, fitness_function: F, rng: &mut R) -> Self {
+        let current_solution = S::new_random(size, rng);
         let current_fitness = fitness_function.evaluate(&current_solution);
         OnePlusOneEA {
             state: SimulationState {

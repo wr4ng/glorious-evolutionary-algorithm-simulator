@@ -12,6 +12,8 @@
 	let { nodes, edges, pheromones, t_max, t_min }: GraphProps = $props();
 
 	let viewBox = $state("0 0 100 100");
+	let minY = $state(0);
+	let maxY = $state(100);
 
 	function updateDimensions(node: HTMLElement) {
 		const resizeObserver = new ResizeObserver(() => calculateViewbox());
@@ -28,8 +30,8 @@
 		if (nodes.length > 0) {
 			const minX = Math.min(...nodes.map((n) => n.x));
 			const maxX = Math.max(...nodes.map((n) => n.x));
-			const minY = Math.min(...nodes.map((n) => n.y));
-			const maxY = Math.max(...nodes.map((n) => n.y));
+			minY = Math.min(...nodes.map((n) => n.y));
+			maxY = Math.max(...nodes.map((n) => n.y));
 
 			const padding = Math.max(maxX - minX, maxY - minY) * 0.05;
 			viewBox = `${minX - padding} ${minY - padding} ${maxX - minX + 2 * padding} ${maxY - minY + 2 * padding}`;
@@ -48,6 +50,10 @@
 		);
 	}
 
+	function flipY(y: number) {
+		return maxY - (y - minY);
+	}
+
 	$effect(() => {
 		// Recalculate viewbox when nodes/edges are updated (switching current task)
 		calculateViewbox();
@@ -59,9 +65,9 @@
 		{#each edges as edge}
 			<line
 				x1={nodes[edge.source].x}
-				y1={nodes[edge.source].y}
+				y1={flipY(nodes[edge.source].y)}
 				x2={nodes[edge.target].x}
-				y2={nodes[edge.target].y}
+				y2={flipY(nodes[edge.target].y)}
 				class="edge"
 				vector-effect="non-scaling-stroke"
 				stroke-width="1.5"
@@ -72,9 +78,9 @@
 				{#if j > i}
 					<line
 						x1={nodes[i].x}
-						y1={nodes[i].y}
+						y1={flipY(nodes[i].y)}
 						x2={nodes[j].x}
-						y2={nodes[j].y}
+						y2={flipY(nodes[j].y)}
 						stroke-opacity="{mapRange(
 							value,
 							t_min,
@@ -90,7 +96,7 @@
 			{/each}
 		{/each}
 		{#each nodes as node}
-			<circle cx={node.x} cy={node.y} r="0.5%" class="node" />
+			<circle cx={node.x} cy={flipY(node.y)} r="0.5%" class="node" />
 		{/each}
 	</svg>
 </div>

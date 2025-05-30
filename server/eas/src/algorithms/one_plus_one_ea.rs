@@ -1,4 +1,4 @@
-use super::{EvolutionaryAlgorithmCore, SimulationState};
+use super::{AlgorithmCore, SimulationState};
 use crate::{
     fitness::FitnessFunction,
     mutation::Mutation,
@@ -36,7 +36,7 @@ where
 
 // Implementation of (1+1) EA for a given fitness function and mutation operating on bitstrings.
 // Here the mutation is applied once each iteration.
-impl<F, M> EvolutionaryAlgorithmCore for OnePlusOneEA<Bitstring, F, M>
+impl<F, M> AlgorithmCore for OnePlusOneEA<Bitstring, F, M>
 where
     F: FitnessFunction<Bitstring>,
     M: Mutation<Bitstring>,
@@ -77,7 +77,7 @@ where
 
 // Implementation of (1+1) EA for a given fitness function and mutation operating on permutations.
 // Here the mutation is applied (x+1) times each iteration where x ~ Poisson(1).
-impl<F, M> EvolutionaryAlgorithmCore for OnePlusOneEA<Permutation, F, M>
+impl<F, M> AlgorithmCore for OnePlusOneEA<Permutation, F, M>
 where
     F: FitnessFunction<Permutation>,
     M: Mutation<Permutation>,

@@ -2,7 +2,7 @@ use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use eas::algorithms::EvolutionaryAlgorithm;
+use eas::algorithms::Algorithm;
 use futures::stream::SplitSink;
 use futures::{SinkExt, StreamExt};
 use rand::SeedableRng;
@@ -103,7 +103,7 @@ async fn send_json(
 async fn run_task(
     task: &Task,
     update_rate: u64,
-    runner: &mut Box<dyn EvolutionaryAlgorithm<Pcg64>>,
+    runner: &mut Box<dyn Algorithm<Pcg64>>,
     rng: &mut Pcg64,
     socket: &mut SplitSink<WebSocket, Message>,
 ) {

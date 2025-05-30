@@ -1,4 +1,4 @@
-use super::{EvolutionaryAlgorithmCore, SimulationState};
+use super::{AlgorithmCore, SimulationState};
 use crate::{
     fitness::FitnessFunction,
     rng::MyRng,
@@ -213,7 +213,7 @@ where
     }
 }
 
-impl<F> EvolutionaryAlgorithmCore for MMAStsp<F>
+impl<F> AlgorithmCore for MMAStsp<F>
 where
     F: FitnessFunction<Permutation>,
 {
@@ -338,7 +338,7 @@ where
     }
 }
 
-impl<F> EvolutionaryAlgorithmCore for MMASbs<F>
+impl<F> AlgorithmCore for MMASbs<F>
 where
     F: FitnessFunction<Bitstring>,
 {

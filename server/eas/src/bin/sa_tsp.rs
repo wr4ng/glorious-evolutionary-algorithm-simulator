@@ -1,5 +1,5 @@
 use eas::algorithms::simulated_annealing::{CoolingSchedule, SimulatedAnnealing};
-use eas::algorithms::EvolutionaryAlgorithm;
+use eas::algorithms::Algorithm;
 use eas::fitness::tsp::TSP;
 use eas::mutation::TwoOpt;
 

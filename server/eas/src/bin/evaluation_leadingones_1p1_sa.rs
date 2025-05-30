@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use eas::algorithms::one_plus_one_ea::OnePlusOneEA;
 use eas::algorithms::simulated_annealing::{CoolingSchedule, SimulatedAnnealing};
-use eas::algorithms::EvolutionaryAlgorithmCore;
+use eas::algorithms::AlgorithmCore;
 use eas::fitness::leading_ones::LeadingOnes;
 use eas::mutation::{Bitflip, SingleBitflip};
 use rand::rng;

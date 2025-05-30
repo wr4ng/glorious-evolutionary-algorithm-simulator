@@ -2,7 +2,7 @@ use serde_json::json;
 
 use crate::{fitness::FitnessFunction, mutation::Mutation, rng::MyRng, search_space::SearchSpace};
 
-use super::{EvolutionaryAlgorithmCore, SimulationState};
+use super::{AlgorithmCore, SimulationState};
 
 pub enum CoolingSchedule {
     Static(f64),
@@ -94,7 +94,7 @@ where
     }
 }
 
-impl<S, F, M> EvolutionaryAlgorithmCore for SimulatedAnnealing<S, F, M>
+impl<S, F, M> AlgorithmCore for SimulatedAnnealing<S, F, M>
 where
     S: SearchSpace,
     F: FitnessFunction<S>,

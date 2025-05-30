@@ -1,4 +1,4 @@
-use eas::algorithms::{one_plus_one_ea::OnePlusOneEA, EvolutionaryAlgorithm};
+use eas::algorithms::{one_plus_one_ea::OnePlusOneEA, Algorithm};
 use eas::fitness::one_max::OneMax;
 use eas::mutation::Bitflip;
 

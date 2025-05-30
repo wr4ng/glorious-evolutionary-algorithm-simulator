@@ -55,7 +55,7 @@ async fn ping_handler() -> String {
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 struct Task {
-    algorithm: Algorithm,
+    algorithm: AlgorithmConfig,
     problem: Problem,
     stop_cond: StopCondition,
 }
@@ -68,7 +68,7 @@ struct StopCondition {
 
 #[derive(Deserialize, Serialize, Clone, Copy, Debug)]
 #[serde(tag = "type")]
-enum Algorithm {
+enum AlgorithmConfig {
     OnePlusOneEA,
     SimulatedAnnealing {
         cooling_schedule: CoolingSchedule,

@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use eas::algorithms::simulated_annealing::{CoolingSchedule, SimulatedAnnealing};
-use eas::algorithms::EvolutionaryAlgorithmCore;
+use eas::algorithms::AlgorithmCore;
 use eas::fitness::one_max::OneMax;
 use eas::mutation::SingleBitflip;
 use rand::rng;

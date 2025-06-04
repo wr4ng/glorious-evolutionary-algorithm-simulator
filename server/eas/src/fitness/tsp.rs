@@ -128,4 +128,29 @@ mod tests {
         let optimal_fitness = tsp.evaluate(&optimal_permutation);
         assert_eq!(optimal_fitness, 7542.0);
     }
+
+    #[test]
+    fn test_parse_bier127() {
+        let berlin52 = include_str!("./bier127.tsp");
+        let tsp = TSP::from_euc2d(&berlin52);
+        assert!(tsp.is_some());
+    }
+
+    #[test]
+    fn test_bier127_optimal_tour() {
+        let tsp = TSP::from_euc2d(include_str!("./bier127.tsp")).unwrap();
+        let optimal_tour = vec![
+            48, 52, 47, 117, 45, 93, 111, 110, 106, 126, 92, 94, 122, 96, 97, 31, 28, 27, 121, 32,
+            24, 25, 37, 38, 41, 33, 42, 39, 34, 36, 35, 40, 13, 11, 29, 26, 30, 79, 78, 76, 17, 20,
+            16, 19, 107, 14, 105, 5, 113, 104, 6, 0, 15, 1, 50, 43, 102, 44, 53, 56, 120, 55, 123,
+            51, 4, 49, 114, 12, 119, 9, 99, 63, 57, 90, 60, 61, 58, 59, 115, 89, 2, 10, 8, 23, 22,
+            3, 21, 18, 71, 7, 66, 72, 73, 67, 70, 69, 68, 74, 75, 77, 116, 83, 80, 125, 81, 82,
+            100, 101, 62, 118, 95, 108, 87, 86, 85, 84, 109, 103, 124, 88, 91, 98, 64, 112, 65, 54,
+            46,
+        ];
+        let optimal_permutation = Permutation::new(optimal_tour);
+
+        let optimal_fitness = tsp.evaluate(&optimal_permutation);
+        assert_eq!(optimal_fitness, 118282.0);
+    }
 }

@@ -9,12 +9,12 @@ use rand::{Rng, SeedableRng};
 use rand_pcg::Pcg64;
 
 const REPETITIONS: usize = 100;
-const MAX_ITERATIONS: u64 = 1_000_000;
-const SEED: u64 = 123123123;
+const MAX_ITERATIONS: u64 = 2_000_000;
+const SEED: u64 = 12462312;
 
 fn main() {
     // OPTIONS:
-    let c_values = vec![3.75, 4.00, 4.25, 4.50];
+    let c_values = vec![7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0];
 
     let mut rng = Pcg64::seed_from_u64(SEED);
 

@@ -2,9 +2,9 @@ use rand::Rng;
 
 use crate::{rng::MyRng, search_space::SearchSpace};
 
+pub mod mmas;
 pub mod one_plus_one_ea;
 pub mod simulated_annealing;
-pub mod mmas;
 
 #[derive(Debug)]
 pub struct SimulationState<S: SearchSpace> {

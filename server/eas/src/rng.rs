@@ -57,7 +57,7 @@ impl<T: Rng> MyRng for T {
     fn shuffle_vec<I>(&mut self, v: &mut Vec<I>) {
         v.shuffle(self);
     }
-    
+
     fn random_range_float(&mut self, range: Range<f64>) -> f64 {
         self.random_range(range)
     }
@@ -138,7 +138,7 @@ impl MyRng for MockRng {
     fn shuffle_vec<T>(&mut self, _: &mut Vec<T>) {
         todo!()
     }
-    
+
     fn random_range_float(&mut self, _: Range<f64>) -> f64 {
         todo!()
     }

@@ -7,6 +7,9 @@ use crate::{
 };
 use serde_json::json;
 
+// Implementation of (1+1) EA independent of search space, fitness function and mutation operator
+// Implements AlgorithmCore separately for Bitstring and Permutation,
+// as the usage of the mutation operator is different between the two search spaces
 pub struct OnePlusOneEA<S: SearchSpace, F: FitnessFunction<S>, M: Mutation<S>> {
     pub state: SimulationState<S>,
     fitness_function: F,

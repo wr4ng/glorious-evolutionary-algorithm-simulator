@@ -4,12 +4,16 @@ use crate::{fitness::FitnessFunction, mutation::Mutation, rng::MyRng, search_spa
 
 use super::{AlgorithmCore, SimulationState};
 
+// Enum representing the cooling schemes used for simulated annealing
+// Represents both a cooling scheme with static temperature,
+// and the exponential cooling scheme T(t) = T_0 * alpha^t
 pub enum CoolingSchedule {
     Static(f64),
     Exponential(f64, f64),
 }
 
 impl CoolingSchedule {
+    // Calculate temperature based on the given cooling schedule and iteration parameter
     pub fn temperature(&self, t: u64) -> f64 {
         match self {
             CoolingSchedule::Static(static_temp) => *static_temp,
@@ -17,22 +21,31 @@ impl CoolingSchedule {
         }
     }
 
+    // Create a new static cooling scheme with a given temperature
     pub fn new_static(temperature: f64) -> Self {
         CoolingSchedule::Static(temperature)
     }
 
+    // Create a cooling scheme for bitstring problems with cooling rate c
     pub fn new_default_bitstring(size: u64, c: f64) -> Self {
-        let initial_temp = size.pow(3) as f64; // T(0) = n^3
-        let alpha = 1.0 - 1.0 / (c * size as f64); // alpha = 1 - 1/cn
+        // T(0) = n^3
+        let initial_temp = size.pow(3) as f64;
+        // alpha = 1 - 1/cn
+        let alpha = 1.0 - 1.0 / (c * size as f64);
         CoolingSchedule::Exponential(initial_temp, alpha)
     }
 
+    // Create a cooling scheme for TSP with cooling rate c
     pub fn new_default_tsp(size: u64, c: f64) -> Self {
-        let initial_temp = size.pow(3) as f64; // T(0) = n^3
-        let alpha = 1.0 - 1.0 / (c * size.pow(2) as f64); // alpha = 1 - 1/cn^2
+        // T(0) = n^3
+        let initial_temp = size.pow(3) as f64;
+        // alpha = 1 - 1/cn^2
+        let alpha = 1.0 - 1.0 / (c * size.pow(2) as f64);
         CoolingSchedule::Exponential(initial_temp, alpha)
     }
 
+    // Create exponential cooling scheme for TSP calculating c such that a fixed final temperature
+    // is reached after max_iterations
     pub fn from_max_iterations_tsp(size: u64, max_iterations: u64) -> Self {
         // c = -1 / (n^2 * ((1/n^3)^(1/t) - 1))
         let c = -1.0
@@ -41,6 +54,8 @@ impl CoolingSchedule {
         Self::new_default_tsp(size, c)
     }
 
+    // Create exponential cooling scheme for bitstring problems calculating c such that a fixed final temperature
+    // is reached after max_iterations
     pub fn from_max_iterations_bitstring(size: u64, max_iterations: u64) -> Self {
         // c = -1 / (n * ((1/n^3)^(1/t) - 1))
         let c = -1.0
@@ -50,6 +65,8 @@ impl CoolingSchedule {
     }
 }
 
+// Implementatiojn of Simulated Annealing. Implementating is generic and is shared
+// for all search spaces, fitness function and mutation operators
 pub struct SimulatedAnnealing<S, F, M>
 where
     S: SearchSpace,
@@ -144,5 +161,3 @@ where
         })
     }
 }
-
-//TODO: Test simulated annealing

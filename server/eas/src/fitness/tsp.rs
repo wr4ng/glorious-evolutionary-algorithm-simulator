@@ -1,6 +1,8 @@
 use super::FitnessFunction;
 use crate::search_space::Permutation;
 
+// Implementation of the Travelling Salesman Problem
+// Implementation is generic and supports non-symmetric distances
 pub struct TSP {
     distances: Vec<Vec<f64>>,
     vertices: u64,
@@ -10,6 +12,7 @@ impl FitnessFunction<Permutation> for TSP {
     fn evaluate(&self, instance: &Permutation) -> f64 {
         let mut tour_length = 0.0;
         let p = instance.permutation();
+        // Add distance of each consecutive pair of vertices from the permutation
         for pair in p.windows(2) {
             tour_length += self.distances[pair[0]][pair[1]];
         }
@@ -18,6 +21,7 @@ impl FitnessFunction<Permutation> for TSP {
         tour_length
     }
 
+    // TSP is a minimization problem
     fn is_maximizing(&self) -> bool {
         false
     }
@@ -44,9 +48,9 @@ impl TSP {
         self.distances.clone()
     }
 
-    //TODO: Should probably be Result<TSP, TSPParseError> or something
+    // Parse a TSP instance from the EUC2D format from the TSPLIB library
+    // Only parses the "NODE_COORD_SECTION ... EOF" section of the file
     pub fn from_euc2d(input: &str) -> Option<TSP> {
-        //TODO: Read values from metadata section. Verify EUC2D type
         let (_metadata, data) = match input.split_once("NODE_COORD_SECTION\n") {
             None => return None,
             Some((l, r)) => (l, r),
@@ -91,8 +95,8 @@ impl TSP {
 }
 
 #[cfg(test)]
+// Function used to parse `.opt.tour` files given by TSPLIB used to verify the optimal tour
 fn parse_tour(input: &str) -> Option<Vec<usize>> {
-    //TODO: Read values from metadata section. Verify Tour type
     let (_metadata, remaning) = match input.split_once("TOUR_SECTION\n") {
         None => return None,
         Some((l, r)) => (l, r),
@@ -112,6 +116,7 @@ fn parse_tour(input: &str) -> Option<Vec<usize>> {
 mod tests {
     use super::*;
 
+    // Test being able to parse the berlin52 instance provided from TSPLIB
     #[test]
     fn test_parse_berlin52() {
         let berlin52 = include_str!("./berlin52.tsp");
@@ -119,6 +124,7 @@ mod tests {
         assert!(tsp.is_some());
     }
 
+    // Test veryfing the fitness of the optimal tour of berlin52 provided by TSPLIB
     #[test]
     fn test_berlin52_optimal_tour() {
         let tsp = TSP::from_euc2d(include_str!("./berlin52.tsp")).unwrap();
@@ -129,6 +135,7 @@ mod tests {
         assert_eq!(optimal_fitness, 7542.0);
     }
 
+    // Test being able to parse the bier127 instance provided from TSPLIB
     #[test]
     fn test_parse_bier127() {
         let berlin52 = include_str!("./bier127.tsp");
@@ -136,6 +143,7 @@ mod tests {
         assert!(tsp.is_some());
     }
 
+    // Test veryfing the fitness of the optimal tour of bier127 found during testing
     #[test]
     fn test_bier127_optimal_tour() {
         let tsp = TSP::from_euc2d(include_str!("./bier127.tsp")).unwrap();

@@ -1,10 +1,13 @@
 use super::rng::MyRng;
 use super::search_space::{Bitstring, Permutation, SearchSpace};
 
+// Mutation trait used by (1+1) EA and Simulated Annealing,
+// as the mutation operator on a given search space
 pub trait Mutation<S: SearchSpace> {
     fn apply<R: MyRng>(&self, solution: &S, rng: &mut R) -> S;
 }
 
+// Simple bitflip mutation, flipping each bit with probability 1/n
 pub struct NaiveBitflip;
 
 impl Mutation<Bitstring> for NaiveBitflip {
@@ -22,6 +25,8 @@ impl Mutation<Bitstring> for NaiveBitflip {
     }
 }
 
+// Optimized bitflip mutation,
+// using the geometric distribution to draw distance between bitflips from
 pub struct Bitflip;
 
 impl Mutation<Bitstring> for Bitflip {
@@ -40,6 +45,8 @@ impl Mutation<Bitstring> for Bitflip {
     }
 }
 
+// Mutation flipping a single random bit
+// Used by Simulated Annealing
 pub struct SingleBitflip;
 
 impl Mutation<Bitstring> for SingleBitflip {
@@ -51,6 +58,8 @@ impl Mutation<Bitstring> for SingleBitflip {
     }
 }
 
+// 2-opt mutation using on the permutation search space
+// Used by both (1+1) EA and Simulated Annealing on TSP
 pub struct TwoOpt;
 
 impl Mutation<Permutation> for TwoOpt {
@@ -81,6 +90,7 @@ fn two_opt(previous: &Vec<usize>, a: usize, b: usize) -> Vec<usize> {
     result
 }
 
+// Test of the defined mutation operators
 #[cfg(test)]
 mod tests {
     use super::*;

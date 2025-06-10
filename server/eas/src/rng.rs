@@ -2,7 +2,8 @@ use std::ops::Range;
 
 use rand::{seq::SliceRandom, Rng};
 
-
+// RNG trait with functions used by algorithms.
+// Allows mocking the RNG passed to algorithm implementations for testing.
 pub trait MyRng {
     fn random(&mut self) -> bool;
     fn random_bool(&mut self, probability: f64) -> bool;
@@ -62,6 +63,8 @@ impl<T: Rng> MyRng for T {
     }
 }
 
+// Mock implementation of MyRng,
+// allowing for setting random numbers returned by each function
 #[derive(Default)]
 pub struct MockRng {
     random_ratio_values: Vec<bool>,

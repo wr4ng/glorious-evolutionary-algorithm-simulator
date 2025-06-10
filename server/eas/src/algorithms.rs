@@ -1,6 +1,6 @@
+use rand::Rng;
+
 use crate::{rng::MyRng, search_space::SearchSpace};
-use rand::rngs::ThreadRng;
-use rand_pcg::Pcg64;
 
 pub mod one_plus_one_ea;
 pub mod simulated_annealing;
@@ -13,6 +13,7 @@ pub struct SimulationState<S: SearchSpace> {
     pub current_fitness: f64,
 }
 
+// The core algorithm trait implemented by all implemented algorithms
 pub trait AlgorithmCore {
     fn iterate<R: MyRng>(&mut self, rng: &mut R);
     fn current_fitness(&self) -> f64;
@@ -20,33 +21,19 @@ pub trait AlgorithmCore {
     fn status_json(&self) -> serde_json::Value;
 }
 
-pub trait Algorithm<R>: Send {
+// Trait used by the server implementation,
+// requiring the types to be able to be sent safely between threads.
+// Also uses a fixed RNG to avoid generic methods, allowing for the creating of trait objects
+pub trait Algorithm<R: Rng>: Send {
     fn iterate(&mut self, rng: &mut R);
     fn current_fitness(&self) -> f64;
     fn iterations(&self) -> u64;
     fn status_json(&self) -> serde_json::Value;
 }
 
-impl<T: AlgorithmCore + Send> Algorithm<ThreadRng> for T {
-    fn iterate(&mut self, rng: &mut ThreadRng) {
-        self.iterate(rng);
-    }
-
-    fn current_fitness(&self) -> f64 {
-        self.current_fitness()
-    }
-
-    fn iterations(&self) -> u64 {
-        self.iterations()
-    }
-
-    fn status_json(&self) -> serde_json::Value {
-        self.status_json()
-    }
-}
-
-impl<T: AlgorithmCore + Send> Algorithm<Pcg64> for T {
-    fn iterate(&mut self, rng: &mut Pcg64) {
+// Algorithm is implemented for types implementing AlgorithmCore, using a fixed RNG
+impl<T: AlgorithmCore + Send, R: Rng> Algorithm<R> for T {
+    fn iterate(&mut self, rng: &mut R) {
         self.iterate(rng);
     }
 

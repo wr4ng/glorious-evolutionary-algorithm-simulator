@@ -2,6 +2,7 @@ use std::fmt::Debug;
 
 use crate::rng::MyRng;
 
+// Main search space trait used as solution candidate for algorithms
 pub trait SearchSpace: Debug + Clone {
     fn new_random<R: MyRng>(size: usize, rng: &mut R) -> Self;
     fn size(&self) -> usize;
@@ -26,7 +27,6 @@ impl Bitstring {
         self.bits[i] = !self.bits[i];
     }
 
-    //TODO: Should be Result<Self, {some error}>
     pub fn from_bitstring(s: &str) -> Option<Self> {
         let bitstring = s
             .chars()

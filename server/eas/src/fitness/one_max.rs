@@ -1,6 +1,7 @@
 use super::FitnessFunction;
 use crate::search_space::Bitstring;
 
+// Implementation of the OneMax pseudo-boolean function
 pub struct OneMax;
 
 impl FitnessFunction<Bitstring> for OneMax {

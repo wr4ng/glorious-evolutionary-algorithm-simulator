@@ -1,6 +1,7 @@
 use super::FitnessFunction;
 use crate::search_space::Bitstring;
 
+// Implementation of the LeadingOnes pseudo-boolean function
 pub struct LeadingOnes;
 
 impl FitnessFunction<Bitstring> for LeadingOnes {

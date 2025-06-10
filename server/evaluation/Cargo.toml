@@ -6,4 +6,6 @@ edition = "2024"
 [dependencies]
 eas = { path = "../eas" }
 rand = "0.9.0"
+rand_chacha = "0.9.0"
 rand_pcg = "0.9.0"
+rand_xoshiro = "0.7.0"

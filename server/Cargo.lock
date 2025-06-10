@@ -180,7 +180,9 @@ version = "0.1.0"
 dependencies = [
  "eas",
  "rand",
+ "rand_chacha",
  "rand_pcg",
+ "rand_xoshiro",
 ]
 
 [[package]]

@@ -29,7 +29,7 @@ async fn main() {
         pending_schedules: HashMap::new(),
     }));
 
-    //TODO: Proberly handle CORS
+    // Permissive CORS layer, allowing web-client to fetch from another origin
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)
@@ -49,6 +49,7 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
+// Simple ping-pong endpoint used to verify is server is running at selected address
 async fn ping_handler() -> String {
     "pong".to_owned()
 }

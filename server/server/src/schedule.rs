@@ -21,7 +21,9 @@ pub struct TaskSchedule {
     pub seed: u64,
 }
 
-//TODO: Error type
+// Given a valid task schedule, create the task schedule and save it,
+// waiting for client to connect to WebSocket.
+// Send Schedule + ID back to client
 pub async fn create_task_schedule(
     State(state): State<SharedState>,
     Json(request): Json<CreateTaskScheduleRequest>,
@@ -29,21 +31,16 @@ pub async fn create_task_schedule(
     let schedule_id = Uuid::new_v4();
 
     // Validate repeat_count
-    //TODO: Better error
-    //TODO: Determine ranges
     if request.repeat_count == 0 || request.repeat_count > 100 {
         return Err(StatusCode::BAD_REQUEST);
     }
 
     // Validate update_rate
-    //TODO: Better error
-    //TODO: Determine ranges
     if request.update_rate < 10 || request.update_rate > 100000 {
         return Err(StatusCode::BAD_REQUEST);
     }
 
     // Validate tasks
-    //TODO: Better error
     if request.tasks.is_empty() {
         return Err(StatusCode::BAD_REQUEST);
     }

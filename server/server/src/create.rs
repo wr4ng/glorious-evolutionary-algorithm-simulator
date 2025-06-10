@@ -33,6 +33,8 @@ impl IntoResponse for CreateError {
     }
 }
 
+// Create a Algorithm trait object to allow iterating any implemented algorithm
+// Returns a CreateError if an invalid TSP instance is provided
 pub fn create_ea<R: Rng>(
     task: &Task,
     rng: &mut R,
@@ -66,6 +68,7 @@ pub fn create_ea<R: Rng>(
     }
 }
 
+// Create a (1+1) EA instance given a problem
 pub fn create_oneplusone_runner<R: Rng>(
     problem: &Problem,
     rng: &mut R,
@@ -90,6 +93,7 @@ pub fn create_oneplusone_runner<R: Rng>(
     })
 }
 
+// Create a Simulated Annealing instance, given provided problem and cooling schedule
 pub fn create_sa_runner<R: Rng>(
     problem: &Problem,
     rng: &mut R,
@@ -154,6 +158,7 @@ pub fn create_sa_runner<R: Rng>(
     })
 }
 
+// Create an MMAS instance given a problem and MMAS parameters
 pub fn create_aco_runner<R: Rng>(
     problem: &Problem,
     alpha: f64,

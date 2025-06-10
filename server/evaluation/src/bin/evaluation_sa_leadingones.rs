@@ -1,7 +1,7 @@
 use std::time::Instant;
 
-use eas::algorithms::simulated_annealing::{CoolingSchedule, SimulatedAnnealing};
 use eas::algorithms::AlgorithmCore;
+use eas::algorithms::simulated_annealing::{CoolingSchedule, SimulatedAnnealing};
 use eas::fitness::leading_ones::LeadingOnes;
 use eas::mutation::SingleBitflip;
 use rand::rng;
@@ -44,7 +44,6 @@ fn main() {
     }
 
     println!("Tikz coordinate format:");
-
 
     for (c, avg) in &averages {
         println!("\nCooling rate: {}", c);

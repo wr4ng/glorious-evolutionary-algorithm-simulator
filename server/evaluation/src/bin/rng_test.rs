@@ -36,10 +36,7 @@ fn benchmark_rng<R: Rng>(mut rng: R, name: &str) -> Duration {
 }
 
 fn benchmark_number_types<R: Rng + Clone>(rng: R, name: &str) {
-    println!(
-        "\n{}:",
-        name
-    );
+    println!("\n{}:", name);
 
     // Benchmark u32
     let mut rng_clone = rng.clone();
@@ -106,10 +103,7 @@ fn compare_rngs() {
     let pcg64_duration = benchmark_rng(pcg64_rng, "Pcg64");
 
     let baseline = std_rng_duration;
-    println!(
-        "StdRng: {:.6} seconds (baseline)",
-        baseline.as_secs_f64()
-    );
+    println!("StdRng: {:.6} seconds (baseline)", baseline.as_secs_f64());
     print_result("Xoshiro128PlusPlus", baseline, xoshiro_duration);
     print_result("ChaCha8Rng", baseline, chacha8_duration);
     print_result("Pcg64", baseline, pcg64_duration);

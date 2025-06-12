@@ -1,6 +1,5 @@
 import type { Node } from "../types/types";
 
-//TODO: Maybe wrap in try/catch
 export function parseEUC2D(input: string): Node[] {
 	const data = input.split("NODE_COORD_SECTION\n", 2)[1];
 	const coords = data.split("\nEOF", 1)[0];

@@ -480,6 +480,7 @@
 											currentTaskIndex = i;
 										}}
 										extraClass="py-0"
+										disabled={status != "Disconnected"}
 									/></td
 								>
 							</tr>

@@ -21,6 +21,7 @@ pub struct MMAStsp<F: FitnessFunction<Permutation>> {
     t_min: f64,
     t_max: f64,
     q: f64,
+    probabilities: Vec<Vec<f64>>,
 }
 impl<F> MMAStsp<F>
 where
@@ -68,7 +69,7 @@ where
                 heuristic[ii][i] = val;
             }
         }
-
+        let probabilities = vec![vec![0.0;size];size];
         MMAStsp {
             state: SimulationState {
                 iteration: 0,
@@ -87,6 +88,7 @@ where
             t_min,
             t_max,
             q,
+            probabilities,
         }
     }
 
@@ -113,7 +115,16 @@ where
         Permutation::new(path)
     }
 
-    fn construct<R: MyRng>(&self, rng: &mut R) -> Permutation {
+    fn probability(&mut self, i: usize, j: usize) -> f64{
+        if self.probabilities[i][j] == 0.0 {
+            self.probabilities[i][j] = self.pheromone[i][j].powf(self.alpha)
+            * self.heuristic[i][j].powf(self.beta);
+            self.probabilities[j][i] = self.probabilities[i][j];
+        }
+        self.probabilities[i][j]
+    }
+
+    fn construct<R: MyRng>(&mut self, rng: &mut R) -> Permutation {
         let start_node = rng.random_range(0..self.size);
         let mut path = Vec::<usize>::with_capacity(self.size);
         let mut visited = vec![false; self.size];
@@ -131,8 +142,7 @@ where
                     continue;
                 }
                 neighbors[added] = i;
-                neighbor_weights[added] = self.pheromone[current_node][i].powf(self.alpha)
-                    * self.heuristic[current_node][i].powf(self.beta)
+                neighbor_weights[added] = self.probability(current_node, i)
                     + neighbor_weights[added - 1];
                 added += 1;
             }
@@ -154,7 +164,8 @@ where
             for ii in 0..self.size {
                 self.pheromone[i][ii] = self
                     .t_min
-                    .max(self.pheromone[i][ii] * (1.0 - self.evap_factor))
+                    .max(self.pheromone[i][ii] * (1.0 - self.evap_factor));
+                self.probabilities[i][ii] = 0.0;
             }
         }
     }
@@ -224,8 +235,6 @@ where
         for _ in 0..self.ants {
             paths.push(self.construct(rng));
         }
-        // Daemon action
-
         // Update pheromones
         self.decrease();
         self.update(&paths);
@@ -257,7 +266,7 @@ where
 pub struct MMASbs<F: FitnessFunction<Bitstring>> {
     pub state: SimulationState<Bitstring>,
     fitness_function: F,
-    pheromone: Vec<f64>,
+    pheromone: Vec<Vec<f64>>,
     size: usize,
     ants: usize,
     alpha: f64,
@@ -280,10 +289,10 @@ where
         let path = Bitstring::new_random(size, rng);
         let current_solution = path;
         let current_fitness = fitness_function.evaluate(&current_solution);
-        let t_min = 1.0 / ((size) as f64);
+        let t_min = 1.0 / (size as f64);
         let t_max = 1.0 - 1.0 / (size as f64);
 
-        let pheromone = vec![0.5; size];
+        let pheromone = vec![vec![0.5; 2]; size];
 
         MMASbs {
             state: SimulationState {
@@ -307,7 +316,7 @@ where
 
         for step in 0..self.size {
             let r = rng.random_range_float(0.0..1.0);
-            path[step] = r < self.pheromone[step].powf(self.alpha)
+            path[step] = r < self.pheromone[step][0].powf(self.alpha)/(self.pheromone[step][0].powf(self.alpha) + self.pheromone[step][1].powf(self.alpha))
         }
         Bitstring::new(path)
     }
@@ -329,9 +338,11 @@ where
             let bits = self.state.current_solution.bits();
             for i in 0..self.size {
                 if bits[i] {
-                    self.pheromone[i] = (self.pheromone[i] + self.evap_factor).min(self.t_max);
+                    self.pheromone[i][0] = ((1.0 - self.evap_factor) * self.pheromone[i][0] + self.evap_factor).min(self.t_max);
+                    self.pheromone[i][1] = ((1.0 - self.evap_factor) * self.pheromone[i][1]).max(self.t_min);
                 } else {
-                    self.pheromone[i] = (self.pheromone[i] - self.evap_factor).max(self.t_min);
+                    self.pheromone[i][1] = ((1.0 - self.evap_factor) * self.pheromone[i][1] + self.evap_factor).min(self.t_max);
+                    self.pheromone[i][0] = ((1.0 - self.evap_factor) * self.pheromone[i][0]).max(self.t_min);
                 }
             }
         }

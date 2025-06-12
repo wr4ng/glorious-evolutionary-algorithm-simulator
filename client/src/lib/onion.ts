@@ -5,7 +5,6 @@ function gaussian(x: number) {
 	return Math.exp(-(x ** 2) / 2); // e^(-x^2 / 2)
 }
 
-//TODO: Determine values for x-range (vertical)
 const xDiff = 3.5;
 const resolution = 100;
 
@@ -80,7 +79,6 @@ export function bitstringToOnionCoords(bitstring: string, tooltip: string): Onio
 			averageOneIndex += bitstring.length - 1 - i;
 		}
 	}
-	//TODO: Can simplify this using n(n+1)/2
 	let minAverage = 0;
 	let maxAverage = 0;
 	for (let i = 0; i < numOnes; i++) {

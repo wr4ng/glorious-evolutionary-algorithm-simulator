@@ -47,7 +47,6 @@
 	let edges: Edge[][] = $state([]);
 
 	let pheromones: number[][][] = $state([]);
-	//TODO: Keep track of this for each task
 	let t_max: number[] = $state([1.0]);
 	let t_min: number[] = $state([1.0]);
 
@@ -95,19 +94,16 @@
 
 		socket.onopen = (event) => {
 			status = "Connected";
-			//TODO: Show loading before connection opens
 			console.log(event);
 		};
 
 		socket.onclose = (event) => {
 			status = "Disconnected";
-			//TODO: Show simulation is completed
 			console.log(event);
 		};
 
 		socket.onerror = (event) => {
 			status = "Disconnected";
-			//TODO: Handle error
 			console.log(event);
 		};
 
@@ -192,9 +188,8 @@
 					results = [...results, message.result];
 					return;
 				}
-				console.log("invalid message"); //TODO: Throw error
+				throw new Error("invalid message: " + JSON.stringify(message));
 			} catch (error) {
-				//TODO: Handle error
 				console.log(error);
 			}
 		};
@@ -485,6 +480,7 @@
 											currentTaskIndex = i;
 										}}
 										extraClass="py-0"
+										disabled={status != "Disconnected"}
 									/></td
 								>
 							</tr>

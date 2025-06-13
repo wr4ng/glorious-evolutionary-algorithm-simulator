@@ -34,3 +34,6 @@ you're presented with the interface to create a simulation schedule to be run on
 ![Screenshot of client interface](./img/client-interface.png)
 
 ![Screenshot of client dashboard](./img/client-dashboard.png)
+
+Compiled binaries of the server for Linux and Windows, along with the compiled web frontend,
+is provided under [Releases](https://github.com/wr4ng/glorious-evolutionary-algorithm-simulator/releases).

@@ -14,7 +14,7 @@ use rand::SeedableRng;
 use rand_pcg::Pcg64;
 
 const REPETITIONS: usize = 100;
-const MAX_MS: u64 = 500;
+const MAX_MS: u64 = 100;
 const SEED: u64 = 111222333;
 
 fn main() {
@@ -46,7 +46,7 @@ fn main() {
     for _ in 0..REPETITIONS {
         let tsp = TSP::from_euc2d(include_str!("./berlin52.tsp")).unwrap();
         let start = Instant::now();
-        let cooling = CoolingSchedule::new_default_tsp(tsp.num_cities() as u64, 100.0);
+        let cooling = CoolingSchedule::new_default_tsp(tsp.num_cities() as u64, 20.0);
         let mut sa = SimulatedAnnealing::new(tsp.num_cities(), TwoOpt, tsp, cooling, &mut rng);
         while start.elapsed() < Duration::from_millis(MAX_MS) {
             sa.iterate(&mut rng);
@@ -76,8 +76,8 @@ fn main() {
             size,
             size,
             1.0,
-            5.0,
-            0.05,
+            4.0,
+            0.02,
             PheromoneUpdateStrategy::GenerationBest,
             true,
             0.0,
@@ -112,8 +112,8 @@ fn main() {
             size,
             size,
             1.0,
-            5.0,
-            0.05,
+            4.0,
+            0.02,
             PheromoneUpdateStrategy::GenerationBest,
             true,
             0.05,
@@ -148,7 +148,7 @@ fn main() {
             size,
             size,
             1.0,
-            5.0,
+            4.0,
             0.05,
             PheromoneUpdateStrategy::GenerationBest,
             true,
